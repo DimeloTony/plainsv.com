@@ -1,0 +1,112 @@
+---
+title: "Scroll Area"
+description: "A scrolling box with thin themed scrollbars that can be dragged, shown on hover, and sized."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Scroll Area
+
+A scrolling box with thin scrollbars that look the same on every platform. The native scrollbars are hidden, so scrolling with the wheel, touch, and keyboard still works natively, and the themed scrollbars follow it.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ScrollArea } from "#lib/components/ui/scroll-area/index.js";
+</script>
+
+<ScrollArea style="height: 18rem; width: 12rem" rounded="md">
+	{#each tags as tag (tag)}
+		<div>{tag}</div>
+	{/each}
+</ScrollArea>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/scroll-area.json
+```
+
+## Height
+
+Give the scroll area a `height` or `max-height` through `class` or `style`, so the content can overflow it. A scrollbar shows only when its direction is enabled and the content overflows. Drag the thumb to scroll, or press the track to jump there.
+
+## Horizontal
+
+Set `orientation` to `horizontal` or `both` to scroll sideways. Content wider than the box scrolls instead of wrapping.
+
+<Demo section="horizontal" />
+
+```svelte title="+page.svelte"
+<ScrollArea orientation="horizontal" style="max-width: 24rem">
+	<div style="display: flex; gap: 1rem">...</div>
+</ScrollArea>
+```
+
+## Visibility
+
+Set `type` to `hover`, the default, to show the scrollbars while the box is hovered or scrolling, `scroll` to show them only while scrolling, or `always` to keep them shown.
+
+<Demo section="always" />
+
+```svelte title="+page.svelte"
+<ScrollArea type="always" style="height: 10rem">...</ScrollArea>
+```
+
+## Scroll position
+
+Use `bind:viewport` to get the scrolling element, such as to read `scrollTop` or call `scrollTo`.
+
+<Demo section="position" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let viewport: HTMLDivElement | undefined = $state();
+</script>
+
+<ScrollArea bind:viewport style="height: 18rem">...</ScrollArea>
+<button onclick={() => viewport?.scrollTo({ top: 0, behavior: "smooth" })}>Back to top</button>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` for a 6, 8, 10, or 12 pixel scrollbar. The default is `md`.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<ScrollArea size="lg" type="always" style="height: 8rem">...</ScrollArea>
+```
+
+## Rounded
+
+The box is square-cornered by default; set `rounded` to `xs` through `4xl` or `pill` to round it.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<ScrollArea rounded="lg" style="height: 8rem">...</ScrollArea>
+```
+
+## API
+
+The `ScrollArea` props extend the native `div` attributes of the box.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Directions the content scrolls in; defaults to `vertical` */
+	orientation?: "vertical" | "horizontal" | "both";
+	/** `hover` shows the scrollbars while hovered or scrolling; `scroll` only while scrolling; `always` keeps them shown; defaults to `hover` */
+	type?: "hover" | "scroll" | "always";
+	/** Scrolling element, for reading or setting the scroll position; supports `bind:viewport` */
+	viewport?: HTMLDivElement;
+	/** Scrollbar thickness on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the box; square when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

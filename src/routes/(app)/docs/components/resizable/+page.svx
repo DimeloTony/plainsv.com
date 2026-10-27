@@ -1,0 +1,117 @@
+---
+title: "Resizable"
+description: "Panels that share a row or column and resize by dragging or with the keyboard."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Resizable
+
+Panels that share the space of a row or column, with handles between them. Drag a handle, or focus it and use the keyboard, to resize the panels beside it. Compose it from `ResizablePanelGroup`, `ResizablePanel`, and `ResizableHandle`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "#lib/components/ui/resizable/index.js";
+</script>
+
+<ResizablePanelGroup>
+	<ResizablePanel defaultSize={50} minSize={20}>One</ResizablePanel>
+	<ResizableHandle />
+	<ResizablePanel defaultSize={50}>
+		<ResizablePanelGroup direction="vertical">
+			<ResizablePanel defaultSize={25}>Two</ResizablePanel>
+			<ResizableHandle />
+			<ResizablePanel defaultSize={75}>Three</ResizablePanel>
+		</ResizablePanelGroup>
+	</ResizablePanel>
+</ResizablePanelGroup>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/resizable.json
+```
+
+## Sizes
+
+Panel sizes are percentages of the group. Set `defaultSize` for the starting size; panels without one share the rest equally. Set `minSize` and `maxSize` to limit how far the handles move. A handle only resizes the two panels beside it, so the others keep their size. Use `onLayoutChange` on the group to read every size after a resize, such as to save the layout.
+
+The group fills its container, so give the container a height for vertical groups. Panels clip content that does not fit.
+
+## Vertical
+
+Set `direction="vertical"` on the group to stack the panels.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<ResizablePanelGroup direction="vertical">
+	<ResizablePanel defaultSize={25}>Header</ResizablePanel>
+	<ResizableHandle />
+	<ResizablePanel defaultSize={75}>Content</ResizablePanel>
+</ResizablePanelGroup>
+```
+
+## Handle
+
+Set `withHandle` on `ResizableHandle` to show a grip in the middle of the line. The line has an 8 pixel hit area, so it is easy to grab.
+
+<Demo section="handle" />
+
+```svelte title="+page.svelte"
+<ResizableHandle withHandle />
+```
+
+## Disabled
+
+Set `disabled` on `ResizableHandle` to lock it. It ignores the pointer and the arrow keys, and leaves the tab order.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<ResizablePanelGroup>
+	<ResizablePanel defaultSize={25}>Locked</ResizablePanel>
+	<ResizableHandle withHandle disabled />
+	<ResizablePanel defaultSize={50}>Content</ResizablePanel>
+	<ResizableHandle withHandle />
+	<ResizablePanel defaultSize={25}>Free</ResizablePanel>
+</ResizablePanelGroup>
+```
+
+## Keyboard
+
+Each handle is in the tab order and announced as a separator with the size of the panel before it. The arrow keys along the group direction move it by 5%, and Home and End move it to the panel's `minSize` and `maxSize`.
+
+## API
+
+`ResizablePanelGroup` and `ResizablePanel` extend the native `div` attributes, and `ResizableHandle` extends them too. The parts lay out space, so they have no `size` or `rounded` props.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** `horizontal` places the panels side by side; `vertical` stacks them; defaults to `horizontal` */
+	direction?: "horizontal" | "vertical";
+	/** Called with every panel size, in percent and in order, after a resize */
+	onLayoutChange?: (sizes: number[]) => void;
+}
+
+interface PanelProps extends CompPropsWithChild<"div"> {
+	/** Starting size in percent; panels without one share the rest equally */
+	defaultSize?: number;
+	/** Smallest size in percent the handles allow; defaults to `0` */
+	minSize?: number;
+	/** Largest size in percent the handles allow; defaults to `100` */
+	maxSize?: number;
+}
+
+interface HandleProps extends CompProps<"div"> {
+	/** Shows a grip in the middle of the divider */
+	withHandle?: boolean;
+	/** Blocks resizing with this handle */
+	disabled?: boolean;
+}
+```

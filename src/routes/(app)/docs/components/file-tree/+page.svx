@@ -1,0 +1,178 @@
+---
+title: "File Tree"
+description: "A tree of files and folders built from paths, with file icons, selection, highlights, and keyboard navigation."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# File Tree
+
+Shows files and folders as a tree, such as the sidebar of a code editor or the files of a starter template. Pass a list of paths, and the tree builds the folders, sorts folders before files like VS Code, and picks an icon from each extension. Clicking a file selects it, clicking a folder opens or closes it, and the tree follows the WAI-ARIA tree pattern, so the arrow keys, Home, End, Enter, and Space work from the keyboard.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { FileTree } from "#lib/components/ui/file-tree/index.js";
+
+	const files = ["src/routes/+layout.svelte", "src/routes/+page.svelte", "src/lib/utils.ts", "package.json", "README.md"];
+	let value = $state("src/routes/+page.svelte");
+</script>
+
+<FileTree {files} bind:value variant="outline" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/file-tree.json
+```
+
+## Files
+
+Set `files` to an array of paths or to an object keyed by path, such as the files of a code editor, where only the keys are read. A path that ends in `/` adds an empty folder, and a path that other paths sit under becomes a folder.
+
+```svelte title="+page.svelte"
+<FileTree files={["src/app.css", "src/lib/", "package.json"]} />
+<FileTree files={{ "src/app.css": "body {}", "package.json": "{}" }} />
+```
+
+## Selection
+
+Bind `value` to the selected file path, or listen with `onValueChange`. Setting `value` from outside opens the folders around that file. Set `disabled` to block selection while the folders still open and close.
+
+```svelte title="+page.svelte"
+<FileTree {files} bind:value onValueChange={(path) => console.log(path)} />
+<FileTree {files} disabled />
+```
+
+## Open Folders
+
+Every folder starts open. Bind `expanded` to the open folder paths, or set it to choose which folders start open, and listen with `onExpandedChange`.
+
+<Demo section="expanded" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let expanded = $state(["src", "src/routes"]);
+</script>
+
+<FileTree {files} bind:expanded />
+```
+
+## Highlighted
+
+Set `highlighted` to the file paths to draw with the primary color, such as search matches. The highlight is separate from the selected file.
+
+<Demo section="highlighted" />
+
+```svelte title="+page.svelte"
+<FileTree {files} highlighted={["src/routes/+page.svelte"]} />
+```
+
+## Variants
+
+Set `variant` to `default` or `outline`. The default draws only the rows, and `outline` draws a bordered card around them.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<FileTree {files} variant="outline" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to scale the rows, text, icons, and indent. The default is `md`.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<FileTree {files} size="sm" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to round the box. The rows use one step smaller so the corners nest, and the radius follows `size` when omitted. A tall `pill` box clips its rows, so use `3xl` or `4xl` for a round box.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<FileTree {files} variant="outline" rounded="2xl" />
+```
+
+## Snippets
+
+Pass an `icon` snippet to replace the icon of every item, and a `trailing` snippet to add content after the name, such as a badge. Both receive the item's `path`, `isFolder`, `open`, and `selected`. Render `FileTreeIcon` inside `icon` to keep the default icons for some items. Clicks on links and buttons in `trailing` do not select the item.
+
+<Demo section="snippets" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { FileTree, FileTreeIcon } from "#lib/components/ui/file-tree/index.js";
+	import { Badge } from "#lib/components/ui/badge/index.js";
+	import { CircleDotIcon } from "@lucide/svelte";
+</script>
+
+<FileTree {files}>
+	{#snippet icon({ path, isFolder, open })}
+		{#if isFolder}<FileTreeIcon {path} {isFolder} {open} />{:else}<CircleDotIcon />{/if}
+	{/snippet}
+	{#snippet trailing({ path })}
+		{#if path.endsWith(".svelte")}<Badge variant="secondary" size="xs">M</Badge>{/if}
+	{/snippet}
+</FileTree>
+```
+
+## Keyboard
+
+Only one item is in the Tab order: the last focused item, else the selected file, else the first item.
+
+- Press `ArrowDown` and `ArrowUp` to move between the items on screen
+- Press `ArrowRight` to open a folder, or to move into an open folder
+- Press `ArrowLeft` to close a folder, or to move to the parent folder
+- Press `Home` and `End` to move to the first and last item
+- Press `Enter` or `Space` to select a file or open and close a folder
+
+## API
+
+The `FileTree` props extend the native `ul` attributes, and extra attributes pass through to the root. The tree is named "Files" for screen readers unless `aria-label` is set. Each set prop renders as a data attribute on the root, such as `data-size` and `data-rounded`.
+
+```ts title="index.ts"
+interface Props extends CompProps<"ul"> {
+	/** File paths, or an object keyed by path, such as editor files; a path ending in `/` is an empty folder */
+	files: string[] | Record<string, unknown>;
+	/** Path of the selected file; supports `bind:value` */
+	value?: string;
+	/** Called with the path when a file is selected */
+	onValueChange?: (value: string) => void;
+	/** Paths of the open folders; every folder starts open when omitted; supports `bind:expanded` */
+	expanded?: string[];
+	/** Called with the open folder paths when a folder opens or closes */
+	onExpandedChange?: (expanded: string[]) => void;
+	/** File paths drawn with the highlight, such as search matches */
+	highlighted?: string[];
+	/** Blocks file selection; folders still open and close */
+	disabled?: boolean;
+	/** Custom icon for every item; replaces the language and folder icons */
+	icon?: Snippet<[ItemSnippetProps]>;
+	/** Content after every item's name, such as a badge or an action */
+	trailing?: Snippet<[ItemSnippetProps]>;
+	/** `default` draws no box; `outline` draws a bordered card around the tree */
+	variant?: "default" | "outline";
+	/** Row height, text, icons, and indent on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the box; rows use one step smaller; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+
+interface IconProps {
+	/** File or folder path; the extension picks the file icon */
+	path: string;
+	/** Draws a folder instead of a file icon */
+	isFolder?: boolean;
+	/** Draws the open folder; only used with `isFolder` */
+	open?: boolean;
+}
+```

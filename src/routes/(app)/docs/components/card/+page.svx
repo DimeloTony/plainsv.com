@@ -1,0 +1,200 @@
+---
+title: "Card"
+description: "A container for grouped content with a header, title, description, action, content, and footer, that can render as a link."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Card
+
+Groups related content on a bordered surface, or renders an anchor when given an `href`. Compose it from `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, and `CardFooter`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "#lib/components/ui/card/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Card>
+	<CardHeader>
+		<CardTitle>Notifications</CardTitle>
+		<CardDescription>Choose what you hear about.</CardDescription>
+	</CardHeader>
+	<CardContent>
+		<p>You have 3 unread messages.</p>
+	</CardContent>
+	<CardFooter>
+		<Button size="sm">Mark as read</Button>
+		<Button size="sm" variant="ghost">Settings</Button>
+	</CardFooter>
+</Card>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/card.json
+```
+
+## Action
+
+Place `CardAction` inside `CardHeader` to show trailing content, such as an icon, badge, or button. It sits in a second column beside the title and description.
+
+<Demo section="action" />
+
+```svelte title="+page.svelte"
+<Card>
+	<CardHeader>
+		<CardTitle>Team members</CardTitle>
+		<CardDescription>Invite people to your project.</CardDescription>
+		<CardAction>
+			<Button size="sm" variant="outline">Invite</Button>
+		</CardAction>
+	</CardHeader>
+</Card>
+```
+
+## Links
+
+Pass `href` to render an anchor that highlights on hover. A disabled link drops its `href`, sets `aria-disabled`, and leaves the tab order. Without `href`, `disabled` only dims the card.
+
+<Demo section="links" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Card, CardHeader, CardTitle, CardDescription, CardAction } from "#lib/components/ui/card/index.js";
+	import { ChevronRightIcon } from "@lucide/svelte";
+</script>
+
+<Card href="/docs/components">
+	<CardHeader>
+		<CardTitle>Browse components</CardTitle>
+		<CardDescription>Opens the components list.</CardDescription>
+		<CardAction><ChevronRightIcon /></CardAction>
+	</CardHeader>
+</Card>
+```
+
+## Size
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the padding, gap, and radius. It defaults to `lg`, with 24 pixel padding and the extra large 14 pixel radius, like the shadcn card. `xs` also shrinks the text.
+
+<Demo section="size" />
+
+```svelte title="+page.svelte"
+<Card size="sm">
+	<CardHeader>
+		<CardTitle>Size sm</CardTitle>
+		<CardDescription>Tighter padding and gap.</CardDescription>
+	</CardHeader>
+</Card>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius, which follows `size` when omitted. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Card rounded="3xl">
+	<CardHeader>
+		<CardTitle>Rounded 3xl</CardTitle>
+	</CardHeader>
+</Card>
+```
+
+## Login form
+
+Compose a card with `Label`, `Input`, and `Button` to build a login form. The submit button sits in `CardFooter`, outside the `form`, so it points at the form with the `form` attribute.
+
+<Demo section="login" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter } from "#lib/components/ui/card/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { Input } from "#lib/components/ui/input/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+</script>
+
+<Card class="login">
+	<CardHeader>
+		<CardTitle>Login to your account</CardTitle>
+		<CardDescription>Enter your email below to login to your account</CardDescription>
+		<CardAction>
+			<Button variant="link">Sign Up</Button>
+		</CardAction>
+	</CardHeader>
+	<CardContent>
+		<form id="loginForm" class="loginForm">
+			<div class="loginField">
+				<Label for="email">Email</Label>
+				<Input id="email" type="email" placeholder="m@example.com" required />
+			</div>
+			<div class="loginField">
+				<div class="loginLabelRow">
+					<Label for="password">Password</Label>
+					<a href="##">Forgot your password?</a>
+				</div>
+				<Input id="password" type="password" required />
+			</div>
+		</form>
+	</CardContent>
+	<CardFooter class="loginFooter">
+		<Button type="submit" form="loginForm" class="loginButton">Login</Button>
+		<Button variant="outline" class="loginButton">Login with Google</Button>
+	</CardFooter>
+</Card>
+
+<style>
+	:global(.login) {
+		max-width: 24rem;
+	}
+
+	.loginForm {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-xl);
+	}
+
+	.loginField {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-sm);
+	}
+
+	.loginLabelRow {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	:global(.loginFooter) {
+		flex-direction: column;
+	}
+
+	:global(.loginButton) {
+		width: 100%;
+	}
+</style>
+```
+
+## API
+
+The `Card` props extend the native `div` attributes, or the `a` attributes when `href` is set. `CardHeader` and `CardFooter` extend the `header` and `footer` attributes, `CardDescription` extends `p`, and the other parts extend `div`. Extra attributes and event handlers such as `onclick` pass through to each element.
+
+```ts title="index.ts"
+interface CardBaseProps {
+	/** Padding, gap, and radius on the shared scale; defaults to `lg` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** Dims the card; a disabled link also drops its href and leaves the tab order */
+	disabled?: boolean;
+}
+```

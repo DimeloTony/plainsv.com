@@ -1,0 +1,154 @@
+---
+title: "Field"
+description: "Form field layout with labels, descriptions, errors, fieldsets, separators, and responsive orientation."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Field
+
+Lays out form controls with their labels, descriptions, and errors. Combine it with any control, such as `Input`, `Textarea`, `Checkbox`, `Switch`, or `RadioGroup`. For validation, use the `form` item, which builds on these parts.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Field, FieldSet, FieldLegend, FieldGroup, FieldLabel, FieldDescription } from "#lib/components/ui/field/index.js";
+	import { Input } from "#lib/components/ui/input/index.js";
+</script>
+
+<FieldSet>
+	<FieldLegend>Payment method</FieldLegend>
+	<FieldDescription>All transactions are secure and encrypted.</FieldDescription>
+	<FieldGroup>
+		<Field>
+			<FieldLabel for="card-name">Name on card</FieldLabel>
+			<Input id="card-name" placeholder="Evil Rabbit" />
+		</Field>
+		<Field>
+			<FieldLabel for="card-number">Card number</FieldLabel>
+			<Input id="card-number" aria-describedby="card-number-description" />
+			<FieldDescription id="card-number-description">Enter your 16-digit card number.</FieldDescription>
+		</Field>
+	</FieldGroup>
+</FieldSet>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/field.json
+```
+
+## Anatomy
+
+`Field` renders a `div` with `role="group"` that holds one control with its `FieldLabel`, `FieldDescription`, and `FieldError`. `FieldGroup` stacks fields with a larger gap. `FieldSet` and `FieldLegend` render a `fieldset` and `legend` for related fields, such as an address. `FieldContent` holds the label and description beside a control in a horizontal field.
+
+Link each label to its control with `for` and a matching `id`, and the description with `aria-describedby`.
+
+## Horizontal
+
+Set `orientation="horizontal"` to place the control beside its label, such as a checkbox or a switch. Wrap the label and description in `FieldContent` so they stack. Set `orientation="responsive"` to stack on narrow screens and switch to a row once the `FieldGroup` is `28rem` wide; the group is a container, so it measures its own width instead of the viewport.
+
+<Demo section="horizontal" />
+
+```svelte title="+page.svelte"
+<Field orientation="horizontal">
+	<Checkbox id="terms" />
+	<FieldLabel for="terms">Accept terms and conditions</FieldLabel>
+</Field>
+<Field orientation="horizontal">
+	<FieldContent>
+		<FieldLabel for="marketing">Marketing emails</FieldLabel>
+		<FieldDescription>Receive emails about new products and features.</FieldDescription>
+	</FieldContent>
+	<Switch id="marketing" />
+</Field>
+```
+
+## Choice cards
+
+Wrap a whole `Field` in `FieldLabel` to turn it into a selectable card. The card highlights while the checkbox, radio, or switch inside it is checked. Use `FieldTitle` for the heading inside the card, since the card is already the label. Set `variant="label"` on `FieldLegend` to shrink it to the label size above a set of cards.
+
+<Demo section="choice" />
+
+```svelte title="+page.svelte"
+<RadioGroup defaultValue="kubernetes">
+	<FieldLabel for="kubernetes">
+		<Field orientation="horizontal">
+			<FieldContent>
+				<FieldTitle>Kubernetes</FieldTitle>
+				<FieldDescription>Run GPU workloads on a cluster.</FieldDescription>
+			</FieldContent>
+			<RadioGroupItem value="kubernetes" id="kubernetes" />
+		</Field>
+	</FieldLabel>
+</RadioGroup>
+```
+
+## Errors
+
+Set `invalid` on `Field` to turn its label destructive, and pass `errors` to `FieldError`, such as zod issues. One message shows as text and several as a list, with repeated messages shown once. `FieldError` renders `role="alert"`, so screen readers announce it, and renders nothing without errors. Set `aria-invalid="true"` on the control for its invalid ring.
+
+<Demo section="error" />
+
+```svelte title="+page.svelte"
+<Field invalid>
+	<FieldLabel for="username">Username</FieldLabel>
+	<Input id="username" aria-invalid="true" aria-describedby="username-error" />
+	<FieldError id="username-error" errors={[{ message: "Username must be at least 3 characters." }]} />
+</Field>
+```
+
+## Disabled
+
+Set `disabled` on `Field` to dim its label and description beside a disabled control.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<Field disabled>
+	<FieldLabel for="team">Team name</FieldLabel>
+	<Input id="team" value="Acme" disabled aria-describedby="team-description" />
+	<FieldDescription id="team-description">Only owners can rename the team.</FieldDescription>
+</Field>
+```
+
+## Separator
+
+Place `FieldSeparator` between sections. Pass text to show it in the middle of the line.
+
+<Demo section="separator" />
+
+```svelte title="+page.svelte"
+<FieldSeparator>Or continue with</FieldSeparator>
+```
+
+## API
+
+`Field`, `FieldGroup`, `FieldContent`, `FieldTitle`, and `FieldSeparator` extend the native `div` attributes. `FieldSet`, `FieldLegend`, `FieldLabel`, and `FieldDescription` extend the `fieldset`, `legend`, `label`, and `p` attributes. The parts have no `size`; size the controls inside them instead.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** `vertical` stacks the label above the control; `horizontal` places them side by side; `responsive` switches to a row when the `FieldGroup` is wide enough; defaults to `vertical` */
+	orientation?: "vertical" | "horizontal" | "responsive";
+	/** Colors the label and error in the destructive color */
+	invalid?: boolean;
+	/** Dims the label and description */
+	disabled?: boolean;
+}
+
+interface LegendProps extends CompPropsWithChild<"legend"> {
+	/** `legend` is a section heading; `label` matches the field label size */
+	variant?: "legend" | "label";
+}
+
+interface ErrorProps extends CompProps<"div"> {
+	/** Errors to list, such as zod issues; repeated messages are shown once */
+	errors?: ({ message?: string } | undefined)[];
+	/** Custom error content in place of `errors` */
+	children?: Snippet;
+}
+```

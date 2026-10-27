@@ -1,0 +1,13 @@
+{
+	"name": "PlainSv",
+	"short_name": "PlainSv",
+	"description": "Accessible components, utilities, and Vite plugins for Svelte 5, written the Svelte way: runes, scoped styles, and native elements, with as few packages as possible.",
+	"theme_color": "#ffffff",
+	"background_color": "#ffffff",
+	"start_url": "/",
+	"display": "standalone",
+	"icons": [
+		{ "src": "/images/manifest-192.png", "type": "image/png", "sizes": "192x192" },
+		{ "src": "/images/manifest-512.png", "type": "image/png", "sizes": "512x512" }
+	]
+}

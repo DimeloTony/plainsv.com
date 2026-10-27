@@ -1,0 +1,163 @@
+---
+title: "Image Viewer"
+description: "A full-screen image preview dialog with optional title editing and removal."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Image Viewer
+
+Opens an image in a full-screen modal dialog with a blurred backdrop. Built on the `Dialog` component, so it shares its top layer rendering, backdrop, and open and close animations. Clicking the backdrop or pressing Escape closes it. You render the trigger yourself through the `trigger` snippet.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ImageViewer } from "#lib/components/ui/image-viewer/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<ImageViewer id="mountains" title="Mountains" src="/images/mountains.jpg">
+	{#snippet trigger({ props })}
+		<Button variant="outline" {...props}>Open image</Button>
+	{/snippet}
+</ImageViewer>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/image-viewer.json
+```
+
+## Trigger
+
+The `trigger` snippet receives `props` with an `onclick` that opens the viewer, the `disabled` state, and `aria-haspopup`. Spread them onto any element, such as a button or a thumbnail.
+
+## Rename and remove
+
+Pass `onTitleChange` to show a header with an edit button. Double-click the title or press the pencil to edit, press Enter or the check to save, and press Escape to cancel. Pass `onRemove` to add a delete button. The viewer closes after a title change.
+
+<Demo section="gallery" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ImageViewer } from "#lib/components/ui/image-viewer/index.js";
+
+	let images = $state([
+		{ id: "mountains", title: "Mountains", src: "/images/mountains.jpg" },
+		{ id: "forest", title: "Forest", src: "/images/forest.jpg" },
+	]);
+
+	/** Renames an image in the gallery. */
+	const renameImage = ({ id, newTitle }: { id: string; newTitle: string }) => {
+		const image = images.find((image) => image.id === id);
+		if (image) image.title = newTitle;
+	};
+
+	/** Removes an image from the gallery. */
+	const removeImage = (id: string) => {
+		images = images.filter((image) => image.id !== id);
+	};
+</script>
+
+{#each images as image (image.id)}
+	<ImageViewer id={image.id} title={image.title} src={image.src} onTitleChange={renameImage} onRemove={removeImage}>
+		{#snippet trigger({ props })}
+			<button type="button" aria-label="Open {image.title}" {...props}>
+				<img src={image.src} alt="" />
+			</button>
+		{/snippet}
+	</ImageViewer>
+{/each}
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the header height, title font size, and action buttons. The default is `md`, and the image panel radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<ImageViewer id="forest" title="Forest" src="/images/forest.jpg" size="lg" onRemove={removeImage}>
+	{#snippet trigger({ props })}
+		<Button variant="outline" size="lg" {...props}>Size lg</Button>
+	{/snippet}
+</ImageViewer>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the image panel radius from the size. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<ImageViewer id="coast" title="Coast" src="/images/coast.jpg" rounded="lg">
+	{#snippet trigger({ props })}
+		<Button variant="outline" rounded="lg" {...props}>Rounded lg</Button>
+	{/snippet}
+</ImageViewer>
+```
+
+## States
+
+Bind `open` to open or close the viewer from outside the trigger. Set `disabled` to disable the trigger and the edit, save, and delete buttons.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ImageViewer } from "#lib/components/ui/image-viewer/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let open = $state(false);
+</script>
+
+<ImageViewer id="controlled" title="Opened from outside" src="/images/mountains.jpg" bind:open>
+	{#snippet trigger({ props })}
+		<Button variant="outline" {...props}>Trigger</Button>
+	{/snippet}
+</ImageViewer>
+<Button variant="secondary" onclick={() => (open = true)}>Open with bind:open</Button>
+```
+
+## API
+
+`ImageViewer` extends the native `dialog` attributes, except `id`, `title`, and `open`. Extra attributes pass through to the dialog.
+
+```ts title="index.ts"
+interface TriggerProps {
+	/** Opens the viewer */
+	onclick: () => void;
+	/** Mirrors the viewer's `disabled` prop */
+	disabled?: boolean;
+	/** Announces that the trigger opens a dialog */
+	"aria-haspopup": "dialog";
+}
+
+interface Props extends Omit<CompProps<"dialog">, "id" | "title" | "open"> {
+	/** Element that opens the viewer; spread the given props onto it */
+	trigger: Snippet<[{ props: TriggerProps }]>;
+	/** Image ID passed back to `onTitleChange` and `onRemove` */
+	id: string;
+	/** Image source URL */
+	src: string;
+	/** Image title shown in the header and used as the alt text */
+	title: string;
+	/** Whether the viewer is open (bindable) */
+	open?: boolean;
+	/** Disables the trigger and the edit, save, and delete buttons */
+	disabled?: boolean;
+	/** Header and action button size */
+	size?: UiSize;
+	/** Corner radius of the image panel; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** Called with the new title after editing; shows the title header with edit controls */
+	onTitleChange?: (data: { id: string; newTitle: string }) => void;
+	/** Called with the image ID when the delete button is clicked; shows the title header with a delete button */
+	onRemove?: (id: string) => void;
+}
+```

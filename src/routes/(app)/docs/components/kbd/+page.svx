@@ -1,0 +1,98 @@
+---
+title: "Kbd"
+description: "A keyboard key or shortcut label, with a group for key combinations and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Kbd
+
+Displays a keyboard key, such as a modifier, a letter, or an icon. Renders a `kbd` element.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Kbd } from "#lib/components/ui/kbd/index.js";
+	import { CommandIcon } from "@lucide/svelte";
+</script>
+
+<Kbd>⌘</Kbd>
+<Kbd>Ctrl</Kbd>
+<Kbd><CommandIcon /></Kbd>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/kbd.json
+```
+
+## Group
+
+Wrap the keys of a shortcut in `KbdGroup`. It renders a `kbd` that holds the key elements, which is how HTML marks keys pressed together. Place text such as `+` between keys when the platform needs it.
+
+<Demo section="group" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Kbd, KbdGroup } from "#lib/components/ui/kbd/index.js";
+</script>
+
+<p>
+	Use <KbdGroup><Kbd>⌘</Kbd><Kbd>K</Kbd></KbdGroup> to open the command menu.
+</p>
+```
+
+## In a button
+
+Place a key inside a `Button` to hint at its shortcut.
+
+<Demo section="button" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Kbd } from "#lib/components/ui/kbd/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { CornerDownLeftIcon } from "@lucide/svelte";
+</script>
+
+<Button variant="outline">Accept <Kbd><CornerDownLeftIcon /></Kbd></Button>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, a 20 pixel key like the shadcn kbd.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Kbd size="lg">⌘</Kbd>
+```
+
+## Rounded
+
+The corner radius stays one step smaller than the size, so keys keep square corners. Set `rounded` to `xs` through `4xl` or `pill` to override it.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Kbd rounded="pill">⌘</Kbd>
+```
+
+## API
+
+`Kbd` and `KbdGroup` extend the native `kbd` attributes.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"kbd"> {
+	/** Height, padding, text, and icon size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; one step smaller than `size` when omitted, like shadcn, so the key stays square-cornered */
+	rounded?: UiRounded;
+}
+
+interface GroupProps extends CompPropsWithChild<"kbd"> {}
+```

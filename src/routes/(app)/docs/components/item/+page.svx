@@ -1,0 +1,126 @@
+---
+title: "Item"
+description: "A flexible row with media, a title, a description, and actions, that can render as a link or a list."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Item
+
+A row that shows content with media and actions, such as a list entry, a notification, or a setting. Compose it from `Item`, `ItemMedia`, `ItemContent`, `ItemTitle`, `ItemDescription`, and `ItemActions`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Item, ItemContent, ItemTitle, ItemDescription, ItemActions } from "#lib/components/ui/item/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Item variant="outline">
+	<ItemContent>
+		<ItemTitle>Basic item</ItemTitle>
+		<ItemDescription>A simple item with a title and a description.</ItemDescription>
+	</ItemContent>
+	<ItemActions>
+		<Button variant="outline" size="sm">Action</Button>
+	</ItemActions>
+</Item>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/item.json
+```
+
+## Anatomy
+
+`ItemMedia` sits at the start and holds an icon, avatar, or image. `ItemContent` takes the room in the middle, with an `ItemTitle` and an `ItemDescription` clamped to two lines. `ItemActions` sits at the end. `ItemHeader` and `ItemFooter` take a full row above or below the content, since the item wraps.
+
+## Variants
+
+Set `variant` to `default`, `outline`, or `muted`. Set `variant` on `ItemMedia` to `icon` for an icon in a bordered square, or `image` to crop an image to a square.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Item variant="muted">
+	<ItemMedia variant="icon"><ShieldAlertIcon /></ItemMedia>
+	<ItemContent>...</ItemContent>
+</Item>
+```
+
+## Link
+
+Set `href` to render the whole item as a link. Link items fill on hover and show a focus ring.
+
+<Demo section="link" />
+
+```svelte title="+page.svelte"
+<Item variant="outline" href="/docs/components">
+	<ItemContent>
+		<ItemTitle>Visit the components</ItemTitle>
+	</ItemContent>
+	<ItemActions><ChevronRightIcon /></ItemActions>
+</Item>
+```
+
+## Group
+
+Wrap items in `ItemGroup` to make a list; the group renders `role="list"` and each item `role="listitem"`. Place `ItemSeparator` between items to divide them.
+
+<Demo section="group" />
+
+```svelte title="+page.svelte"
+<ItemGroup>
+	{#each people as person, index (person.email)}
+		{#if index > 0}<ItemSeparator />{/if}
+		<Item>...</Item>
+	{/each}
+</ItemGroup>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, like the shadcn item, and the padding, gap, text size, and corner radius follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Item variant="outline" size="sm">...</Item>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius that follows `size`.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Item variant="outline" rounded="3xl">...</Item>
+```
+
+## API
+
+`Item` extends the native `div` attributes, or the `a` attributes when `href` is set. `ItemDescription` extends the `p` attributes, and every other part extends the `div` attributes.
+
+```ts title="index.ts"
+interface ItemBaseProps {
+	/** `default` is transparent; `outline` draws a border; `muted` fills the background */
+	variant?: "default" | "outline" | "muted";
+	/** Padding, gap, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+
+type Props = ItemBaseProps & ((CompPropsWithChild<"div"> & { href?: undefined }) | (CompPropsWithChild<"a"> & { href: string }));
+
+interface MediaProps extends CompPropsWithChild<"div"> {
+	/** `default` shows the media as is; `icon` puts an icon in a bordered square; `image` crops an image to a square */
+	variant?: "default" | "icon" | "image";
+}
+```

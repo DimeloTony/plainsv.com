@@ -1,0 +1,171 @@
+---
+title: "Date Picker"
+description: "A button that opens a calendar in a popover to pick a date or a range, with form submission."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Date Picker
+
+A button that shows the picked date and opens a calendar in a popover. It combines `Button`, `Popover`, and `Calendar`, so install those items too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { DatePicker } from "#lib/components/ui/date-picker/index.js";
+
+	let date: Date | undefined = $state();
+</script>
+
+<DatePicker bind:value={date} />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/date-picker.json
+```
+
+## Behavior
+
+The button shows the `placeholder` until a date is picked, then the date formatted with `Intl` in the calendar's `locale`. Set `formatOptions` to change the format; the default is `{ dateStyle: "long" }`. The calendar closes once a date is picked; set `closeOnSelect={false}` to keep it open. Use `bind:open` to read or set whether it is open.
+
+<Demo section="behavior" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let date: Date | undefined = $state();
+	let open = $state(false);
+</script>
+
+<DatePicker bind:value={date} bind:open closeOnSelect={false} formatOptions={{ weekday: "short", month: "short", day: "numeric" }} />
+```
+
+## Range
+
+Set `mode="range"` and bind `value` to a `DateRange`. The calendar closes once both ends are picked, and the button shows the range.
+
+<Demo section="range" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { DatePicker } from "#lib/components/ui/date-picker/index.js";
+	import type { DateRange } from "#lib/components/ui/calendar/index.js";
+
+	let range: DateRange | undefined = $state();
+</script>
+
+<DatePicker mode="range" bind:value={range} numberOfMonths={2} placeholder="Pick a date range" />
+```
+
+## Calendar options
+
+`min`, `max`, `isDateDisabled`, `numberOfMonths`, `captionLayout`, `locale`, `weekStartsOn`, `fixedWeeks`, and `showOutsideDays` pass through to the calendar. Set `captionLayout="dropdown"` for dates far from today, such as a date of birth.
+
+<Demo section="dropdown" />
+
+```svelte title="+page.svelte"
+<DatePicker bind:value={birthday} captionLayout="dropdown" max={new Date()} placeholder="Date of birth" />
+```
+
+## Form
+
+Set `name` to submit the date as `yyyy-mm-dd` in local time, like a native date input. A range submits its start and end as two values under the same name, so read them with `formData.getAll(name)`.
+
+<Demo section="form" />
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<DatePicker name="due" placeholder="Due date" />
+	<Button type="submit">Submit</Button>
+</form>
+```
+
+## Disabled
+
+Set `disabled` to dim the button and keep the calendar from opening.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<DatePicker value={new Date()} disabled />
+```
+
+## Trigger
+
+`DatePicker` renders an outline button with a calendar icon. To open the calendar from any other element, pass a `trigger` snippet. It receives `props` with the popover trigger's ARIA attributes, the handlers, the attachment that places the calendar, and `disabled`, plus `label`, the picked date or range as text, or an empty string. Spread `props` onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<DatePicker bind:value={dueDate}>
+	{#snippet trigger({ props, label })}
+		<Button variant="ghost" {...props}>
+			<CalendarClockIcon />
+			{label || "Set due date"}
+		</Button>
+	{/snippet}
+</DatePicker>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the button and calendar follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<DatePicker size="sm" placeholder="Size sm" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the button and the calendar. Set `align` to `start`, `center`, or `end` to align the calendar along the button.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<DatePicker rounded="lg" align="end" placeholder="Rounded lg" />
+```
+
+## API
+
+`DatePicker` is generic over `mode`, so `value` and `onValueChange` take a `Date` by default and a `DateRange` with `mode="range"`, and TypeScript infers them even when `mode` is omitted. The `class` goes on the button, and is ignored when a `trigger` snippet is given.
+
+```ts title="index.ts"
+type DatePickerMode = "single" | "range";
+
+type DatePickerValue<M extends DatePickerMode> = M extends "range" ? DateRange : Date;
+
+interface Props<M extends DatePickerMode = "single"> extends CalendarOptions {
+	/** Selection mode; defaults to `single` */
+	mode?: M;
+	/** Picked date, or range when `mode` is `range`; supports `bind:value` */
+	value?: DatePickerValue<M>;
+	/** Called with the picked date, or range when `mode` is `range` */
+	onValueChange?: (value: DatePickerValue<M>) => void;
+	/** Whether the calendar is shown; supports `bind:open` */
+	open?: boolean;
+	/** Text on the button while no date is picked; defaults to `Pick a date` */
+	placeholder?: string;
+	/** How the button shows the picked date; defaults to `{ dateStyle: "long" }` */
+	formatOptions?: Intl.DateTimeFormatOptions;
+	/** Closes the calendar once a date, or both ends of a range, are picked; defaults to `true` */
+	closeOnSelect?: boolean;
+	/** Form field name; submits the date as `yyyy-mm-dd`, or the start and end of a range as two values */
+	name?: string;
+	/** Dims the button and blocks opening the calendar */
+	disabled?: boolean;
+	/** Alignment of the calendar along the button; defaults to `start` */
+	align?: "start" | "center" | "end";
+	/** Button and calendar size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the button and calendar; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+	/** Custom trigger; spread `props` onto the element that opens the calendar, and show `label`, the picked date or range, or `""` */
+	trigger?: Snippet<[{ props: TriggerAttrs; label: string }]>;
+}
+```

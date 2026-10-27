@@ -1,0 +1,51 @@
+{
+    "name": "table",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/_.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { Props } from \"./index.js\";\n\tconst { children, size = \"md\", class: className, ...props }: Props = $props();\n</script>\n\n<!-- Scroll container; sets the size variables its cells read. -->\n<div class=\"tableContainer not-typeset\" data-size={size}>\n\t<table class={[\"table\", className]} {...props}>\n\t\t{@render children()}\n\t</table>\n</div>\n\n<style>\n\t/* Container scrolls sideways when the table is wider than it */\n\t.tableContainer {\n\t\tposition: relative;\n\t\twidth: 100%;\n\t\toverflow-x: auto;\n\t}\n\n\t/* Base table; the caption sits under the rows */\n\t.table {\n\t\tborder-collapse: collapse;\n\t\twidth: 100%;\n\t\tcaption-side: bottom;\n\t\tcolor: var(--foreground);\n\t}\n\n\t/* =============== Sizes =============== */\n\n\t/* Large */\n\t.tableContainer[data-size=\"lg\"] {\n\t\t--table-head-height: 3rem; /* 48px */\n\t\t--table-cell-padding: var(--spacing-md);\n\t\tfont-size: var(--text-sm);\n\t\tline-height: var(--line-height-sm);\n\t}\n\n\t/* Medium — default */\n\t.tableContainer[data-size=\"md\"] {\n\t\t--table-head-height: var(--control-height-lg);\n\t\t--table-cell-padding: var(--spacing-sm);\n\t\tfont-size: var(--text-sm);\n\t\tline-height: var(--line-height-sm);\n\t}\n\n\t/* Small */\n\t.tableContainer[data-size=\"sm\"] {\n\t\t--table-head-height: var(--control-height-md);\n\t\t--table-cell-padding: calc(var(--spacing-xs) * 1.5); /* 6px */\n\t\tfont-size: var(--text-sm);\n\t\tline-height: var(--line-height-sm);\n\t}\n\n\t/* Extra small */\n\t.tableContainer[data-size=\"xs\"] {\n\t\t--table-head-height: var(--control-height-sm);\n\t\t--table-cell-padding: var(--spacing-xs);\n\t\tfont-size: var(--text-xs);\n\t\tline-height: var(--line-height-xs);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/body.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { BodyProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: BodyProps = $props();\n</script>\n\n<!-- Body rows. -->\n<tbody class={[\"tableBody\", className]} {...props}>\n\t{@render children()}\n</tbody>\n\n<style>\n\t/* The last row drops its border so it does not double the table edge */\n\t.tableBody :global(tr:last-child) {\n\t\tborder-bottom: 0;\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/caption.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { CaptionProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: CaptionProps = $props();\n</script>\n\n<!-- Title of the table, announced with it and shown under the rows. -->\n<caption class={[\"tableCaption\", className]} {...props}>\n\t{@render children()}\n</caption>\n\n<style>\n\t/* Base caption; padding instead of a gap, since a caption is not a flex item */\n\t.tableCaption {\n\t\tpadding-top: var(--spacing-lg);\n\t\tcolor: var(--muted-foreground);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/cell.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { CellProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: CellProps = $props();\n</script>\n\n<!-- Data cell. -->\n<td class={[\"tableCell\", className]} {...props}>\n\t{@render children()}\n</td>\n\n<style>\n\t/* Base cell; the padding comes from the size on the table */\n\t.tableCell {\n\t\tvertical-align: middle;\n\t\tpadding: var(--table-cell-padding);\n\t\twhite-space: nowrap;\n\t}\n\n\t/* A checkbox column stays narrow */\n\t.tableCell:has(:global([role=\"checkbox\"])) {\n\t\tpadding-right: 0;\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/footer.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { FooterProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: FooterProps = $props();\n</script>\n\n<!-- Summary rows on a muted background. -->\n<tfoot class={[\"tableFooter\", className]} {...props}>\n\t{@render children()}\n</tfoot>\n\n<style>\n\t/* Base footer */\n\t.tableFooter {\n\t\tborder-top: 1px solid var(--border);\n\t\tbackground-color: color-mix(in oklab, var(--muted) 50%, transparent);\n\t\tfont-weight: 500;\n\t}\n\n\t.tableFooter :global(tr:last-child) {\n\t\tborder-bottom: 0;\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/head.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { HeadProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: HeadProps = $props();\n</script>\n\n<!-- Column heading; set `scope` when a heading labels a row instead of a column. -->\n<th class={[\"tableHead\", className]} {...props}>\n\t{@render children()}\n</th>\n\n<style>\n\t/* Base heading; the height and padding come from the size on the table */\n\t.tableHead {\n\t\tvertical-align: middle;\n\t\tpadding-inline: var(--table-cell-padding);\n\t\theight: var(--table-head-height);\n\t\tcolor: var(--foreground);\n\t\tfont-weight: 500;\n\t\ttext-align: left;\n\t\twhite-space: nowrap;\n\t}\n\n\t/* A checkbox column stays narrow */\n\t.tableHead:has(:global([role=\"checkbox\"])) {\n\t\tpadding-right: 0;\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/header.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { HeaderProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: HeaderProps = $props();\n</script>\n\n<!-- Header rows, divided from the body by a border. -->\n<thead class={[\"tableHeader\", className]} {...props}>\n\t{@render children()}\n</thead>\n\n<style>\n\t/* Every header row keeps its bottom border */\n\t.tableHeader :global(tr) {\n\t\tborder-bottom: 1px solid var(--border);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/index.ts",
+            "content": "export { default as Table } from \"./_.svelte\";\nexport { default as TableHeader } from \"./header.svelte\";\nexport { default as TableBody } from \"./body.svelte\";\nexport { default as TableFooter } from \"./footer.svelte\";\nexport { default as TableRow } from \"./row.svelte\";\nexport { default as TableHead } from \"./head.svelte\";\nexport { default as TableCell } from \"./cell.svelte\";\nexport { default as TableCaption } from \"./caption.svelte\";\n\n/** Data table inside a container that scrolls sideways when the table is too wide */\nexport interface Props extends CompPropsWithChild<\"table\"> {\n\t/** Row height, cell padding, and text size on the shared scale; defaults to `md` */\n\tsize?: UiSize;\n\t/** Classes merged onto the `table`; the scroll container is the root element */\n\tclass?: CompPropsWithChild<\"table\">[\"class\"];\n}\n\n/** Header rows; renders a `thead` */\nexport interface HeaderProps extends CompPropsWithChild<\"thead\"> {\n\t/** Classes merged onto the header */\n\tclass?: CompPropsWithChild<\"thead\">[\"class\"];\n}\n\n/** Body rows; renders a `tbody` */\nexport interface BodyProps extends CompPropsWithChild<\"tbody\"> {\n\t/** Classes merged onto the body */\n\tclass?: CompPropsWithChild<\"tbody\">[\"class\"];\n}\n\n/** Summary rows, such as totals; renders a `tfoot` */\nexport interface FooterProps extends CompPropsWithChild<\"tfoot\"> {\n\t/** Classes merged onto the footer */\n\tclass?: CompPropsWithChild<\"tfoot\">[\"class\"];\n}\n\n/** One row; set `data-state=\"selected\"` to highlight it */\nexport interface RowProps extends CompPropsWithChild<\"tr\"> {\n\t/** Classes merged onto the row */\n\tclass?: CompPropsWithChild<\"tr\">[\"class\"];\n}\n\n/** Column heading cell; renders a `th` */\nexport interface HeadProps extends CompPropsWithChild<\"th\"> {\n\t/** Classes merged onto the heading */\n\tclass?: CompPropsWithChild<\"th\">[\"class\"];\n}\n\n/** Data cell; renders a `td` */\nexport interface CellProps extends CompPropsWithChild<\"td\"> {\n\t/** Classes merged onto the cell */\n\tclass?: CompPropsWithChild<\"td\">[\"class\"];\n}\n\n/** Title of the table, shown under it */\nexport interface CaptionProps extends CompPropsWithChild<\"caption\"> {\n\t/** Classes merged onto the caption */\n\tclass?: CompPropsWithChild<\"caption\">[\"class\"];\n}\n\nexport type TableProps = Props;\nexport type TableHeaderProps = HeaderProps;\nexport type TableBodyProps = BodyProps;\nexport type TableFooterProps = FooterProps;\nexport type TableRowProps = RowProps;\nexport type TableHeadProps = HeadProps;\nexport type TableCellProps = CellProps;\nexport type TableCaptionProps = CaptionProps;\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/table/row.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { RowProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: RowProps = $props();\n</script>\n\n<!-- One row; highlighted on hover and while `data-state=\"selected\"`. -->\n<tr class={[\"tableRow\", className]} {...props}>\n\t{@render children()}\n</tr>\n\n<style>\n\t/* Base row */\n\t.tableRow {\n\t\ttransition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);\n\t\tborder-bottom: 1px solid var(--border);\n\t}\n\n\t.tableRow:hover {\n\t\tbackground-color: color-mix(in oklab, var(--muted) 50%, transparent);\n\t}\n\n\t/* =============== States =============== */\n\n\t/* Selected row */\n\t.tableRow[data-state=\"selected\"] {\n\t\tbackground-color: var(--muted);\n\t}\n</style>\n"
+        }
+    ],
+    "description": "A responsive data table with a header, body, footer, rows, cells, a caption, and sizes."
+}

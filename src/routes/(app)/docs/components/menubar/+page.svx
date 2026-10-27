@@ -1,0 +1,163 @@
+---
+title: "Menubar"
+description: "A bar of menus like a desktop app, with keyboard navigation between menus, built on the dropdown menu parts."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Menubar
+
+A bar of menus that stays visible, like the File, Edit, and View menus of a desktop app. Each menu is a dropdown menu, so install the `dropdown-menu` item too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem, MenubarSeparator, MenubarShortcut } from "#lib/components/ui/menubar/index.js";
+</script>
+
+<Menubar>
+	<MenubarMenu>
+		<MenubarTrigger>File</MenubarTrigger>
+		<MenubarContent>
+			<MenubarItem>New tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+			<MenubarSeparator />
+			<MenubarItem>Print... <MenubarShortcut>⌘P</MenubarShortcut></MenubarItem>
+		</MenubarContent>
+	</MenubarMenu>
+	<MenubarMenu>
+		<MenubarTrigger>Edit</MenubarTrigger>
+		<MenubarContent>
+			<MenubarItem>Undo <MenubarShortcut>⌘Z</MenubarShortcut></MenubarItem>
+		</MenubarContent>
+	</MenubarMenu>
+</Menubar>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/menubar.json
+```
+
+## Anatomy
+
+`Menubar` renders a `div` with `role="menubar"`. Each `MenubarMenu` pairs a `MenubarTrigger`, announced as a menu item that opens a menu, with its `MenubarContent`. The items are the dropdown menu's parts under menubar names: `MenubarItem`, `MenubarCheckboxItem`, `MenubarRadioGroup`, `MenubarRadioItem`, `MenubarLabel`, `MenubarGroup`, `MenubarSeparator`, `MenubarShortcut`, and `MenubarSub` with `MenubarSubTrigger` and `MenubarSubContent`.
+
+## Behavior
+
+Only one menu is open at a time. While a menu is open, moving the pointer onto another trigger opens that menu instead, so you can sweep across the bar.
+
+## Keyboard
+
+One trigger is in the tab order. The left and right arrows move between triggers, and Home and End jump to the first and last. The down arrow, Enter, or Space opens a menu with its first item focused, and the up arrow with its last. Inside an open menu, the left and right arrows open the menu beside it, unless the right arrow opens a submenu. Escape closes the menu and returns focus to its trigger.
+
+## Trigger
+
+`MenubarTrigger` renders a button announced as a menu item. To open the menu from any other element, pass a `trigger` snippet. It receives `props` with `role="menuitem"`, the ids, the ARIA attributes, `tabindex`, the `data-menubar-trigger` marker that the left and right arrows move between, `data-state`, the handlers, and an attachment that registers the element the menu is placed against. Spread them onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<MenubarMenu>
+	<MenubarTrigger>
+		{#snippet trigger({ props })}
+			<button type="button" {...props}>
+				<FileIcon aria-hidden="true" />
+				File
+			</button>
+		{/snippet}
+	</MenubarTrigger>
+	<MenubarContent>
+		<MenubarItem>New tab</MenubarItem>
+	</MenubarContent>
+</MenubarMenu>
+```
+
+## Sizes
+
+Set `size` on `Menubar` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the bar height, trigger padding, menu item size, and corner radius follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Menubar size="sm">
+	<MenubarMenu>
+		<MenubarTrigger>File</MenubarTrigger>
+		<MenubarContent>
+			<MenubarItem>New tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+		</MenubarContent>
+	</MenubarMenu>
+</Menubar>
+```
+
+## Rounded
+
+Set `rounded` on `Menubar` to `xs` through `4xl` or `pill` to override the radius that follows `size`. The triggers use one step smaller so the corners nest.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Menubar rounded="3xl">...</Menubar>
+```
+
+## Variants
+
+Set `variant` on `Menubar` to style the triggers. `default` fills them with the accent color while hovered, focused, or open, `outline` adds a border on the page background, `ghost` uses a lighter fill and drops the bar's border, shadow, and background, and `secondary` fills them with the secondary color.
+
+```svelte title="+page.svelte"
+<Menubar variant="ghost">...</Menubar>
+```
+
+## Overrides
+
+`MenubarTrigger` takes its own `variant`, `size`, and `rounded`, which win over the bar's for that trigger only. Its `size` changes the padding and text, and the height still fills the bar. An own `rounded` sets that exact radius. `MenubarContent` takes `size` and `rounded` for its menu.
+
+```svelte title="+page.svelte"
+<MenubarMenu>
+	<MenubarTrigger variant="secondary" rounded="pill">File</MenubarTrigger>
+	<MenubarContent size="sm" rounded="lg">...</MenubarContent>
+</MenubarMenu>
+```
+
+## API
+
+`Menubar` extends the native `div` attributes, `MenubarTrigger` the `button` attributes, ignored when a `trigger` snippet is given, and `MenubarContent` the `div` attributes of the menu. `MenubarMenu` renders no element of its own.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Height, trigger padding, and menu item size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the bar, with triggers one step smaller; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+	/** Style of the triggers; `ghost` also drops the bar's border, shadow, and background; defaults to `default` */
+	variant?: "default" | "outline" | "ghost" | "secondary";
+}
+
+type MenuProps = CompPropsWithChildSimple<{
+	/** Unique name of the menu; generated when omitted */
+	value?: string;
+}>;
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the menu */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger; overrides the bar's `variant` */
+	variant?: Props["variant"];
+	/** Padding and text of the default trigger; overrides the bar's `size` */
+	size?: UiSize;
+	/** Corner radius of the default trigger with this exact value; overrides the inherited radius */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Item size of this menu; overrides the bar's `size` */
+	size?: UiSize;
+	/** Corner radius of this menu, with items one step smaller; overrides the bar's `rounded`. `pill` makes it a pill too, which can clip its items, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

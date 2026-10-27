@@ -1,0 +1,231 @@
+---
+title: "Tooltip"
+description: "A short label that appears beside an element on hover or keyboard focus, with sides, variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Tooltip
+
+Shows a short label for an element when a mouse rests on it or the keyboard focuses it. Compose it from `Tooltip`, `TooltipTrigger`, and `TooltipContent`. Keep tooltips to text, since keyboard users cannot move focus into them.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Tooltip, TooltipTrigger, TooltipContent } from "#lib/components/ui/tooltip/index.js";
+</script>
+
+<Tooltip>
+	<TooltipTrigger>Hover</TooltipTrigger>
+	<TooltipContent>
+		<p>Add to library</p>
+	</TooltipContent>
+</Tooltip>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/tooltip.json
+```
+
+## Anatomy
+
+`Tooltip` holds the open state and the placement and style settings, and renders no element of its own. `TooltipTrigger` renders an outline `Button` with its children as the label. `TooltipContent` renders `role="tooltip"` while open, and the trigger points to it with `aria-describedby`.
+
+The content opens in the top layer with the native popover API, so no ancestor's `overflow` or `z-index` can clip or cover it.
+
+## Behavior
+
+The tooltip opens when a mouse or pen enters the trigger, and when the trigger gets keyboard focus. It closes when focus leaves, the trigger is pressed, or Escape is pressed. Touch does not open it, so do not rely on a tooltip for information touch users need.
+
+When the pointer leaves the trigger, the tooltip waits `closeDelay` milliseconds, `150` by default, before closing. Moving the pointer onto the tooltip in that time keeps it open, so its text can be read or selected, and leaving the tooltip starts the same wait. Set `closeDelay` to `0` to close as soon as the pointer leaves.
+
+Set `delay` to wait that many milliseconds on hover before opening, which avoids flashes as the pointer crosses a toolbar. Keyboard focus always opens it right away.
+
+<Demo section="behavior" />
+
+```svelte title="+page.svelte"
+<Tooltip delay={700}>...</Tooltip>
+<Tooltip closeDelay={0}>...</Tooltip>
+```
+
+## Sides
+
+Set `side` to `top`, `right`, `bottom`, or `left`. When the preferred side does not have room, the tooltip flips to the opposite side, and it shifts along the edge to stay inside the viewport. Set `align` to `start`, `center`, or `end` to line it up with the trigger's edge, and `sideOffset` to change the gap.
+
+<Demo section="sides" />
+
+```svelte title="+page.svelte"
+<Tooltip side="right" align="start">
+	<TooltipTrigger>Right</TooltipTrigger>
+	<TooltipContent>Opens on the right</TooltipContent>
+</Tooltip>
+```
+
+## Trigger
+
+To show the tooltip on another element, pass a `trigger` snippet to `TooltipTrigger`. It receives `props` with the event handlers, `aria-describedby`, and an attachment that registers the element. Spread them onto the element, such as an icon button. Disabled buttons do not fire pointer events, so wrap a disabled button in a `span` and spread the props onto the `span`.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Tooltip, TooltipTrigger, TooltipContent } from "#lib/components/ui/tooltip/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { PlusIcon } from "@lucide/svelte";
+</script>
+
+<Tooltip>
+	<TooltipTrigger>
+		{#snippet trigger({ props })}
+			<Button size="icon-md" variant="outline" aria-label="Add to library" {...props}><PlusIcon /></Button>
+		{/snippet}
+	</TooltipTrigger>
+	<TooltipContent>Add to library</TooltipContent>
+</Tooltip>
+```
+
+## Arrow
+
+Set `arrow={false}` on `Tooltip` to remove the arrow. The default `sideOffset` drops from `8` to `4` without it, so the tooltip stays close to the trigger. An explicit `sideOffset` applies either way.
+
+<Demo section="arrow" />
+
+```svelte title="+page.svelte"
+<Tooltip arrow={false}>
+	<TooltipTrigger>Without arrow</TooltipTrigger>
+	<TooltipContent>Add to library</TooltipContent>
+</Tooltip>
+```
+
+## Controlled
+
+Use `bind:open` to open or close the tooltip from your own code. The binding updates in both directions, so hover and focus still change it.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Tooltip, TooltipTrigger, TooltipContent } from "#lib/components/ui/tooltip/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let isOpen = $state(false);
+</script>
+
+<Tooltip bind:open={isOpen} side="right">
+	<TooltipTrigger>Anchor</TooltipTrigger>
+	<TooltipContent>Opened from outside</TooltipContent>
+</Tooltip>
+<Button variant="secondary" onclick={() => (isOpen = !isOpen)}>Toggle tooltip</Button>
+```
+
+## Variants
+
+Set `variant` on `Tooltip` to `default`, `secondary`, `outline`, or `destructive`. `default` inverts the page colors, and `outline` uses the popover surface with a border that continues around the arrow.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Tooltip variant="outline">
+	<TooltipTrigger>Outline</TooltipTrigger>
+	<TooltipContent>Add to library</TooltipContent>
+</Tooltip>
+```
+
+## Sizes
+
+Set `size` on `Tooltip` to `xs`, `sm`, `md`, or `lg` to change the padding and text size. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Tooltip size="lg">
+	<TooltipTrigger>Large</TooltipTrigger>
+	<TooltipContent>Add to library</TooltipContent>
+</Tooltip>
+```
+
+## Rounded
+
+Set `rounded` on `Tooltip` to `xs` through `4xl` or `pill` to override the radius from the size. With `pill`, a one-line tooltip is a pill, and a tooltip that wraps keeps round corners.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Tooltip rounded="pill">
+	<TooltipTrigger>Rounded pill</TooltipTrigger>
+	<TooltipContent>Add to library</TooltipContent>
+</Tooltip>
+<Tooltip rounded="pill">
+	<TooltipTrigger>Long pill</TooltipTrigger>
+	<TooltipContent>Save this item to your library so you can find it again later from any device you sign in on.</TooltipContent>
+</Tooltip>
+```
+
+## Overrides
+
+The default `TooltipTrigger` button takes `variant`, `size`, `rounded`, and `class`. `TooltipContent` takes `variant`, `size`, and `rounded`, which win over the ones on `Tooltip`.
+
+```svelte title="+page.svelte"
+<Tooltip>
+	<TooltipTrigger variant="ghost" size="icon-sm"><InfoIcon /></TooltipTrigger>
+	<TooltipContent variant="secondary" rounded="pill">Add to library</TooltipContent>
+</Tooltip>
+```
+
+## API
+
+`Tooltip` takes the settings below and its parts as children. `TooltipContent` extends the native `div` attributes, and extra attributes pass through to it. The content sets `data-side` to the side it opened on after flipping, for custom styles.
+
+```ts title="index.ts"
+interface TooltipOptions {
+	/** Whether the tooltip is shown; supports `bind:open` */
+	open?: boolean;
+	/** Milliseconds the pointer rests on the trigger before the tooltip opens; defaults to `0` */
+	delay?: number;
+	/** Milliseconds the tooltip stays open after the pointer leaves the trigger or content; defaults to `150` */
+	closeDelay?: number;
+	/** Preferred side; flips to the opposite side when there is not enough room */
+	side?: "top" | "right" | "bottom" | "left";
+	/** Alignment along the trigger's edge; defaults to `center` */
+	align?: "start" | "center" | "end";
+	/** Whether to show the arrow that points at the trigger; defaults to `true` */
+	arrow?: boolean;
+	/** Gap in pixels between the trigger and the tooltip, including the arrow; defaults to `8`, or `4` without the arrow */
+	sideOffset?: number;
+	/** Visual style of the tooltip */
+	variant?: "default" | "secondary" | "outline" | "destructive";
+	/** Padding and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a pill on one line and keeps round corners when the text wraps */
+	rounded?: UiRounded;
+}
+
+type Props = CompPropsWithChildSimple<TooltipOptions>;
+
+interface TriggerProps {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that shows the tooltip */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default trigger button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default trigger button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Style of this tooltip; overrides the `Tooltip`'s `variant` */
+	variant?: Props["variant"];
+	/** Padding and text of this tooltip; overrides the `Tooltip`'s `size` */
+	size?: UiSize;
+	/** Corner radius of this tooltip; overrides the `Tooltip`'s `rounded` */
+	rounded?: UiRounded;
+}
+```

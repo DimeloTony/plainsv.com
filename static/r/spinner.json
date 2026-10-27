@@ -1,0 +1,16 @@
+{
+    "name": "spinner",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/spinner/_.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { Props } from \"./index.js\";\n\tconst { variant = \"default\", size = \"md\", class: className, ...props }: Props = $props();\n</script>\n\n<!-- Status region named for screen readers; the spinning circle inside is decorative. -->\n<span class={[\"spinner not-typeset\", className]} role=\"status\" aria-label=\"Loading\" data-variant={variant} data-size={size} {...props}>\n\t<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">\n\t\t<path d=\"M21 12a9 9 0 1 1-6.219-8.56\" />\n\t</svg>\n</span>\n\n<style>\n\t/* Base spinner; sits inline with text and buttons */\n\t.spinner {\n\t\tdisplay: inline-flex;\n\t\tflex-shrink: 0;\n\t\tjustify-content: center;\n\t\talign-items: center;\n\t}\n\n\t/* Fills the spinner, even inside parents that size their own icons */\n\t.spinner svg {\n\t\tanimation: spinnerRotate 1s linear infinite;\n\t\twidth: 100%;\n\t\theight: 100%;\n\t}\n\n\t/* If the user prefers reduced motion: spin slower instead of stopping, so loading stays visible. */\n\t@media (prefers-reduced-motion: reduce) {\n\t\t.spinner svg {\n\t\t\tanimation-duration: 3s;\n\t\t}\n\t}\n\n\t@keyframes spinnerRotate {\n\t\tto {\n\t\t\ttransform: rotate(360deg);\n\t\t}\n\t}\n\n\t/* =============== Variants =============== */\n\n\t/* Follows the surrounding text color, such as a button's label */\n\t.spinner[data-variant=\"default\"] {\n\t\tcolor: currentColor;\n\t}\n\n\t.spinner[data-variant=\"destructive\"] {\n\t\tcolor: var(--destructive);\n\t}\n\n\t/* =============== Sizes =============== */\n\n\t/* Large */\n\t.spinner[data-size=\"lg\"] {\n\t\twidth: 1.25rem; /* 20px */\n\t\theight: 1.25rem; /* 20px */\n\t}\n\n\t/* Medium — default */\n\t.spinner[data-size=\"md\"] {\n\t\twidth: 1rem; /* 16px */\n\t\theight: 1rem; /* 16px */\n\t}\n\n\t/* Small */\n\t.spinner[data-size=\"sm\"] {\n\t\twidth: var(--text-sm);\n\t\theight: var(--text-sm);\n\t}\n\n\t/* Extra small */\n\t.spinner[data-size=\"xs\"] {\n\t\twidth: var(--text-xs);\n\t\theight: var(--text-xs);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/spinner/index.ts",
+            "content": "export { default as Spinner } from \"./_.svelte\";\n\n/** Spinning loader announced as a status; labeled \"Loading\" unless `aria-label` is set */\nexport interface Props extends CompProps<\"span\"> {\n\t/** Color of the spinner; `default` follows the surrounding text color */\n\tvariant?: \"default\" | \"destructive\";\n\t/** Spinner size on the shared scale; defaults to `md` */\n\tsize?: UiSize;\n\t/** Classes merged onto the spinner */\n\tclass?: CompProps<\"span\">[\"class\"];\n}\n\nexport type SpinnerProps = Props;\n"
+        }
+    ],
+    "description": "A spinning indicator that shows something is loading, with variants and sizes."
+}

@@ -1,0 +1,97 @@
+---
+title: "Progress"
+description: "A bar that shows how much of a task is complete, with an indeterminate state, variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Progress
+
+Shows how much of a task is complete, such as an upload. The indicator slides to the new amount when `value` changes. The root sets `role="progressbar"` with `aria-valuenow`, so give it an `aria-label` or point `aria-labelledby` at a visible label.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Progress } from "#lib/components/ui/progress/index.js";
+</script>
+
+<Progress value={33} aria-label="Upload progress" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/progress.json
+```
+
+## Max
+
+Set `max` to measure progress in your own units, such as files or bytes. The default is `100`, and values outside `0` to `max` are clamped.
+
+<Demo section="max" />
+
+```svelte title="+page.svelte"
+<Progress value={3} max={8} aria-label="Files uploaded" />
+```
+
+## Indeterminate
+
+Omit `value` or pass `null` when the amount is unknown. A short indicator sweeps across the track, and it pulses in place instead when the user prefers reduced motion.
+
+<Demo section="indeterminate" />
+
+```svelte title="+page.svelte"
+<Progress aria-label="Loading" />
+```
+
+## Variants
+
+Set `variant` to `default` or `destructive`. The track uses a light tint of the indicator color.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Progress variant="destructive" value={33} aria-label="Storage used" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the bar thickness. The default is `sm`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Progress size="lg" value={33} aria-label="Upload progress" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size. Use `pill` for a pill.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Progress size="md" rounded="pill" value={33} aria-label="Upload progress" />
+```
+
+## API
+
+The `Progress` props extend the native `div` attributes. Extra attributes, such as `aria-label`, pass through to the root. The root also sets `data-state` to `indeterminate`, `loading`, or `complete` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Completed amount from `0` to `max`; omit or pass `null` for indeterminate */
+	value?: number | null;
+	/** Amount that counts as complete; defaults to `100` */
+	max?: number;
+	/** Visual style of the track and indicator */
+	variant?: "default" | "destructive";
+	/** Bar thickness on the shared scale; defaults to `sm` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

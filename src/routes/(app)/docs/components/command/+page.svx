@@ -1,0 +1,221 @@
+---
+title: "Command"
+description: "A searchable list of commands with groups, shortcuts, keyboard navigation, and a dialog for a command menu."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Command
+
+Filters a list of commands as the user types, and moves a highlight through the matches with the arrow keys. Focus stays in the input, which points at the highlighted item with `aria-activedescendant`, so screen readers announce each item as the highlight moves. Enter or a click selects an item.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator, CommandShortcut } from "#lib/components/ui/command/index.js";
+	import { CalendarIcon, SmileIcon, CalculatorIcon, UserIcon, CreditCardIcon, SettingsIcon } from "@lucide/svelte";
+</script>
+
+<Command>
+	<CommandInput placeholder="Type a command or search..." />
+	<CommandList>
+		<CommandEmpty>No results found.</CommandEmpty>
+		<CommandGroup heading="Suggestions">
+			<CommandItem><CalendarIcon />Calendar</CommandItem>
+			<CommandItem><SmileIcon />Search Emoji</CommandItem>
+			<CommandItem disabled><CalculatorIcon />Calculator</CommandItem>
+		</CommandGroup>
+		<CommandSeparator />
+		<CommandGroup heading="Settings">
+			<CommandItem><UserIcon />Profile<CommandShortcut>⌘P</CommandShortcut></CommandItem>
+			<CommandItem><CreditCardIcon />Billing<CommandShortcut>⌘B</CommandShortcut></CommandItem>
+			<CommandItem><SettingsIcon />Settings<CommandShortcut>⌘S</CommandShortcut></CommandItem>
+		</CommandGroup>
+	</CommandList>
+</Command>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/command.json
+```
+
+## Anatomy
+
+`Command` holds the search and the highlight, and handles the arrow, Home, End, and Enter keys. `CommandInput` filters the items, and `CommandList` scrolls once it passes `300px`. Inside the list, `CommandGroup` takes a `heading` and hides itself while none of its items match.
+
+`CommandItem` is the selectable row. `CommandShortcut` shows a key hint at the end of an item and is left out of its search text. `CommandSeparator` divides groups and hides while searching. `CommandEmpty` shows only while no item matches, so place it inside `CommandList`.
+
+## Dialog
+
+`CommandDialog` renders a `Command` in a modal `Dialog` and takes every `Command` prop. Use `bind:open` to open it from a button or a keyboard shortcut. Opening it focuses the input, and Escape or a click on the backdrop closes it. Set `title` to name the dialog for assistive technology; it defaults to `"Command menu"`.
+
+<Demo section="dialog" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "#lib/components/ui/command/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let isOpen = $state(false);
+
+	/** Toggles the menu with Cmd+K or Ctrl+K. */
+	const handleShortcut = (e: KeyboardEvent) => {
+		if (e.key !== "k" || !(e.metaKey || e.ctrlKey)) return;
+		e.preventDefault();
+		isOpen = !isOpen;
+	};
+</script>
+
+<svelte:window onkeydown={handleShortcut} />
+
+<Button variant="outline" onclick={() => (isOpen = true)}>Open command menu</Button>
+
+<CommandDialog bind:open={isOpen}>
+	<CommandInput placeholder="Type a command or search..." />
+	<CommandList>
+		<CommandEmpty>No results found.</CommandEmpty>
+		<CommandGroup heading="Suggestions">
+			<CommandItem onSelect={() => (isOpen = false)}>Calendar</CommandItem>
+			<CommandItem onSelect={() => (isOpen = false)}>Search Emoji</CommandItem>
+		</CommandGroup>
+	</CommandList>
+</CommandDialog>
+```
+
+The dialog stays open after a selection, so close it in `onSelect` when the command is done.
+
+## Filtering
+
+An item matches when every word of the search appears in its text, `value`, or `keywords`, ignoring case. Add `keywords` to match synonyms that are not shown, such as `theme` for a dark mode item.
+
+<Demo section="filtering" />
+
+```svelte title="+page.svelte"
+<CommandItem keywords={["theme", "night"]}>Dark mode</CommandItem>
+```
+
+Pass `filter` to replace the matching. It receives the item's text, value, and keywords joined by spaces, plus the search, and returns whether the item matches. Set `shouldFilter={false}` to show every item and filter them yourself, such as with results loaded from a server.
+
+```svelte title="+page.svelte"
+<Command filter={(text, search) => text.toLowerCase().startsWith(search.toLowerCase())}>
+	<CommandInput />
+	<CommandList>...</CommandList>
+</Command>
+```
+
+## Controlled
+
+Use `bind:search` to read or set the input text, and `bind:value` to read or set the highlighted item. `onSelect` on an item receives its `value`, which defaults to the item's text. Set `loop` to wrap the arrow keys between the first and last items.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "#lib/components/ui/command/index.js";
+
+	let search = $state("");
+	let selected = $state("");
+</script>
+
+<Command bind:search>
+	<CommandInput placeholder="Search..." />
+	<CommandList>
+		<CommandEmpty>No results for "{search}".</CommandEmpty>
+		<CommandGroup heading="Pages">
+			<CommandItem value="home" onSelect={(value) => (selected = value)}>Home</CommandItem>
+			<CommandItem value="docs" onSelect={(value) => (selected = value)}>Documentation</CommandItem>
+		</CommandGroup>
+	</CommandList>
+</Command>
+```
+
+## Sizes
+
+Set `size` on `Command` to `xs`, `sm`, `md`, or `lg` to change the input height, item padding, icons, and text. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Command size="lg">
+	<CommandInput />
+	<CommandList>...</CommandList>
+</Command>
+```
+
+## Rounded
+
+Set `rounded` on `Command` to `xs` through `4xl` or `pill` to override the radius. Items use one step smaller so the corners nest. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Command rounded="lg">
+	<CommandInput />
+	<CommandList>...</CommandList>
+</Command>
+```
+
+## Overrides
+
+`CommandItem` takes `rounded` to set that item's exact radius over the list's item radius.
+
+```svelte title="+page.svelte"
+<CommandItem rounded="pill">Calendar</CommandItem>
+```
+
+## API
+
+`Command`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem`, and `CommandSeparator` extend the native `div` attributes, and `CommandShortcut` extends `span`. `CommandInput` passes extra attributes such as `placeholder` to the `input`, and merges `class` onto its wrapper. Highlighted items set `data-selected` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Value of the highlighted item; supports `bind:value` */
+	value?: string;
+	/** Called with the new value when the highlight moves */
+	onValueChange?: (value: string) => void;
+	/** Text in `CommandInput`; supports `bind:search` */
+	search?: string;
+	/** Called with the new text as the user types */
+	onSearchChange?: (search: string) => void;
+	/** Hides items that do not match the search; set `false` to filter the items yourself; defaults to `true` */
+	shouldFilter?: boolean;
+	/** Decides whether an item matches; receives the item's text, value, and keywords joined by spaces */
+	filter?: (text: string, search: string) => boolean;
+	/** Wraps the arrow keys between the first and last items; defaults to `false` */
+	loop?: boolean;
+	/** Input height, item padding, and text on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the root and items; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+}
+
+interface DialogProps extends Props {
+	/** Whether the dialog is shown; supports `bind:open` */
+	open?: boolean;
+	/** Accessible name of the dialog; defaults to `"Command menu"` */
+	title?: string;
+}
+
+interface GroupProps extends CompPropsWithChild<"div"> {
+	/** Muted heading above the items; also names the group */
+	heading?: string;
+}
+
+interface ItemProps extends CompPropsWithChild<"div"> {
+	/** Value reported to `onSelect` and the root `value`; defaults to the item's text */
+	value?: string;
+	/** Extra words that also match the item, such as synonyms */
+	keywords?: string[];
+	/** Blocks selecting the item; the arrow keys skip it */
+	disabled?: boolean;
+	/** Called with the item's value when it is clicked or chosen with Enter */
+	onSelect?: (value: string) => void;
+	/** Corner radius of this item with this exact value; overrides the list's item radius */
+	rounded?: UiRounded;
+}
+```

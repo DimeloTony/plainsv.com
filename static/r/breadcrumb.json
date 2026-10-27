@@ -1,0 +1,49 @@
+{
+    "name": "breadcrumb",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/_.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { Props } from \"./index.js\";\n\tconst { children, size = \"md\", class: className, ...props }: Props = $props();\n</script>\n\n<!-- Navigation landmark; sets the text size and the variables its parts read. -->\n<nav class={[\"breadcrumb not-typeset\", className]} aria-label=\"breadcrumb\" data-size={size} {...props}>\n\t{@render children()}\n</nav>\n\n<style>\n\t/* =============== Sizes =============== */\n\n\t/* Large */\n\t.breadcrumb[data-size=\"lg\"] {\n\t\t--breadcrumb-gap: var(--spacing-md);\n\t\t--breadcrumb-icon: var(--text-md);\n\t\tfont-size: var(--text-md);\n\t\tline-height: var(--line-height-md);\n\t}\n\n\t/* Medium — default */\n\t.breadcrumb[data-size=\"md\"] {\n\t\t--breadcrumb-gap: var(--spacing-sm);\n\t\t--breadcrumb-icon: var(--text-sm);\n\t\tfont-size: var(--text-sm);\n\t\tline-height: var(--line-height-sm);\n\t}\n\n\t/* Small */\n\t.breadcrumb[data-size=\"sm\"] {\n\t\t--breadcrumb-gap: calc(var(--spacing-xs) + var(--spacing-xs) / 2);\n\t\t--breadcrumb-icon: var(--text-sm);\n\t\tfont-size: var(--text-sm);\n\t\tline-height: var(--line-height-sm);\n\t}\n\n\t/* Extra small */\n\t.breadcrumb[data-size=\"xs\"] {\n\t\t--breadcrumb-gap: var(--spacing-xs);\n\t\t--breadcrumb-icon: var(--text-xs);\n\t\tfont-size: var(--text-xs);\n\t\tline-height: var(--line-height-xs);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/ellipsis.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { EllipsisProps } from \"./index.js\";\n\timport { EllipsisIcon } from \"@lucide/svelte\";\n\tconst { class: className, ...props }: EllipsisProps = $props();\n</script>\n\n<!-- Stands in for collapsed items; give the button that wraps it an aria-label. -->\n<span class={[\"breadcrumbEllipsis\", className]} role=\"presentation\" aria-hidden=\"true\" {...props}>\n\t<EllipsisIcon />\n</span>\n\n<style>\n\t/* Base ellipsis */\n\t.breadcrumbEllipsis {\n\t\tdisplay: flex;\n\t\tjustify-content: center;\n\t\talign-items: center;\n\t}\n\n\t.breadcrumbEllipsis :global(svg) {\n\t\tflex-shrink: 0;\n\t\twidth: var(--breadcrumb-icon);\n\t\theight: var(--breadcrumb-icon);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/index.ts",
+            "content": "export { default as Breadcrumb } from \"./_.svelte\";\nexport { default as BreadcrumbList } from \"./list.svelte\";\nexport { default as BreadcrumbItem } from \"./item.svelte\";\nexport { default as BreadcrumbLink } from \"./link.svelte\";\nexport { default as BreadcrumbPage } from \"./page.svelte\";\nexport { default as BreadcrumbSeparator } from \"./separator.svelte\";\nexport { default as BreadcrumbEllipsis } from \"./ellipsis.svelte\";\n\n/** Breadcrumb root; a `nav` landmark that sets the size of its parts */\nexport interface Props extends CompPropsWithChild<\"nav\"> {\n\t/** Text, gap, and icon size on the shared scale; defaults to `md` */\n\tsize?: UiSize;\n\t/** Classes merged onto the nav */\n\tclass?: CompPropsWithChild<\"nav\">[\"class\"];\n}\n\n/** Ordered list that holds the items and separators */\nexport interface ListProps extends CompPropsWithChild<\"ol\"> {\n\t/** Classes merged onto the list */\n\tclass?: CompPropsWithChild<\"ol\">[\"class\"];\n}\n\n/** One step in the trail */\nexport interface ItemProps extends CompPropsWithChild<\"li\"> {\n\t/** Classes merged onto the item */\n\tclass?: CompPropsWithChild<\"li\">[\"class\"];\n}\n\n/** Link to an earlier page in the trail */\nexport interface LinkProps extends CompPropsWithChild<\"a\"> {\n\t/** Classes merged onto the link */\n\tclass?: CompPropsWithChild<\"a\">[\"class\"];\n}\n\n/** Current page; the last step, which is not a link */\nexport interface PageProps extends CompPropsWithChild<\"span\"> {\n\t/** Classes merged onto the page */\n\tclass?: CompPropsWithChild<\"span\">[\"class\"];\n}\n\n/** Divider between items; renders a chevron by default */\nexport interface SeparatorProps extends CompProps<\"li\"> {\n\t/** Custom divider content in place of the chevron */\n\tchildren?: Snippet;\n\t/** Classes merged onto the separator */\n\tclass?: CompProps<\"li\">[\"class\"];\n}\n\n/** Placeholder for collapsed items; renders an ellipsis icon */\nexport interface EllipsisProps extends CompProps<\"span\"> {\n\t/** Classes merged onto the ellipsis */\n\tclass?: CompProps<\"span\">[\"class\"];\n}\n\nexport type BreadcrumbProps = Props;\nexport type BreadcrumbListProps = ListProps;\nexport type BreadcrumbItemProps = ItemProps;\nexport type BreadcrumbLinkProps = LinkProps;\nexport type BreadcrumbPageProps = PageProps;\nexport type BreadcrumbSeparatorProps = SeparatorProps;\nexport type BreadcrumbEllipsisProps = EllipsisProps;\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/item.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { ItemProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: ItemProps = $props();\n</script>\n\n<!-- One step in the trail, holding a link, the current page, or an ellipsis. -->\n<li class={[\"breadcrumbItem\", className]} {...props}>\n\t{@render children()}\n</li>\n\n<style>\n\t/* Base item */\n\t.breadcrumbItem {\n\t\tdisplay: inline-flex;\n\t\talign-items: center;\n\t\tgap: var(--spacing-xs);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/link.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { LinkProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: LinkProps = $props();\n</script>\n\n<!-- Link to an earlier page; SvelteKit handles it as client-side navigation. -->\n<a class={[\"breadcrumbLink\", className]} {...props}>\n\t{@render children()}\n</a>\n\n<style>\n\t/* Base link; muted until hovered */\n\t.breadcrumbLink {\n\t\tdisplay: inline-flex;\n\t\talign-items: center;\n\t\tgap: var(--spacing-xs);\n\t\ttransition-duration: 150ms;\n\t\ttransition-property: color, box-shadow;\n\t\ttransition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n\t\toutline: none;\n\t\tborder-radius: var(--radius-xs);\n\t\tcolor: inherit;\n\t\ttext-decoration: none;\n\t}\n\n\t.breadcrumbLink:hover {\n\t\tcolor: var(--foreground);\n\t}\n\n\t.breadcrumbLink :global(svg) {\n\t\tflex-shrink: 0;\n\t\twidth: var(--breadcrumb-icon);\n\t\theight: var(--breadcrumb-icon);\n\t}\n\n\t/* =============== States =============== */\n\n\t/* Keyboard focus ring */\n\t.breadcrumbLink:focus-visible {\n\t\tbox-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/list.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { ListProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: ListProps = $props();\n</script>\n\n<!-- Ordered trail of items and separators; wraps onto more lines when it runs out of room. -->\n<ol class={[\"breadcrumbList\", className]} {...props}>\n\t{@render children()}\n</ol>\n\n<style>\n\t/* Base list; the gap comes from the size on the root */\n\t.breadcrumbList {\n\t\tdisplay: flex;\n\t\tflex-wrap: wrap;\n\t\talign-items: center;\n\t\tgap: var(--breadcrumb-gap);\n\t\tmargin: 0;\n\t\tpadding: 0;\n\t\tcolor: var(--muted-foreground);\n\t\tlist-style: none;\n\t\toverflow-wrap: break-word;\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/page.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { PageProps } from \"./index.js\";\n\tconst { children, class: className, ...props }: PageProps = $props();\n</script>\n\n<!-- Current page; announced as the current location and not clickable. -->\n<span class={[\"breadcrumbPage\", className]} role=\"link\" aria-disabled=\"true\" aria-current=\"page\" {...props}>\n\t{@render children()}\n</span>\n\n<style>\n\t/* Base page; full contrast so it stands out from the links */\n\t.breadcrumbPage {\n\t\tdisplay: inline-flex;\n\t\talign-items: center;\n\t\tgap: var(--spacing-xs);\n\t\tcolor: var(--foreground);\n\t\tfont-weight: 400;\n\t}\n\n\t.breadcrumbPage :global(svg) {\n\t\tflex-shrink: 0;\n\t\twidth: var(--breadcrumb-icon);\n\t\theight: var(--breadcrumb-icon);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/breadcrumb/separator.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { SeparatorProps } from \"./index.js\";\n\timport { ChevronRightIcon } from \"@lucide/svelte\";\n\tconst { children, class: className, ...props }: SeparatorProps = $props();\n</script>\n\n<!-- Divider between items; hidden from screen readers, which already announce the list. -->\n<li class={[\"breadcrumbSeparator\", className]} role=\"presentation\" aria-hidden=\"true\" {...props}>\n\t{#if children}\n\t\t{@render children()}\n\t{:else}\n\t\t<ChevronRightIcon />\n\t{/if}\n</li>\n\n<style>\n\t/* Base separator */\n\t.breadcrumbSeparator {\n\t\tdisplay: inline-flex;\n\t\talign-items: center;\n\t}\n\n\t.breadcrumbSeparator :global(svg) {\n\t\tflex-shrink: 0;\n\t\twidth: var(--breadcrumb-icon);\n\t\theight: var(--breadcrumb-icon);\n\t}\n</style>\n"
+        }
+    ],
+    "devDependencies": [
+        "@lucide/svelte"
+    ],
+    "description": "A trail of links to the current page, with custom separators, collapsed items, and sizes."
+}

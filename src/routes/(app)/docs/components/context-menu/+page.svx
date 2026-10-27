@@ -1,0 +1,166 @@
+---
+title: "Context Menu"
+description: "A menu that opens at the pointer on right-click, built on the dropdown menu parts."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Context Menu
+
+Shows a menu at the pointer when an area is right-clicked, in place of the browser's own menu. It reuses the dropdown menu's panel and items, so install the `dropdown-menu` item too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuSeparator, ContextMenuCheckboxItem } from "#lib/components/ui/context-menu/index.js";
+
+	let showBookmarks = $state(true);
+</script>
+
+<ContextMenu>
+	<ContextMenuTrigger>Right click here</ContextMenuTrigger>
+	<ContextMenuContent>
+		<ContextMenuItem>Back <ContextMenuShortcut>⌘[</ContextMenuShortcut></ContextMenuItem>
+		<ContextMenuItem>Reload <ContextMenuShortcut>⌘R</ContextMenuShortcut></ContextMenuItem>
+		<ContextMenuSeparator />
+		<ContextMenuCheckboxItem bind:checked={showBookmarks}>Show bookmarks</ContextMenuCheckboxItem>
+	</ContextMenuContent>
+</ContextMenu>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/context-menu.json
+```
+
+## Anatomy
+
+`ContextMenuTrigger` renders the area that opens the menu. `ContextMenuContent` and every item part are the dropdown menu's parts under context menu names: `ContextMenuItem`, `ContextMenuCheckboxItem`, `ContextMenuRadioGroup`, `ContextMenuRadioItem`, `ContextMenuLabel`, `ContextMenuGroup`, `ContextMenuSeparator`, `ContextMenuShortcut`, and `ContextMenuSub` with `ContextMenuSubTrigger` and `ContextMenuSubContent`. They take the same props as the dropdown menu parts.
+
+## Opening
+
+Right-click the area to open the menu with its top-left corner at the pointer; it flips when there is not enough room. Right-click again elsewhere in the area to move it. The context menu key opens it at the area's top-left corner with the first item focused.
+
+## Keyboard
+
+The menu works like the dropdown menu: the arrow keys move between items, typing jumps to an item by its text, Enter or Space selects it, the right arrow opens a submenu, and Escape or Tab closes the menu.
+
+## Disabled
+
+Set `disabled` on `ContextMenuTrigger` to keep the browser's own menu.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<ContextMenu>
+	<ContextMenuTrigger disabled>Browser menu here</ContextMenuTrigger>
+	<ContextMenuContent>...</ContextMenuContent>
+</ContextMenu>
+```
+
+## Trigger
+
+`ContextMenuTrigger` renders a `div` area around its children. To open the menu from any other element, such as a file or a table row, pass a `trigger` snippet. It receives `props` with `data-state`, `data-disabled`, and the `oncontextmenu` handler that opens the menu at the pointer. Spread them onto the element. Use a focusable element so the context menu key also opens the menu.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<ContextMenu>
+	<ContextMenuTrigger>
+		{#snippet trigger({ props })}
+			<button type="button" {...props}>report.pdf</button>
+		{/snippet}
+	</ContextMenuTrigger>
+	<ContextMenuContent>
+		<ContextMenuItem>Open</ContextMenuItem>
+		<ContextMenuItem>Rename</ContextMenuItem>
+	</ContextMenuContent>
+</ContextMenu>
+```
+
+## Controlled
+
+Use `bind:open` on `ContextMenu` to read whether the menu is open, or `onOpenChange` to run code when it opens or closes. Use `onSelect` on an item to run code when it is chosen.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let open = $state(false);
+	let lastAction = $state("none");
+</script>
+
+<ContextMenu bind:open>
+	<ContextMenuTrigger>Right click here</ContextMenuTrigger>
+	<ContextMenuContent>
+		<ContextMenuItem onSelect={() => (lastAction = "copy")}>Copy</ContextMenuItem>
+		<ContextMenuItem onSelect={() => (lastAction = "paste")}>Paste</ContextMenuItem>
+	</ContextMenuContent>
+</ContextMenu>
+```
+
+## Sizes
+
+Set `size` on `ContextMenu` to `xs`, `sm`, `md`, or `lg` to change the item padding, the text, and the icons. It defaults to `md`, and submenus use the same size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<ContextMenu size="sm">
+	<ContextMenuTrigger>Right click here</ContextMenuTrigger>
+	<ContextMenuContent>...</ContextMenuContent>
+</ContextMenu>
+```
+
+## Rounded
+
+Set `rounded` on `ContextMenu` to `xs` through `4xl` or `pill` to override the radius that follows `size`. Items use one step smaller so the corners nest. `pill` makes the menu a true pill, which clips its items, so use `3xl` or `4xl` for a round menu with items that line up.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<ContextMenu rounded="lg">
+	<ContextMenuTrigger>Right click here</ContextMenuTrigger>
+	<ContextMenuContent>...</ContextMenuContent>
+</ContextMenu>
+```
+
+## Overrides
+
+`ContextMenuContent` and `ContextMenuSubContent` take `size` and `rounded` for that menu only, and the items take `rounded` to set their own exact radius, as in `DropdownMenu`.
+
+```svelte title="+page.svelte"
+<ContextMenuContent size="md" rounded="lg">
+	<ContextMenuItem rounded="pill">Reload</ContextMenuItem>
+</ContextMenuContent>
+```
+
+## API
+
+`ContextMenu` renders no element of its own. `ContextMenuTrigger` extends the native `div` attributes and ignores them when a `trigger` snippet is given.
+
+```ts title="index.ts"
+type Props = CompPropsWithChildSimple<{
+	/** Whether the menu is shown; supports `bind:open` */
+	open?: boolean;
+	/** Called when the menu opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Item size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the menus and items; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+}>;
+
+interface TriggerProps extends Omit<CompProps<"div">, "children"> {
+	/** Keeps the browser's own context menu instead */
+	disabled?: boolean;
+	/** Content of the default area */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the menu */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+}
+```

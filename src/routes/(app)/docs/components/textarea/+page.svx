@@ -1,0 +1,130 @@
+---
+title: "Textarea"
+description: "A multi-line text field that grows with its content, with sizes, rounded corners, and focus, invalid, and disabled states."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Textarea
+
+Displays a multi-line text field. Styled with theme tokens like the shadcn textarea, fills the width of its container, and grows with its content.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Textarea } from "#lib/components/ui/textarea/index.js";
+</script>
+
+<Textarea placeholder="Type your message here." />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/textarea.json
+```
+
+## Binding
+
+Use `bind:value` to read and write the value. Event handlers such as `oninput` and `onchange` also pass through to the element.
+
+<Demo section="binding" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Textarea } from "#lib/components/ui/textarea/index.js";
+
+	let message = $state("");
+</script>
+
+<Textarea placeholder="Type your message here." bind:value={message} />
+<p>{message.length} characters</p>
+```
+
+## Auto height
+
+The textarea uses `field-sizing: content`, so it starts at the minimum height for its size and grows as you type. Content sizing ignores `rows`, so set `min-height` through `class` or `style` to raise the starting height, and `max-height` to make it scroll after a point. Browsers without `field-sizing` keep a fixed height that you can drag to resize.
+
+## With label
+
+Link a `Label` to the textarea with `for` and a matching `id`, so clicking the label focuses the field.
+
+<Demo section="label" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Textarea } from "#lib/components/ui/textarea/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+</script>
+
+<Label for="message">Your message</Label>
+<Textarea id="message" placeholder="Type your message here." />
+```
+
+## With button
+
+Place a `Button` below the textarea to submit it in a form.
+
+<Demo section="button" />
+
+```svelte title="+page.svelte"
+<form>
+	<Textarea placeholder="Type your message here." />
+	<Button type="submit">Send message</Button>
+</form>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the padding, minimum height, text size, and corner radius follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Textarea size="xs" placeholder="Size xs" />
+<Textarea size="sm" placeholder="Size sm" />
+<Textarea size="md" placeholder="Size md" />
+<Textarea size="lg" placeholder="Size lg" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Textarea rounded="sm" placeholder="Rounded sm" />
+<Textarea rounded="3xl" placeholder="Rounded 3xl" />
+```
+
+## States
+
+Set `disabled` to dim the textarea and block interaction. Set `aria-invalid="true"` to show the invalid ring, such as for a field that failed validation.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Textarea placeholder="Disabled" disabled />
+<Textarea placeholder="Invalid" aria-invalid="true" />
+```
+
+## API
+
+The `Textarea` props extend the native `textarea` attributes.
+
+```ts title="index.ts"
+interface Props extends Omit<CompProps<"textarea">, "value"> {
+	/** Current value (bindable) */
+	value?: CompProps<"textarea">["value"];
+	/** Padding, minimum height, and text size on the shared scale */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill and can clip tall text, so use `3xl` or `4xl` to stay round and safe */
+	rounded?: UiRounded;
+	/** Classes merged onto the textarea */
+	class?: CompProps<"textarea">["class"];
+}
+```

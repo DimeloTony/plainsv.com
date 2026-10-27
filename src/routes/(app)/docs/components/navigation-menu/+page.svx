@@ -1,0 +1,235 @@
+---
+title: "Navigation Menu"
+description: "A row of site links whose items open panels of more links on hover, click, or the keyboard."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Navigation Menu
+
+Shows the main links of a site in a row, with items that open a panel of more links. A panel opens when the mouse rests on its trigger, when the trigger is clicked, or with the down arrow. Moving to another trigger while a panel is open switches panels right away.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from "#lib/components/ui/navigation-menu/index.js";
+</script>
+
+<NavigationMenu>
+	<NavigationMenuList>
+		<NavigationMenuItem>
+			<NavigationMenuTrigger>Getting started</NavigationMenuTrigger>
+			<NavigationMenuContent>
+				<ul class="links">
+					<li>
+						<NavigationMenuLink href="/docs">
+							<span>Introduction</span>
+							<span>What the registry holds and how it is built.</span>
+						</NavigationMenuLink>
+					</li>
+				</ul>
+			</NavigationMenuContent>
+		</NavigationMenuItem>
+		<NavigationMenuItem>
+			<NavigationMenuLink href="/docs/components">Docs</NavigationMenuLink>
+		</NavigationMenuItem>
+	</NavigationMenuList>
+</NavigationMenu>
+
+<style>
+	.links {
+		width: 20rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+</style>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/navigation-menu.json
+```
+
+## Anatomy
+
+`NavigationMenu` renders a `nav` labeled `"Main"`, and holds the open item. Pass `aria-label` to name another menu on the same page. `NavigationMenuList` is the `ul` row, and each `NavigationMenuItem` is an `li` that holds either a `NavigationMenuTrigger` with its `NavigationMenuContent`, or a single `NavigationMenuLink`.
+
+The content panel sizes to its children, so lay them out and set a width with your own markup and classes. A transparent gap above the panel keeps it open while the mouse moves down from the trigger.
+
+## Keyboard
+
+The left and right arrows, Home, and End move between the top-level triggers and links, and wrap at the ends. Enter, Space, or a click toggles a panel, and the down arrow opens it and focuses its first link. Tab moves through the panel's links before the next trigger. Escape closes the panel and returns focus to its trigger, and the panel also closes when focus or a press moves outside the menu.
+
+## Links
+
+`NavigationMenuLink` looks like a trigger when it sits directly in an item, and like a padded row inside content, where it stacks a title and a description. Set `active` to mark the current page with `aria-current="page"`. Following a link in a panel closes the menu. Set `align="end"` on `NavigationMenuContent` to line a panel up with the right edge of its item, such as for the last item in a row.
+
+<Demo section="links" />
+
+```svelte title="+page.svelte"
+<NavigationMenuItem>
+	<NavigationMenuLink href="/" active>Home</NavigationMenuLink>
+</NavigationMenuItem>
+<NavigationMenuItem>
+	<NavigationMenuTrigger>With icon</NavigationMenuTrigger>
+	<NavigationMenuContent align="end">
+		<NavigationMenuLink href="/backlog"><CircleHelpIcon />Backlog</NavigationMenuLink>
+	</NavigationMenuContent>
+</NavigationMenuItem>
+```
+
+## Trigger
+
+`NavigationMenuTrigger` renders a button with a chevron that flips while open. To open the content from any other element, pass a `trigger` snippet. It receives `props` with the ids, `aria-expanded`, `data-state`, the `data-navigation-menu-top` marker that the left and right arrows move between, and the click, key, and hover handlers. Spread them onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<NavigationMenuItem>
+	<NavigationMenuTrigger>
+		{#snippet trigger({ props })}
+			<Button variant="ghost" {...props}>
+				<LayoutGridIcon />
+				Components
+			</Button>
+		{/snippet}
+	</NavigationMenuTrigger>
+	<NavigationMenuContent>
+		<!-- Links -->
+	</NavigationMenuContent>
+</NavigationMenuItem>
+```
+
+## Controlled
+
+Use `bind:value` to read or set the open item, or `onValueChange` to run code when it changes. Give each item a `value` to refer to it; it is `""` while every panel is closed. Set `delayDuration` to change how long the mouse rests on a trigger before its panel opens; it defaults to `200`.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let openValue = $state("");
+</script>
+
+<NavigationMenu bind:value={openValue}>
+	<NavigationMenuList>
+		<NavigationMenuItem value="docs">
+			<NavigationMenuTrigger>Docs</NavigationMenuTrigger>
+			<NavigationMenuContent>...</NavigationMenuContent>
+		</NavigationMenuItem>
+	</NavigationMenuList>
+</NavigationMenu>
+<p>Open: {openValue || "none"}</p>
+```
+
+## Variants
+
+Set `variant` on `NavigationMenu` to style the triggers and top-level links. `default` fills them with the accent color on hover and while open, `outline` adds a border on the page background, `ghost` uses a lighter fill, and `secondary` fills them with the secondary color. Links inside content keep the row style.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<NavigationMenu variant="outline">...</NavigationMenu>
+```
+
+## Sizes
+
+Set `size` on `NavigationMenu` to `xs`, `sm`, `md`, or `lg` to change the triggers, top-level links, panel padding, and link padding. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<NavigationMenu size="lg">...</NavigationMenu>
+```
+
+## Rounded
+
+Set `rounded` on `NavigationMenu` to `xs` through `4xl` or `pill` to override the radius. The triggers, panels, and links all follow it, with the links one step smaller so the corners nest. `pill` makes the panels pills too, so use `3xl` or `4xl` for pill-like triggers with round panels that don't clip their links.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<NavigationMenu rounded="3xl">...</NavigationMenu>
+```
+
+## Overrides
+
+`NavigationMenuTrigger` and `NavigationMenuLink` take their own `variant`, `size`, and `rounded`, which win over the menu's for that part only. An own `rounded` sets that exact radius. `NavigationMenuContent` takes `size` and `rounded` for its panel, and the links inside it follow with one radius step smaller, unless they set their own.
+
+<Demo section="overrides" />
+
+```svelte title="+page.svelte"
+<NavigationMenuItem>
+	<NavigationMenuTrigger variant="outline" rounded="pill">Pill</NavigationMenuTrigger>
+	<NavigationMenuContent size="lg" rounded="lg">
+		<NavigationMenuLink href="/plugins" rounded="pill">Plugins</NavigationMenuLink>
+	</NavigationMenuContent>
+</NavigationMenuItem>
+<NavigationMenuItem>
+	<NavigationMenuLink href="/login" variant="secondary" size="sm">Sign in</NavigationMenuLink>
+</NavigationMenuItem>
+```
+
+## API
+
+`NavigationMenu` extends the native `nav` attributes, `NavigationMenuList` extends `ul`, `NavigationMenuItem` extends `li`, `NavigationMenuTrigger` extends `button` and ignores its attributes when a `trigger` snippet is given, `NavigationMenuLink` extends `a`, and `NavigationMenuContent` passes extra attributes and `class` to its panel. Items and triggers set `data-state` to `open` or `closed`.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"nav"> {
+	/** Value of the open item, or `""` while closed; supports `bind:value` */
+	value?: string;
+	/** Called with the open item's value when an item opens or closes */
+	onValueChange?: (value: string) => void;
+	/** Milliseconds the pointer rests on a trigger before its content opens; defaults to `200` */
+	delayDuration?: number;
+	/** Style of the triggers and top-level links; defaults to `default` */
+	variant?: "default" | "outline" | "ghost" | "secondary";
+	/** Trigger height, padding, and text on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the triggers, content, and links; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+}
+
+interface ItemProps extends CompPropsWithChild<"li"> {
+	/** Value that identifies the item in the open value; defaults to a generated id */
+	value?: string;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Edge of the item the panel lines up with; use `end` near the right of the page; defaults to `start` */
+	align?: "start" | "end";
+	/** Padding and text of the panel, and the padding of its links; overrides the menu's `size` */
+	size?: UiSize;
+	/** Corner radius of the panel; its links use one step smaller; overrides the menu's `rounded`. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+}
+
+interface LinkProps extends CompPropsWithChild<"a"> {
+	/** Marks the link as the current page with `aria-current="page"` */
+	active?: boolean;
+	/** Style of a top-level link; overrides the menu's `variant`; links inside content keep the row style */
+	variant?: Props["variant"];
+	/** Height, padding, and text of a top-level link, or the padding and text of a row inside content; overrides the menu's `size` */
+	size?: UiSize;
+	/** Corner radius of the link with this exact value; overrides the inherited radius */
+	rounded?: UiRounded;
+}
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the item's content */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger; overrides the menu's `variant` */
+	variant?: Props["variant"];
+	/** Height, padding, and text of the default trigger; overrides the menu's `size` */
+	size?: UiSize;
+	/** Corner radius of the default trigger with this exact value; overrides the menu's `rounded` */
+	rounded?: UiRounded;
+}
+```

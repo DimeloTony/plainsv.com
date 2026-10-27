@@ -1,0 +1,6 @@
+/** App core data */
+export const appData = {
+	name: "PlainSv",
+	title: "Components, utilities, and plugins in plain Svelte",
+	description: "Accessible components, utilities, and Vite plugins for Svelte 5, written the Svelte way: runes, scoped styles, and native elements, with as few packages as possible.",
+};

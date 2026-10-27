@@ -1,0 +1,22 @@
+{
+    "name": "init-project",
+    "files": [
+        {
+            "type": "file",
+            "path": "template/packageJson.txt",
+            "target": "package.json",
+            "content": "{\n\t\"name\": \"my-app\",\n\t\"private\": true,\n\t\"version\": \"0.0.1\",\n\t\"type\": \"module\",\n\t\"scripts\": {\n\t\t\"dev\": \"vite dev\",\n\t\t\"build\": \"vite build\",\n\t\t\"preview\": \"vite preview\",\n\t\t\"prepare\": \"svelte-kit sync || echo ''\",\n\t\t\"check\": \"svelte-kit sync && svelte-check --tsconfig ./tsconfig.json\",\n\t\t\"check:watch\": \"svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch\"\n\t},\n\t\"devDependencies\": {\n\t\t\"@sveltejs/kit\": \"^3.0.0\",\n\t\t\"@sveltejs/vite-plugin-svelte\": \"^7.2.0\",\n\t\t\"@types/node\": \"^26.6.5\",\n\t\t\"prettier-plugin-css-order\": \"^2.2.0\",\n\t\t\"prettier-plugin-svelte\": \"^4.1.1\",\n\t\t\"svelte\": \"^5.57.1\",\n\t\t\"svelte-check\": \"^4.6.0\",\n\t\t\"typescript\": \"^6.0.3\",\n\t\t\"vite\": \"^8.3.0\"\n\t},\n\t\"imports\": {\n\t\t\"#lib\": \"./src/lib/index.js\",\n\t\t\"#lib/*\": \"./src/lib/*\"\n\t}\n}\n"
+        },
+        {
+            "type": "file",
+            "path": "tsconfig.json",
+            "content": "{\n\t\"extends\": \"$app/tsconfig\",\n\t\"compilerOptions\": {\n\t\t\"strict\": true\n\t},\n\t\"include\": [\"src\", \"vite.config.ts\"]\n}\n"
+        },
+        {
+            "type": "file",
+            "path": "src/app.d.ts",
+            "content": "import type { Snippet as SvSnippet, Component as SvComponent, ComponentProps as SvComponentProps } from \"svelte\";\nimport type { SvelteHTMLElements } from \"svelte/elements\";\n\ntype PrivateEnv = typeof import(\"$app/env/private\");\ntype PublicEnv = typeof import(\"$app/env/public\");\n\n// See https://svelte.dev/docs/kit/types#app.d.ts\n// for information about these interfaces\ndeclare global {\n\t// Overwrite nodeJs process env variables types\n\tnamespace NodeJS {\n\t\tinterface Dict<T extends PrivateEnv, PublicEnv> {\n\t\t\t[key: string]: T | undefined;\n\t\t}\n\t\tinterface ProcessEnv extends PrivateEnv, PublicEnv {\n\t\t\tNODE_ENV: \"development\" | \"production\";\n\t\t}\n\t}\n\t// App types\n\tnamespace App {\n\t\t// interface Error {}\n\t\tinterface Locals {\n\t\t\tuserData?: any;\n\t\t\tsessionData?: any;\n\t\t\tisDarkMode: boolean;\n\t\t}\n\t\t// interface PageData {}\n\t\t// interface PageState {}\n\t\t// interface Platform {}\n\t}\n\t// Types\n\ttype Snippet<T extends unknown[] = []> = SvSnippet<T>;\n\ttype Component = SvComponent;\n\ttype ComponentProps<T> = SvComponentProps<T>;\n\ttype CompAttrs<TagName extends keyof HTMLElementTagNameMap> = Omit<SvelteHTMLElements[TagName], `on${string}` | `bind:${string}` | \"children\">;\n\ttype CompEvents<TagName extends keyof HTMLElementTagNameMap> = { [K in keyof HTMLElementTagNameMap[TagName] as K extends `on${string}` ? K : never]?: (e: any) => any };\n\ttype CompProps<TagName extends keyof HTMLElementTagNameMap> = CompAttrs<TagName> & CompEvents<TagName>;\n\ttype CompPropsWithChild<TagName extends keyof HTMLElementTagNameMap> = CompProps<TagName> & { children: SvSnippet };\n\ttype CompPropsWithChildSimple<ExtraT> = { children: SvSnippet } & ExtraT;\n\ttype UiSize = \"xs\" | \"sm\" | \"md\" | \"lg\";\n\ttype UiRounded = \"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"2xl\" | \"3xl\" | \"4xl\" | \"pill\";\n}\n\nexport {};\n"
+        }
+    ],
+    "description": "The package.json, tsconfig, and global types that every init item writes first, before it installs any package."
+}

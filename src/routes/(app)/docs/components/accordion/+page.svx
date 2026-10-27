@@ -1,0 +1,209 @@
+---
+title: "Accordion"
+description: "A stack of headings that each reveal a section of content, with single or multiple open items, keyboard support, variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Accordion
+
+A stack of headings that each reveal a section of content. Compose it from `Accordion`, `AccordionItem`, `AccordionTrigger`, and `AccordionContent`. By default one item is open at a time, and clicking an open item closes it.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "#lib/components/ui/accordion/index.js";
+</script>
+
+<Accordion>
+	<AccordionItem value="item-1">
+		<AccordionTrigger>Is it accessible?</AccordionTrigger>
+		<AccordionContent>Yes. It adheres to the WAI-ARIA design pattern.</AccordionContent>
+	</AccordionItem>
+	<AccordionItem value="item-2">
+		<AccordionTrigger>Is it styled?</AccordionTrigger>
+		<AccordionContent>Yes. It comes with default styles that match the other components.</AccordionContent>
+	</AccordionItem>
+</Accordion>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/accordion.json
+```
+
+## Anatomy
+
+`Accordion` holds the values of the open items and the style settings. Each `AccordionItem` has a unique `value` and is divided from the next by a border. `AccordionTrigger` renders a `button` inside an `h3`, so the items show up in the page outline, with `aria-expanded` and a chevron that flips while open. `AccordionContent` renders a `role="region"` named by its trigger, which slides open and closed and is removed from the page while closed.
+
+## Keyboard
+
+Enter and Space open and close the focused item. The up and down arrows move between triggers and wrap at the ends, and Home and End jump to the first and last. Disabled items are skipped.
+
+## Multiple
+
+Set `multiple` to let several items be open at once. Set `defaultValue` to an array of item values to open them at the start.
+
+<Demo section="multiple" />
+
+```svelte title="+page.svelte"
+<Accordion multiple defaultValue={["item-1", "item-2"]}>
+	<AccordionItem value="item-1">
+		<AccordionTrigger>Is it accessible?</AccordionTrigger>
+		<AccordionContent>Yes. It adheres to the WAI-ARIA design pattern.</AccordionContent>
+	</AccordionItem>
+	<AccordionItem value="item-2">
+		<AccordionTrigger>Is it styled?</AccordionTrigger>
+		<AccordionContent>Yes. It comes with default styles that match the other components.</AccordionContent>
+	</AccordionItem>
+</Accordion>
+```
+
+## Trigger
+
+`AccordionTrigger` renders a button with a chevron inside an `h3`. To open and close the item from any other element, pass a `trigger` snippet. It renders inside the same `h3`, and receives `props` with the ids, `aria-expanded`, `disabled`, `data-state`, the `data-accordion-trigger` marker that the arrow keys move between, and the click and key handlers. Spread them onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<AccordionItem value="item-1">
+	<AccordionTrigger>
+		{#snippet trigger({ props })}
+			<button type="button" {...props}>
+				<PlusIcon aria-hidden="true" />
+				Is it accessible?
+			</button>
+		{/snippet}
+	</AccordionTrigger>
+	<AccordionContent>Yes. It adheres to the WAI-ARIA design pattern.</AccordionContent>
+</AccordionItem>
+```
+
+## Controlled
+
+Use `bind:value` to read and set the open items from your own code, or `onValueChange` to run code when they change. The value is always an array of item values, even when only one item can be open, and assigning a new array updates the accordion.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "#lib/components/ui/accordion/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let openValues: string[] = $state(["item-2"]);
+</script>
+
+<Button variant="outline" size="sm" onclick={() => (openValues = [])}>Close all</Button>
+
+<Accordion bind:value={openValues}>
+	<AccordionItem value="item-1">
+		<AccordionTrigger>Is it accessible?</AccordionTrigger>
+		<AccordionContent>Yes. It adheres to the WAI-ARIA design pattern.</AccordionContent>
+	</AccordionItem>
+	<AccordionItem value="item-2">
+		<AccordionTrigger>Is it styled?</AccordionTrigger>
+		<AccordionContent>Yes. It comes with default styles that match the other components.</AccordionContent>
+	</AccordionItem>
+</Accordion>
+```
+
+## Disabled
+
+Set `disabled` on an `AccordionItem` to block it, or on `Accordion` to block every item. A disabled trigger is dimmed, cannot be clicked, and is skipped by the arrow keys.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<AccordionItem value="item-2" disabled>
+	<AccordionTrigger>Is it styled?</AccordionTrigger>
+	<AccordionContent>Yes.</AccordionContent>
+</AccordionItem>
+```
+
+## Variant
+
+Set `variant` on `Accordion` to `outline` to wrap the items in a bordered box with padding. It defaults to `default`, which only divides the items.
+
+<Demo section="variant" />
+
+```svelte title="+page.svelte"
+<Accordion variant="outline">
+	<AccordionItem value="item-1">
+		<AccordionTrigger>Is it accessible?</AccordionTrigger>
+		<AccordionContent>Yes. It adheres to the WAI-ARIA design pattern.</AccordionContent>
+	</AccordionItem>
+</Accordion>
+```
+
+## Size
+
+Set `size` on `Accordion` to `xs`, `sm`, `md`, or `lg` to change the padding, the text, and the chevron. It defaults to `md`.
+
+<Demo section="size" />
+
+```svelte title="+page.svelte"
+<Accordion size="sm">
+	<AccordionItem value="item-1">
+		<AccordionTrigger>Is it accessible?</AccordionTrigger>
+		<AccordionContent>Yes.</AccordionContent>
+	</AccordionItem>
+</Accordion>
+```
+
+## Rounded
+
+Set `rounded` on `Accordion` to `xs` through `4xl` or `pill` to override the radius that follows `size`. It rounds the `outline` box and the trigger focus ring. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Accordion variant="outline" rounded="lg">
+	<AccordionItem value="item-1">
+		<AccordionTrigger>Is it accessible?</AccordionTrigger>
+		<AccordionContent>Yes.</AccordionContent>
+	</AccordionItem>
+</Accordion>
+```
+
+## API
+
+`Accordion`, `AccordionItem`, and `AccordionContent` extend the `div` attributes, and `AccordionTrigger` extends the `button` attributes. Extra attributes pass through, and the trigger ignores them when a `trigger` snippet is given.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Values of the open items; supports `bind:value` */
+	value?: string[];
+	/** Items open at the start when `value` is not set */
+	defaultValue?: string[];
+	/** Called with the open values when an item opens or closes */
+	onValueChange?: (value: string[]) => void;
+	/** Lets several items be open at once; by default opening one closes the others */
+	multiple?: boolean;
+	/** Blocks opening and closing every item */
+	disabled?: boolean;
+	/** Visual style; `outline` wraps the items in a bordered box */
+	variant?: "default" | "outline";
+	/** Padding and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the box and focus rings; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+
+interface ItemProps extends CompPropsWithChild<"div"> {
+	/** Value that identifies the item in the open values */
+	value: string;
+	/** Blocks opening and closing the item; the arrow keys skip it */
+	disabled?: boolean;
+}
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens and closes the item */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+}
+```

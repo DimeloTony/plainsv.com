@@ -1,0 +1,238 @@
+---
+title: "Questionnaire"
+description: "A multi-step questionnaire with single-choice, multiple-choice, freeform, and skippable questions."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Questionnaire
+
+A form that asks one question at a time, such as for onboarding or when an agent waits for input. Questions can take one choice, several choices, or typed text, and optional questions can be skipped. It checks each answer before moving on and submits a normal form.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Questionnaire, QuestionnaireProgress, QuestionnaireItem, QuestionnaireTitle, QuestionnaireDescription, QuestionnaireChoices, QuestionnaireChoice, QuestionnaireInput, QuestionnaireError, QuestionnaireActions, QuestionnairePrevious, QuestionnaireSkip, QuestionnaireNext, QuestionnaireSubmit } from "#lib/components/ui/questionnaire/index.js";
+
+	/** Reads the answers instead of sending the form. */
+	const handleSubmit = (e: SubmitEvent & { currentTarget: HTMLFormElement }) => {
+		e.preventDefault();
+		const data = new FormData(e.currentTarget);
+		console.log(data.get("direction"), data.getAll("signals"));
+	};
+</script>
+
+<Questionnaire shortcuts="letters" onsubmit={handleSubmit}>
+	<QuestionnaireProgress />
+	<QuestionnaireItem name="direction" required>
+		<QuestionnaireTitle>What should we prototype next?</QuestionnaireTitle>
+		<QuestionnaireDescription>Choose one direction or write another answer.</QuestionnaireDescription>
+		<QuestionnaireChoices>
+			<QuestionnaireChoice value="delegation">Sub-agent delegation</QuestionnaireChoice>
+			<QuestionnaireChoice value="questions">Question prompts</QuestionnaireChoice>
+			<QuestionnaireInput aria-label="Another direction" placeholder="Type another direction…" />
+		</QuestionnaireChoices>
+		<QuestionnaireError />
+	</QuestionnaireItem>
+	<QuestionnaireItem name="signals" multiple>
+		<QuestionnaireTitle>What should every progress update include?</QuestionnaireTitle>
+		<QuestionnaireChoices>
+			<QuestionnaireChoice value="progress">Progress</QuestionnaireChoice>
+			<QuestionnaireChoice value="risks">Risks</QuestionnaireChoice>
+		</QuestionnaireChoices>
+		<QuestionnaireError />
+	</QuestionnaireItem>
+	<QuestionnaireActions>
+		<QuestionnairePrevious />
+		<QuestionnaireSkip />
+		<QuestionnaireNext />
+		<QuestionnaireSubmit />
+	</QuestionnaireActions>
+</Questionnaire>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/questionnaire.json
+```
+
+## Anatomy
+
+`Questionnaire` renders a `form` and tracks the active question. `QuestionnaireProgress` shows "Question 1 of 3" and is announced as a progress bar. Each `QuestionnaireItem` renders a `fieldset` with a unique `name`, which is also the form field name, and only the active one shows.
+
+Inside a question, `QuestionnaireTitle` renders the `legend`, and `QuestionnaireDescription` is linked to the question as its description. `QuestionnaireChoices` holds the answers: each `QuestionnaireChoice` is a radio, or a checkbox when the question sets `multiple`, and `QuestionnaireChoiceDescription` adds a muted second line. `QuestionnaireInput` takes a typed answer. `QuestionnaireError` shows only while the question is invalid.
+
+`QuestionnaireActions` lays out `QuestionnairePrevious`, `QuestionnaireSkip`, `QuestionnaireNext`, and `QuestionnaireSubmit`. Each button shows only when it applies: Previous after the first question, Skip on optional questions, Next before the last question, and Submit on the last. Pass children to change their labels.
+
+## Answers
+
+A question with `required` needs an answer to continue. An optional question needs an answer or a skip, so Next stays blocked until one is picked or Skip is pressed. Set `multiple` to allow several choices, and read them with `formData.getAll(name)`.
+
+A `QuestionnaireInput` in a single-choice question is another way to answer: typing in it clears the picked choice, and picking a choice leaves the text out of the submission. Give it a label or `aria-label`, since a placeholder is not a label.
+
+Skipped questions are left out of the form data. Use `onStatusChange` on a question to tell a skip from a missing answer; it reports `answered`, `unanswered`, or `skipped`.
+
+## Keyboard
+
+Tab moves between the answers and the buttons. The up and down arrows move between answers, and Space picks or toggles one. Enter on a picked choice or a filled input continues, and Cmd or Ctrl and Enter continues from anywhere, submitting on the last question. The left and right arrows move between questions, but right only once the question is answered or skipped. Moving to a question focuses it.
+
+Set `shortcuts` to `letters` for A to Z or `numbers` for 1 to 9. Each enabled choice of the active question shows its key, and pressing the key picks it without moving on. Shortcuts and arrows pause while typing in a field.
+
+## Submitting
+
+Submitting checks every question. If one is not valid, the form stays, opens that question, and focuses its first answer. Otherwise `onsubmit` runs as a normal form handler: call `preventDefault` to handle the answers yourself, or let it post to a SvelteKit form action. A reset restores the starting question and the default answers.
+
+## Card
+
+Place the parts inside other layouts, such as a card with the question in the header and the buttons in the footer. When the title is not the fieldset's first child, give it an `id` and point the question's `aria-labelledby` at it.
+
+<Demo section="card" />
+
+```svelte title="+page.svelte"
+<Card>
+	<Questionnaire shortcuts="numbers" onsubmit={handleSubmit}>
+		<QuestionnaireItem name="plan" required aria-labelledby="plan-title">
+			<CardHeader>
+				<QuestionnaireTitle id="plan-title">Choose a plan</QuestionnaireTitle>
+			</CardHeader>
+			<CardContent>
+				<QuestionnaireChoices>
+					<QuestionnaireChoice value="plus">Plus</QuestionnaireChoice>
+					<QuestionnaireChoice value="enterprise" disabled>Enterprise</QuestionnaireChoice>
+				</QuestionnaireChoices>
+				<QuestionnaireError />
+			</CardContent>
+		</QuestionnaireItem>
+		<CardFooter>
+			<QuestionnaireActions>...</QuestionnaireActions>
+		</CardFooter>
+	</Questionnaire>
+</Card>
+```
+
+## Controlled
+
+Use `bind:item` to read or set the active question by name, such as to resume a saved draft, or `onItemChange` to run code when it changes. `defaultItem` sets the starting question without binding. Choices take `bind:checked` and `defaultChecked`, and inputs take `bind:value` and `defaultValue`.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let activeItem = $state("role");
+</script>
+
+<button onclick={() => (activeItem = "goal")}>Jump to the last question</button>
+
+<Questionnaire bind:item={activeItem}>...</Questionnaire>
+```
+
+## Conditional questions
+
+Set `disabled` on a question to leave it out of the progress, navigation, checks, and form data, such as when an earlier answer makes it irrelevant.
+
+<Demo section="conditional" />
+
+```svelte title="+page.svelte"
+<QuestionnaireItem name="size" required disabled={!hasTeam}>...</QuestionnaireItem>
+```
+
+## Validation
+
+Set `invalid` on a question to apply your own rule. It blocks moving on and submitting, marks the answers invalid, and shows `QuestionnaireError`, whose children replace the default message.
+
+<Demo section="validation" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let username = $state("");
+	const isTooShort = $derived(username.length > 0 && username.length < 3);
+</script>
+
+<QuestionnaireItem name="username" required invalid={isTooShort}>
+	<QuestionnaireTitle>Pick a username</QuestionnaireTitle>
+	<QuestionnaireInput aria-label="Username" bind:value={username} />
+	<QuestionnaireError>{isTooShort ? "Use at least 3 characters." : "Enter a username to continue."}</QuestionnaireError>
+</QuestionnaireItem>
+```
+
+## Sizes
+
+Set `size` on `Questionnaire` to `xs`, `sm`, `md`, or `lg` to change the text, the choices, the input, and the buttons. It defaults to `md`, with 44 pixel choices like shadcn.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Questionnaire size="sm">...</Questionnaire>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to change the radius of the choices and input. It defaults to `lg`, like shadcn. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Questionnaire rounded="3xl">...</Questionnaire>
+```
+
+## Overrides
+
+`QuestionnaireChoice` takes `rounded` to set that choice's radius. The action buttons follow the questionnaire's `rounded`, and each takes its own `variant`, `size`, and `rounded` to override it.
+
+```svelte title="+page.svelte"
+<QuestionnaireChoice value="yes" rounded="3xl">Yes</QuestionnaireChoice>
+<QuestionnaireNext size="lg" rounded="pill" />
+```
+
+## API
+
+`Questionnaire` extends the `form` attributes, `QuestionnaireItem` the `fieldset` attributes, and the other parts their own element. The buttons take the `Button` props.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"form"> {
+	/** Name of the active question; supports `bind:item` */
+	item?: string;
+	/** Question to start on when `item` is not set; defaults to the first enabled question */
+	defaultItem?: string;
+	/** Called with the name of the question that becomes active */
+	onItemChange?: (item: string) => void;
+	/** Keys that pick a choice in the active question; off when omitted */
+	shortcuts?: "letters" | "numbers";
+	/** Text, choice, input, and button size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the choices and inputs; defaults to `lg`, like shadcn. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+
+interface ItemProps extends Omit<CompPropsWithChild<"fieldset">, "name"> {
+	/** Unique name of the question, used as the form field name */
+	name: string;
+	/** Needs an answer to continue; optional questions can be skipped instead */
+	required?: boolean;
+	/** Lets several choices be picked, as checkboxes instead of radios */
+	multiple?: boolean;
+	/** Removes the question from the progress, navigation, validation, and submission */
+	disabled?: boolean;
+	/** Marks the question invalid from your own validation; show the reason in `QuestionnaireError` */
+	invalid?: boolean;
+	/** Called when the question becomes answered, unanswered, or skipped */
+	onStatusChange?: (status: "unanswered" | "answered" | "skipped") => void;
+}
+
+interface ChoiceProps extends Omit<CompPropsWithChild<"label">, "onchange"> {
+	/** Value submitted for the question when this choice is picked */
+	value: string;
+	/** Whether the choice is picked; supports `bind:checked` */
+	checked?: boolean;
+	/** Picks the choice at the start, and again on reset */
+	defaultChecked?: boolean;
+	/** Blocks picking the choice; shortcuts skip it */
+	disabled?: boolean;
+	/** Corner radius of this choice; overrides the questionnaire's `rounded`. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

@@ -1,0 +1,226 @@
+---
+title: "Sidebar"
+description: "A collapsible app sidebar with groups, menus, sub menus, and icon mode, that becomes a drawer on mobile."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Sidebar
+
+A composable app sidebar. It collapses off the screen or down to its icons on desktop, and turns into a drawer below `48rem`. The preview uses `collapsible="none"` so it fits on this page.
+
+<Demo />
+
+```svelte title="+layout.svelte"
+<script lang="ts">
+	import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from "#lib/components/ui/sidebar/index.js";
+	import { HouseIcon, InboxIcon } from "@lucide/svelte";
+
+	const { children } = $props();
+</script>
+
+<SidebarProvider>
+	<Sidebar collapsible="icon">
+		<SidebarContent>
+			<SidebarGroup>
+				<SidebarGroupLabel>Application</SidebarGroupLabel>
+				<SidebarGroupContent>
+					<SidebarMenu>
+						<SidebarMenuItem>
+							<SidebarMenuButton href="/" tooltip="Home"><HouseIcon /><span>Home</span></SidebarMenuButton>
+						</SidebarMenuItem>
+						<SidebarMenuItem>
+							<SidebarMenuButton href="/inbox" tooltip="Inbox"><InboxIcon /><span>Inbox</span></SidebarMenuButton>
+						</SidebarMenuItem>
+					</SidebarMenu>
+				</SidebarGroupContent>
+			</SidebarGroup>
+		</SidebarContent>
+	</Sidebar>
+	<SidebarInset>
+		<header><SidebarTrigger /></header>
+		{@render children()}
+	</SidebarInset>
+</SidebarProvider>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/sidebar.json
+```
+
+## Anatomy
+
+`SidebarProvider` wraps the page and holds the state. Inside it, `Sidebar` holds `SidebarHeader`, a scrolling `SidebarContent`, and `SidebarFooter`. `SidebarInset` renders the `main` element beside it. `SidebarTrigger` toggles the sidebar, and `SidebarRail` adds a strip on its edge that toggles it on click.
+
+`SidebarGroup` is a section with a `SidebarGroupLabel`, an optional `SidebarGroupAction`, and a `SidebarGroupContent`. `SidebarMenu` lists `SidebarMenuItem` entries, each with a `SidebarMenuButton` and an optional `SidebarMenuAction`, `SidebarMenuBadge`, or `SidebarMenuSub` of `SidebarMenuSubItem` and `SidebarMenuSubButton` entries. `SidebarSeparator`, `SidebarInput`, and `SidebarMenuSkeleton` round it out.
+
+## Provider
+
+`SidebarProvider` lays out the sidebar beside the main content. Use `bind:open` to read or set whether the desktop sidebar is expanded, such as to restore it from a cookie, or `onOpenChange` to save it. Cmd or Ctrl and `b` toggles the sidebar; set `shortcut` to another key, or to `false` to turn it off. Set `width`, `iconWidth`, and `mobileWidth` to change the widths; the defaults are `16rem`, `3rem`, and `18rem`.
+
+Read the state in any part with `useSidebar()`, such as `useSidebar().toggle()` or `useSidebar().isMobile`.
+
+## Collapsible
+
+Set `collapsible` on `Sidebar` to `offcanvas`, the default, to slide it out of view, `icon` to shrink it to its icons, or `none` to keep it expanded. While collapsed to icons, labels, badges, actions, and sub menus hide, and each `SidebarMenuButton` with a `tooltip` shows its label in a tooltip. Below `48rem`, the sidebar is a drawer that the trigger opens.
+
+A `Sidebar` with `collapsible="none"` leaves the collapse mode and side to the collapsible one, so it can sit beside it, such as a second panel on the right, or inside it, such as an icon rail and a list nested in one sidebar that collapses to icons. It also works inside a popover or a dialog with its own `SidebarProvider`.
+
+## Variants
+
+Set `variant` on `Sidebar` to `sidebar`, the default, for a flush panel with a border, `floating` for a rounded card, or `inset` to frame the main content in `SidebarInset` on the sidebar color. Set `side` to `left` or `right`.
+
+## Site header
+
+Set `offsetTop` on `Sidebar` to start the fixed desktop panel below a sticky site header, such as `3.5rem` for a header that tall. Put the header first in `SidebarProvider` with `flex-direction: column`, then the sidebar and `SidebarInset` in a row below it.
+
+```svelte title="+page.svelte"
+<SidebarProvider style="flex-direction: column">
+	<SiteHeader />
+	<div style="display: flex; flex: 1">
+		<Sidebar offsetTop="3.5rem">...</Sidebar>
+		<SidebarInset>...</SidebarInset>
+	</div>
+</SidebarProvider>
+```
+
+## Menu buttons
+
+`SidebarMenuButton` renders a `button`, or an `a` with `href`. Set `isActive` on the current page, which also sets `aria-current="page"` on links. Place an icon first and the label in a `span`, which truncates. Set `size` to `xs`, `sm`, `md`, or `lg`, where `lg` fits two lines such as a team name and plan, and `variant="outline"` for a bordered button.
+
+`SidebarMenuAction` places an icon button at the end of an item; set `showOnHover` to show it only while the item is hovered or focused. It also works inside a `Collapsible` that wraps the item's parts, such as a `CollapsibleTrigger` snippet that expands the item's sub menu. `SidebarMenuBadge` places a count there. Give icon buttons an `aria-label`.
+
+Set `showTooltip` with `tooltip` to show the tooltip while the sidebar is expanded too, such as in an icon-only rail.
+
+<Demo section="menuButtons" />
+
+```svelte title="+page.svelte"
+<SidebarMenuItem>
+	<SidebarMenuButton size="sm" variant="outline">
+		<FolderIcon />
+		<span>Projects</span>
+	</SidebarMenuButton>
+	<SidebarMenuAction showOnHover aria-label="More"><EllipsisIcon /></SidebarMenuAction>
+</SidebarMenuItem>
+<SidebarMenuItem>
+	<SidebarMenuButton href="/inbox" isActive>
+		<InboxIcon />
+		<span>Inbox</span>
+	</SidebarMenuButton>
+	<SidebarMenuBadge>8</SidebarMenuBadge>
+</SidebarMenuItem>
+```
+
+## Collapsible groups
+
+`SidebarGroupLabel` renders a `button` when it gets an `onclick`, so it can be the trigger of a `Collapsible` that wraps the group. Spread the `props` from a `CollapsibleTrigger` snippet onto it, and the label gets the hover highlight, focus ring, `aria-expanded`, and a `data-state` of `open` or `closed` for styling an icon.
+
+<Demo section="collapsibleGroups" />
+
+```svelte title="+page.svelte"
+<Collapsible defaultOpen>
+	<SidebarGroup>
+		<CollapsibleTrigger>
+			{#snippet trigger({ props })}
+				<SidebarGroupLabel {...props}>
+					Getting Started
+					<ChevronRightIcon class="chevron" />
+				</SidebarGroupLabel>
+			{/snippet}
+		</CollapsibleTrigger>
+		<CollapsibleContent>
+			<SidebarGroupContent>...</SidebarGroupContent>
+		</CollapsibleContent>
+	</SidebarGroup>
+</Collapsible>
+```
+
+## Loading
+
+Show `SidebarMenuSkeleton` items while a menu loads, and mark the menu with `aria-busy`. Set `showIcon` for a square in place of the icon.
+
+<Demo section="skeleton" />
+
+```svelte title="+page.svelte"
+<SidebarMenu aria-busy="true">
+	{#each Array.from({ length: 5 }) as _}
+		<SidebarMenuItem><SidebarMenuSkeleton showIcon /></SidebarMenuItem>
+	{/each}
+</SidebarMenu>
+```
+
+## Theme
+
+The sidebar uses the `--sidebar`, `--sidebar-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, `--sidebar-border`, and `--sidebar-ring` tokens from the theme, so it can differ from the page.
+
+## Trigger
+
+`SidebarTrigger` renders a ghost icon button that expands and collapses the sidebar, or opens the drawer on mobile, and passes extra attributes to its `Button`. To toggle the sidebar from any other element, pass a `trigger` snippet. It receives `props` with `aria-label`, `aria-expanded`, and an `onclick` that toggles the sidebar. Spread them onto the element.
+
+```svelte title="+page.svelte"
+<SidebarTrigger>
+	{#snippet trigger({ props })}
+		<Button variant="outline" size="sm" {...props}>
+			<PanelLeftIcon />
+			Menu
+		</Button>
+	{/snippet}
+</SidebarTrigger>
+```
+
+## API
+
+`SidebarProvider`, `Sidebar`, and the layout parts extend the native `div` attributes, and `SidebarGroupLabel` extends the `button` attributes when it gets an `onclick`. `SidebarMenu` and `SidebarMenuSub` extend the `ul` attributes, their items the `li` attributes, and `SidebarInset` the `main` attributes.
+
+```ts title="index.ts"
+interface ProviderProps extends CompPropsWithChild<"div"> {
+	/** Whether the desktop sidebar is expanded; supports `bind:open` */
+	open?: boolean;
+	/** Called when the desktop sidebar expands or collapses */
+	onOpenChange?: (open: boolean) => void;
+	/** Width of the expanded sidebar; defaults to `16rem` */
+	width?: string;
+	/** Width of the sidebar collapsed to its icons; defaults to `3rem` */
+	iconWidth?: string;
+	/** Width of the mobile drawer; defaults to `18rem` */
+	mobileWidth?: string;
+	/** Toggles the sidebar with Cmd or Ctrl and this key; set `false` to turn it off; defaults to `b` */
+	shortcut?: string | false;
+}
+
+interface Props extends CompPropsWithChild<"div"> {
+	/** Edge the sidebar sits on; defaults to `left` */
+	side?: "left" | "right";
+	/** `sidebar` is flush with a border; `floating` is a rounded card; `inset` frames the main content; defaults to `sidebar` */
+	variant?: "sidebar" | "floating" | "inset";
+	/** `offcanvas` slides out of view; `icon` shrinks to the icons; `none` never collapses, such as a second panel, one inside another sidebar, or one in a popover or dialog; defaults to `offcanvas` */
+	collapsible?: "offcanvas" | "icon" | "none";
+	/** Space above the fixed desktop panel, such as the height of a sticky site header, so the panel starts below it; defaults to `0rem` */
+	offsetTop?: string;
+}
+
+type TriggerProps = ButtonAttrs & {
+	/** Custom trigger; spread `props` onto the element that toggles the sidebar */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+};
+
+interface MenuButtonBaseProps {
+	/** Highlights the button as the current page */
+	isActive?: boolean;
+	/** `default` is transparent; `outline` draws a border */
+	variant?: "default" | "outline";
+	/** Height and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Label shown in a tooltip while the sidebar is collapsed to icons */
+	tooltip?: string;
+	/** Shows `tooltip` even while the sidebar is expanded, such as in an icon-only rail */
+	showTooltip?: boolean;
+}
+
+/** Renders a `div`, or a `button` when `onclick` is set, such as a collapsible trigger */
+type GroupLabelProps = (CompPropsWithChild<"div"> & { onclick?: undefined }) | (CompPropsWithChild<"button"> & { onclick: MouseEventHandler<HTMLButtonElement> });
+```

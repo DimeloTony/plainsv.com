@@ -1,0 +1,146 @@
+---
+title: "Drizzle"
+description: "A Drizzle ORM client on Node's built-in node:sqlite, with a typed schema and drizzle-kit migrations."
+---
+
+# Drizzle
+
+The Drizzle utility sets up Drizzle ORM on SQLite with Node's built-in `node:sqlite` driver, so there is no native SQLite package to compile. You define tables in TypeScript in `schema.ts`, query them with a typed client, and create or change the tables with `drizzle-kit`. It lives in `src/lib/server/drizzle`, so SvelteKit keeps it out of the client bundle, and it backs the SQLite auth items.
+
+## Installation
+
+Install the item, then create the tables. It installs `drizzle-orm` and `drizzle-kit` from their `rc` release, which adds the `node:sqlite` driver, and it needs Node 22.13 or later.
+
+```pm
+npx remote0 add https://plainsv.com/r/drizzle.json
+```
+
+```pm
+npx drizzle-kit push --config=src/lib/server/drizzle/config.ts
+```
+
+The config lives next to the schema, so pass `--config` to every `drizzle-kit` command. Add these scripts to `package.json` to skip typing it.
+
+```json title="package.json"
+"scripts": {
+	"db:push": "drizzle-kit push --config=src/lib/server/drizzle/config.ts",
+	"db:generate": "drizzle-kit generate --config=src/lib/server/drizzle/config.ts",
+	"db:migrate": "drizzle-kit migrate --config=src/lib/server/drizzle/config.ts",
+	"db:studio": "drizzle-kit studio --config=src/lib/server/drizzle/config.ts"
+}
+```
+
+## Files
+
+The utility has three files, and only `schema.ts` needs editing day to day.
+
+- Define tables in `src/lib/server/drizzle/schema.ts`
+- Import `db` and `schema` from `src/lib/server/drizzle/index.ts`
+- Configure `drizzle-kit` in `src/lib/server/drizzle/config.ts`, whose paths resolve from the project root
+
+## Database file
+
+The database is the file at `DATABASE_URL`, or `db/db.sqlite` when it is unset, created on first use along with its folder. The client turns on write-ahead logging, so reads run while a write is in progress, and enforces foreign keys. Keep the fallback path the same in `index.ts` and `config.ts`, and add `db.sqlite*` to `.gitignore`.
+
+```sh title=".env"
+DATABASE_URL=db/db.sqlite
+```
+
+```ts title="src/lib/server/drizzle/index.ts"
+/** SQLite file path from the project root, read from `DATABASE_URL` with the same fallback as `config.ts` */
+export const DB_FILE = process.env.DATABASE_URL ?? "db/db.sqlite";
+```
+
+SQLite writes to a local file, so host the app on a server with a persistent disk, not a serverless platform.
+
+## Define a table
+
+Add a table to `schema.ts` with `sqliteTable`, then add it to `relations`. The schema ships with the `users` and `sessions` tables that auth uses, so keep both when you use auth.
+
+```ts title="src/lib/server/drizzle/schema.ts"
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const posts = sqliteTable("posts", {
+	id: text().primaryKey(),
+	title: text().notNull(),
+	createdAt: integer({ mode: "timestamp_ms" }).notNull(),
+});
+```
+
+## Change the tables
+
+Run `db:push` after you change `schema.ts` to apply the change straight to `db/db.sqlite`, which suits local development. For production, generate migration files, commit them, and apply them on deploy. Migrations go in `src/lib/server/drizzle/migrations`.
+
+```pm
+npm run db:push
+```
+
+```pm
+npm run db:generate
+```
+
+```pm
+npm run db:migrate
+```
+
+## Query
+
+Read rows with `db.query`, Drizzle's relational query API, in server code such as a `+page.server.ts` load function, a `+server.ts` endpoint, or a function handler. Filter with a plain `where` object, pick fields with `columns`, and load related rows with `with`. Results are typed from the schema.
+
+```ts title="src/routes/account/+page.server.ts"
+import { db } from "#lib/server/drizzle/index.js";
+
+export const load = async ({ locals }) => {
+	const user = await db.query.users.findFirst({ where: { id: locals.userData.id }, with: { sessions: true } });
+	return { email: user?.email, sessionCount: user?.sessions.length };
+};
+```
+
+Write rows with `db.insert`, `db.update`, and `db.delete`, since `db.query` only reads.
+
+```ts title="src/lib/server/posts.ts"
+import { eq } from "drizzle-orm";
+import { db, schema } from "#lib/server/drizzle/index.js";
+
+/** Renames a post */
+export const renamePost = (id: string, title: string) => db.update(schema.posts).set({ title }).where(eq(schema.posts.id, id));
+```
+
+## Relations
+
+Declare links between tables in `relations` at the bottom of `schema.ts`, and `db.query` can load them with `with`. Add a table to the `defineRelations` call when you create it, even with no links, so `db.query` knows about it.
+
+```ts title="src/lib/server/drizzle/schema.ts"
+export const relations = defineRelations({ users, sessions, posts }, (r) => ({
+	users: { sessions: r.many.sessions() },
+	sessions: { user: r.one.users({ from: r.sessions.userId, to: r.users.id }) },
+}));
+```
+
+## Raw SQL
+
+Use `db.$client` for anything Drizzle does not cover. It is the `DatabaseSync` instance from `node:sqlite`.
+
+```ts title="src/lib/server/drizzle/stats.ts"
+import { db } from "#lib/server/drizzle/index.js";
+
+/** Counts every user */
+export const countUsers = () => db.$client.prepare("SELECT count(*) AS total FROM users").get();
+```
+
+## Auth
+
+The SQLite auth items, `auth-google-sqlite` and `auth-github-sqlite`, install this utility and store users and sessions in its `users` and `sessions` tables. Run `db:push` once after installing them, so the tables exist before the first sign in.
+
+## API
+
+```ts title="src/lib/server/drizzle/index.ts"
+/** Drizzle client on Node's built-in `node:sqlite`, with `db.query` typed from the schema relations */
+const db: NodeSQLiteDatabase<typeof schema.relations> & { $client: DatabaseSync };
+
+/** Every table in `schema.ts`, plus `relations` */
+const schema: { users: SQLiteTable; sessions: SQLiteTable; relations: Relations };
+
+/** SQLite file path from the project root, read from `DATABASE_URL` with the same fallback as `config.ts` */
+const DB_FILE: string;
+```

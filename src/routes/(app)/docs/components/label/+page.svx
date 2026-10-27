@@ -1,0 +1,82 @@
+---
+title: "Label"
+description: "An accessible caption for a form control, with sizes, icons, and a dimmed disabled state."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Label
+
+Renders an accessible caption for a form control. Link it to a control with `for`, or wrap the control inside it. Styled with theme tokens like the shadcn label.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Label } from "#lib/components/ui/label/index.js";
+	import { Input } from "#lib/components/ui/input/index.js";
+</script>
+
+<Label for="email">Email</Label>
+<Input id="email" type="email" placeholder="m@example.com" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/label.json
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`. Every size uses `--text-sm` except `xs`, which uses `--text-xs`, so the label can match a control of the same size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Label size="xs" for="name">Name</Label>
+<Input size="xs" id="name" />
+```
+
+## Icons
+
+Place an icon before or after the text. Icons scale with the label text.
+
+<Demo section="icons" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Label } from "#lib/components/ui/label/index.js";
+	import { MailIcon } from "@lucide/svelte";
+</script>
+
+<Label for="email"><MailIcon />Email</Label>
+```
+
+## Disabled
+
+The label dims and shows a not-allowed cursor when it wraps a disabled control, comes after a disabled sibling control, or sits inside an element with `data-disabled="true"`.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<Input id="email" disabled />
+<Label for="email">Email</Label>
+
+<Label><input type="checkbox" disabled />Remember me</Label>
+```
+
+## API
+
+The `Label` props extend the native `label` attributes, such as `for`.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"label"> {
+	/** Text size on the shared scale */
+	size?: UiSize;
+	/** Classes merged onto the label */
+	class?: CompPropsWithChild<"label">["class"];
+}
+```

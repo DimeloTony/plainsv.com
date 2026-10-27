@@ -1,0 +1,85 @@
+---
+title: "Spinner"
+description: "A spinning indicator that shows something is loading, with variants and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Spinner
+
+Shows that something is loading when you cannot tell how long it will take. For a known amount of progress, use `Progress` instead. The root sets `role="status"` and is named "Loading" for screen readers.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Spinner } from "#lib/components/ui/spinner/index.js";
+</script>
+
+<Spinner />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/spinner.json
+```
+
+## Label
+
+Set `aria-label` to describe what is loading, such as `aria-label="Loading results"`. The spinning circle itself is hidden from screen readers.
+
+```svelte title="+page.svelte"
+<Spinner aria-label="Loading results" />
+```
+
+## Button
+
+Place a spinner before the label of a disabled button while an action runs. The default variant follows the surrounding text color, so it matches every button variant. Use `size="sm"` in small buttons and `size="xs"` in extra small ones.
+
+<Demo section="button" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Spinner } from "#lib/components/ui/spinner/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Button disabled><Spinner />Saving</Button>
+<Button size="sm" variant="secondary" disabled><Spinner size="sm" />Processing</Button>
+```
+
+## Variants
+
+Set `variant` to `default` or `destructive`. To use another color, set `color` on the spinner or its parent.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Spinner variant="destructive" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Spinner size="lg" />
+```
+
+## API
+
+The `Spinner` props extend the native `span` attributes, and extra attributes pass through to the root. When the user prefers reduced motion, the spinner turns more slowly instead of stopping.
+
+```ts title="index.ts"
+interface Props extends CompProps<"span"> {
+	/** Color of the spinner; `default` follows the surrounding text color */
+	variant?: "default" | "destructive";
+	/** Spinner size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+```

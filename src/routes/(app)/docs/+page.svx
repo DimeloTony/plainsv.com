@@ -1,0 +1,262 @@
+---
+title: "Get Started"
+description: "Create a SvelteKit app with PlainSv in one command, or add its styles and types to an existing project, then copy in Svelte 5 components, utilities, and plugins that need few external packages."
+---
+
+# PlainSv
+
+PlainSv is a collection of accessible Svelte 5 components that follow the shadcn design, written the Svelte way. Each component keeps its state in runes, its styles in a scoped `<style>` block, and builds on native elements such as `dialog` where the browser already does the work, with no Tailwind, no PostCSS setup, and no headless UI library underneath. Alongside the components, PlainSv ships [utilities](/docs/utilities) for the rest of a Svelte app, such as CSS effects, typed server functions, and Vite plugins for Markdown pages and icon imports. PlainSv is not a package you install from npm: each item's source is copied into your project with the `remote0` CLI, so you own the code and can change anything you need.
+
+## Two ways to start
+
+Start a new app with an `init` item, which creates the whole SvelteKit project in an empty folder, so you do not need to run `sv create` first. To use PlainSv in a SvelteKit project you already have, follow the existing project steps at the bottom of this page.
+
+## Create a project
+
+Create an empty folder for your app. Replace `project-name` with the name of your project.
+
+```bash title="Terminal"
+mkdir project-name && cd project-name
+```
+
+The `remote0` CLI picks the package manager from the lock file in the folder, and uses npm when there is none. To install with Bun, create an empty `bun.lock` before you add the `init` item.
+
+```bash title="Terminal"
+touch bun.lock
+```
+
+Then add the `init` item.
+
+```pm
+npx remote0 add https://plainsv.com/r/init.json
+```
+
+The `init` item writes every file a SvelteKit project needs and installs its packages:
+
+- Write `package.json`, `tsconfig.json`, `src/app.html`, `.gitignore`, `.npmrc`, `.prettierrc`, and VS Code settings
+- Install the `styles` item and the global types in `src/app.d.ts`
+- Add the root layout with the theme toggle and toasts, the app context, and the page meta
+- Add a home page at `src/routes/+page.svelte` and a Markdown about page at `src/routes/(typeset)/about/+page.svx`
+- Add the `dev-plugin` and `svx-plugin-simple` Vite plugins in `vite.config.ts`
+- Add `CLAUDE.md` with the PlainSv conventions for AI coding agents
+
+## Pick a host
+
+The `init` item uses `@sveltejs/adapter-auto`, which detects supported hosts such as Vercel, Netlify, and Cloudflare at build time. To target one host, add one of these items instead of `init`. Each one installs the same app with the matching adapter.
+
+- Use `init-node` for a Node server that runs `node build`
+- Use `init-bun` for a Bun server, which adds `bunfig.toml` so `bun run build` runs on Bun as the adapter requires
+- Use `init-vercel` for Vercel functions
+- Use `init-cloudflare` for Cloudflare Workers, which adds `wrangler.jsonc`, Wrangler scripts, and platform types, then run `bun run gen` to generate `worker-configuration.d.ts`
+- Use `init-static` for a static site that is prerendered at build time
+
+```pm
+npx remote0 add https://plainsv.com/r/init-node.json
+```
+
+## Run the app
+
+Start the dev server, then open `http://localhost:5173` to see the home page and `/about` to see the Markdown page.
+
+```pm
+npm run dev
+```
+
+## Make it yours
+
+Every `init` item ships with placeholder content. Replace it with your own before you deploy.
+
+Update `src/lib/data/app.ts` with your app's name, title, and description. The page meta and the starter pages read these values. Update the same name and description in `static/manifest.json` for the web app manifest, and the `name` field in `package.json`.
+
+```ts title="src/lib/data/app.ts"
+/** App core data */
+export const appData = {
+	name: "Acme",
+	title: "Acme, the app that does it all",
+	description: "A short sentence that describes your app.",
+};
+```
+
+Replace the images in `static/images` with your own and keep the same file names: `favicon.svg`, `apple-icon.png`, `manifest-192.png`, `manifest-512.png`, and `og.png`. The page meta uses the favicon, the Apple icon, and the Open Graph image, and the web app manifest uses the two manifest icons. Then swap the SVG in `src/lib/components/shared/logo.svelte` for your own logo.
+
+Set `DOMAIN_URL` in `.env.production` to the URL where your app will run. The `.env` file keeps `http://localhost:3000` for local development. A server build will not start without `DOMAIN_URL`, so also set it as an environment variable on your host, or under `vars` in `wrangler.jsonc` for Cloudflare.
+
+```bash title=".env.production"
+DOMAIN_URL="https://acme.com"
+```
+
+## Installation
+
+Add a component with the `remote0` CLI and its registry URL. The source files are copied into your project at the same paths they have here.
+
+```pm
+npx remote0 add https://plainsv.com/r/button.json
+```
+
+Replace `button` with the component name, which matches the last part of its docs URL, such as `card` or `dropdown-menu`. Components that build on other components install those too. Components expect the global types and the styles, which every `init` item installs. In an existing project, add the `init-existing` item before your first component.
+
+## Theme
+
+Components read their colors, radii, spacing, and font sizes from the CSS variables in `src/styles/theme.css`, which the `styles` item installs. The global `src/styles/app.css` imports the theme, and the root layout imports `app.css` once so every page has the tokens.
+
+```css title="src/styles/app.css"
+@import "./theme.css";
+@import "./utils.css";
+```
+
+The theme defines a light palette on `:root` and a dark palette that applies when the `dark` class is set. Override any token to restyle every component at once.
+
+```css title="src/styles/theme.css"
+:root {
+	--radius: 0.625rem;
+	--primary: oklch(0.205 0 0);
+	--primary-foreground: oklch(0.985 0 0);
+}
+```
+
+## CSS utilities
+
+A few components, such as `ai-action` and `prompt-input`, use the `shimmer` and `scroll-fade` classes from `src/styles/utils.css`. The `styles` item installs the file, and `app.css` imports it after the theme so the classes work on every page.
+
+```svelte title="+page.svelte"
+<span class="shimmer">Generating response...</span>
+
+<ul class="list scroll-fade-y">
+	<!-- Long list -->
+</ul>
+```
+
+Read more about the classes and their variables on the [CSS utilities page](/docs/utilities/css).
+
+## Global types
+
+Components share the `UiSize` and `UiRounded` types, the `Snippet` and `Component` types, and the `CompProps` helpers that type props from an HTML element. Every `init` item and the `init-existing` item declare them globally in `src/app.d.ts`, so components can use them without imports.
+
+```ts title="src/app.d.ts"
+import type { Snippet as SvSnippet, Component as SvComponent, ComponentProps as SvComponentProps } from "svelte";
+import type { SvelteHTMLElements } from "svelte/elements";
+
+declare global {
+	type Snippet<T extends unknown[] = []> = SvSnippet<T>;
+	type Component = SvComponent;
+	type ComponentProps<T> = SvComponentProps<T>;
+	type CompAttrs<TagName extends keyof HTMLElementTagNameMap> = Omit<SvelteHTMLElements[TagName], `on${string}` | `bind:${string}` | "children">;
+	type CompEvents<TagName extends keyof HTMLElementTagNameMap> = { [K in keyof HTMLElementTagNameMap[TagName] as K extends `on${string}` ? K : never]?: (e: any) => any };
+	type CompProps<TagName extends keyof HTMLElementTagNameMap> = CompAttrs<TagName> & CompEvents<TagName>;
+	type CompPropsWithChild<TagName extends keyof HTMLElementTagNameMap> = CompProps<TagName> & { children: SvSnippet };
+	type CompPropsWithChildSimple<ExtraT> = { children: SvSnippet } & ExtraT;
+	type UiSize = "xs" | "sm" | "md" | "lg";
+	type UiRounded = "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "pill";
+}
+
+export {};
+```
+
+## Using a component
+
+Each component lives in its own folder with a `_.svelte` file and an `index.ts` file that exports the component and its props type. Import components from the folder's `index.js`.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Button>Sign in</Button>
+```
+
+## Sizes and corners
+
+Sized components accept `size` and `rounded` props. When `rounded` is omitted, the corner radius follows the size.
+
+```svelte title="+page.svelte"
+<Button size="sm">Small</Button>
+<Button size="lg" rounded="pill">Large pill</Button>
+```
+
+## Variants
+
+Components that have visual styles accept a `variant` prop with the shadcn names `default`, `secondary`, `outline`, `ghost`, `destructive`, and `link`.
+
+```svelte title="+page.svelte"
+<Button variant="outline">Cancel</Button>
+<Button variant="destructive">Delete</Button>
+```
+
+## Styling
+
+Components pass extra attributes through to the root element, so the recommended way to override one is the `style` attribute. They also render their props as `data-variant`, `data-size`, and `data-rounded` attributes on the root element.
+
+```svelte title="+page.svelte"
+<Button style="margin-top: 1rem">Save</Button>
+```
+
+Read more about inline styles, theme tokens, other ways to override, and new variants on the [styling page](/docs/styling).
+
+## Server functions
+
+Add type-safe server functions with the `functions` item. Define a function's input and output with Zod in `src/lib/functions/schemas.ts`, export a handler with the same name from `src/lib/functions/handlers`, and call it from the client with `useFunc`.
+
+```pm
+npx remote0 add https://plainsv.com/r/functions.json
+```
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { useFunc } from "#lib/functions/index.js";
+
+	const response = await useFunc("userCreate", { email: "ada@example.com" });
+</script>
+```
+
+Read more about validation, private functions, uploads, and streaming on the [functions page](/docs/utilities/functions). The [utilities page](/docs/utilities) also covers the Vite plugins that compile `.svx` pages and speed up icon imports.
+
+## Browse components
+
+Browse every component and its demos on the [components page](/docs/components), and see them working together in full-screen apps on the [examples page](/examples).
+
+## For LLMs
+
+Every component page is also available as plain Markdown by adding `.md` to its URL, such as `/docs/components/button.md`. The [llms.txt](/llms.txt) file lists them all.
+
+## Existing project
+
+To use PlainSv in a SvelteKit project you already have, add the `init-existing` item. It installs the `styles` item in `src/styles` and the global types in `src/app.d.ts`, which is all components need. It replaces your `src/app.d.ts`, so copy any types you added there back in afterward.
+
+```pm
+npx remote0 add https://plainsv.com/r/init-existing.json
+```
+
+## Import styles
+
+Import `app.css` once in your root layout so every page has the theme tokens. It imports `theme.css` and `utils.css` for you. Components render without color, spacing, or radius until these styles load.
+
+```svelte title="src/routes/+layout.svelte"
+<script lang="ts">
+	import "../styles/app.css";
+
+	let { children } = $props();
+</script>
+
+{@render children()}
+```
+
+## Import alias
+
+Registry files import each other through the `#lib` alias instead of `$lib`. Projects created with `sv create` already have it. Otherwise, add it to the `imports` field of your `package.json`.
+
+```json title="package.json"
+{
+	"imports": {
+		"#lib": "./src/lib/index.js",
+		"#lib/*": "./src/lib/*"
+	}
+}
+```
+
+## Add components
+
+After the styles, types, and alias are in place, add any component with `remote0` as shown in the installation section above.
+
+```pm
+npx remote0 add https://plainsv.com/r/button.json
+```

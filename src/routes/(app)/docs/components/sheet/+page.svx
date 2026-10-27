@@ -1,0 +1,238 @@
+---
+title: "Sheet"
+description: "A panel that slides in from an edge of the screen, built on the native dialog element."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Sheet
+
+A panel docked to one edge of the viewport over a blurred backdrop. Built on the native `dialog` element with `showModal`, so it renders in the top layer above every ancestor. Clicking the backdrop, pressing Escape, or using the corner close button closes it, and the panel slides out as the backdrop fades.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "#lib/components/ui/sheet/index.js";
+</script>
+
+<Sheet>
+	<SheetTrigger>Open</SheetTrigger>
+	<SheetContent>
+		<SheetHeader>
+			<SheetTitle>Are you absolutely sure?</SheetTitle>
+			<SheetDescription>This action cannot be undone.</SheetDescription>
+		</SheetHeader>
+	</SheetContent>
+</Sheet>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/sheet.json
+```
+
+## Anatomy
+
+`Sheet` holds the open state and renders the modal `dialog` element and its panel while open. `SheetTrigger` opens it and renders a `Button` with its children as the label. `SheetContent` registers its children with `Sheet`, which renders them inside the panel.
+
+Inside the content, `SheetHeader` groups a `SheetTitle` and a `SheetDescription`. The title labels the sheet and the description describes it for assistive technology. `SheetFooter` sits at the end of the panel for actions, and `SheetClose` closes the sheet.
+
+## Trigger
+
+To open the sheet from any other element, pass a `trigger` snippet to `SheetTrigger`. It receives `props` with an `onclick` that opens the sheet. Spread them onto the element, such as a link styled button or an icon.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<Sheet>
+	<SheetTrigger>
+		{#snippet trigger({ props })}
+			<button type="button" {...props}>Open with a custom trigger</button>
+		{/snippet}
+	</SheetTrigger>
+	<SheetContent>
+		<SheetHeader>
+			<SheetTitle>Custom trigger</SheetTitle>
+			<SheetDescription>The trigger snippet receives the props that open the sheet.</SheetDescription>
+		</SheetHeader>
+	</SheetContent>
+</Sheet>
+```
+
+## Close
+
+`SheetClose` renders an outline `Button` that closes the sheet. It takes the same `trigger` snippet as `SheetTrigger`, so any element can close the sheet. Set `closeButton={false}` on `Sheet` to hide the corner close button.
+
+<Demo section="close" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from "#lib/components/ui/sheet/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Sheet>
+	<SheetTrigger>Edit profile</SheetTrigger>
+	<SheetContent>
+		<SheetHeader>
+			<SheetTitle>Edit profile</SheetTitle>
+			<SheetDescription>Make changes to your profile here. Click save when you are done.</SheetDescription>
+		</SheetHeader>
+		<SheetFooter>
+			<SheetClose>
+				{#snippet trigger({ props })}
+					<Button {...props}>Save changes</Button>
+				{/snippet}
+			</SheetClose>
+			<SheetClose>Cancel</SheetClose>
+		</SheetFooter>
+	</SheetContent>
+</Sheet>
+```
+
+## Controlled
+
+Use `bind:open` to open or close the sheet from your own code. The binding updates in both directions, so closing the sheet from the backdrop, Escape, or a close button sets the variable back to `false`. A trigger is optional.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "#lib/components/ui/sheet/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let isOpen = $state(false);
+</script>
+
+<Button variant="outline" onclick={() => (isOpen = true)}>Open from outside</Button>
+
+<Sheet bind:open={isOpen}>
+	<SheetContent>
+		<SheetHeader>
+			<SheetTitle>Controlled</SheetTitle>
+		</SheetHeader>
+		<SheetFooter>
+			<Button onclick={() => (isOpen = false)}>Done</Button>
+		</SheetFooter>
+	</SheetContent>
+</Sheet>
+```
+
+## Side
+
+Set `side` on `Sheet` to `top`, `right`, `bottom`, or `left` to choose the edge the panel slides in from. It defaults to `right`. Side panels fill the height up to `24rem` wide at the default size, and top and bottom panels fill the width and size to their content.
+
+<Demo section="side" />
+
+```svelte title="+page.svelte"
+<Sheet side="left">
+	<SheetTrigger>Open</SheetTrigger>
+	<SheetContent>Left panel</SheetContent>
+</Sheet>
+```
+
+## Variant
+
+Set `variant` on `Sheet` to `default`, `secondary`, or `outline` to change the panel.
+
+<Demo section="variant" />
+
+```svelte title="+page.svelte"
+<Sheet variant="secondary">
+	<SheetTrigger>Open</SheetTrigger>
+	<SheetContent>Secondary panel</SheetContent>
+</Sheet>
+```
+
+## Size
+
+Set `size` on `Sheet` to `xs`, `sm`, `md`, or `lg` to change the panel's padding and gap, and the width of side panels from `16rem` to `32rem`. It defaults to `md`, and `xs` also shrinks the text. Unlike other sized components, the panel stays square until `rounded` is set.
+
+<Demo section="size" />
+
+```svelte title="+page.svelte"
+<Sheet size="lg">
+	<SheetTrigger>Open</SheetTrigger>
+	<SheetContent>Wider and roomier.</SheetContent>
+</Sheet>
+```
+
+## Rounded
+
+The panel is square by default. Set `rounded` on `Sheet` to `xs` through `4xl` or `pill` to round the two corners facing the page, such as the top corners of a bottom sheet. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Sheet side="bottom" rounded="lg">
+	<SheetTrigger>Open</SheetTrigger>
+	<SheetContent>Rounded lg</SheetContent>
+</Sheet>
+```
+
+## Overrides
+
+The default `SheetTrigger` and `SheetClose` buttons take `variant`, `size`, `rounded`, and `class`, so you can restyle them without a `trigger` snippet.
+
+```svelte title="+page.svelte"
+<SheetTrigger variant="outline" size="sm">Open</SheetTrigger>
+<SheetClose variant="ghost" rounded="pill">Cancel</SheetClose>
+```
+
+## API
+
+`Sheet` extends the native `dialog` attributes, and extra attributes pass through to the dialog. `SheetHeader`, `SheetTitle`, `SheetDescription`, and `SheetFooter` extend the `header`, `h2`, `p`, and `footer` attributes.
+
+```ts title="index.ts"
+interface TriggerProps {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the sheet */
+	trigger?: Snippet<[{ props: { onclick: () => void } }]>;
+	/** Style of the default trigger button; defaults to `default` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default trigger button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default trigger button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface CloseProps {
+	/** Label for the default close button */
+	children?: Snippet;
+	/** Custom close trigger; spread `props` onto the element that closes the sheet */
+	trigger?: Snippet<[{ props: { onclick: () => void } }]>;
+	/** Style of the default close button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default close button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default close button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface ContentProps {
+	/** Content rendered inside the sheet panel */
+	children: Snippet;
+}
+
+interface Props extends CompProps<"dialog"> {
+	/** Whether the sheet is shown; supports `bind:open` */
+	open?: boolean;
+	/** Edge of the viewport the panel slides in from; defaults to `right` */
+	side?: "top" | "right" | "bottom" | "left";
+	/** Visual style of the panel */
+	variant?: "default" | "secondary" | "outline";
+	/** Panel padding, gap, and side panel width on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Radius of the panel's two inner corners; square when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** Whether to show the close button in the panel corner; defaults to `true` */
+	closeButton?: boolean;
+	/** The `SheetTrigger` and `SheetContent` parts */
+	children: Snippet;
+}
+```

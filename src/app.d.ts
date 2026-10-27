@@ -1,0 +1,44 @@
+import type { Snippet as SvSnippet, Component as SvComponent, ComponentProps as SvComponentProps } from "svelte";
+import type { SvelteHTMLElements } from "svelte/elements";
+
+type PrivateEnv = typeof import("$app/env/private");
+type PublicEnv = typeof import("$app/env/public");
+
+// See https://svelte.dev/docs/kit/types#app.d.ts
+// for information about these interfaces
+declare global {
+	// Overwrite nodeJs process env variables types
+	namespace NodeJS {
+		interface Dict<T extends PrivateEnv, PublicEnv> {
+			[key: string]: T | undefined;
+		}
+		interface ProcessEnv extends PrivateEnv, PublicEnv {
+			NODE_ENV: "development" | "production";
+		}
+	}
+	// App types
+	namespace App {
+		// interface Error {}
+		interface Locals {
+			userData?: any;
+			sessionData?: any;
+			isDarkMode: boolean;
+		}
+		// interface PageData {}
+		// interface PageState {}
+		// interface Platform {}
+	}
+	// Types
+	type Snippet<T extends unknown[] = []> = SvSnippet<T>;
+	type Component = SvComponent;
+	type ComponentProps<T> = SvComponentProps<T>;
+	type CompAttrs<TagName extends keyof HTMLElementTagNameMap> = Omit<SvelteHTMLElements[TagName], `on${string}` | `bind:${string}` | "children">;
+	type CompEvents<TagName extends keyof HTMLElementTagNameMap> = { [K in keyof HTMLElementTagNameMap[TagName] as K extends `on${string}` ? K : never]?: (e: any) => any };
+	type CompProps<TagName extends keyof HTMLElementTagNameMap> = CompAttrs<TagName> & CompEvents<TagName>;
+	type CompPropsWithChild<TagName extends keyof HTMLElementTagNameMap> = CompProps<TagName> & { children: SvSnippet };
+	type CompPropsWithChildSimple<ExtraT> = { children: SvSnippet } & ExtraT;
+	type UiSize = "xs" | "sm" | "md" | "lg";
+	type UiRounded = "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "pill";
+}
+
+export {};

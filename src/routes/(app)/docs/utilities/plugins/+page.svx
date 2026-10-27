@@ -1,0 +1,158 @@
+---
+title: "Plugins"
+description: "Vite plugins that compile Markdown .svx pages, optimize icon imports, and generate src/env.ts from .env."
+---
+
+# Plugins
+
+Two Vite plugins run before the SvelteKit plugin in `vite.config.ts`. The `svxPlugin` compiles `.svx` pages, so add `.svx` to the SvelteKit `extensions`. Both live in `src/lib/server/plugins`, since they only run in Node and never reach the client bundle.
+
+```ts title="vite.config.ts"
+import devPlugin from "#lib/server/plugins/dev/index.js";
+import svxPlugin from "#lib/server/plugins/svx/index.js";
+import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+	plugins: [devPlugin(), svxPlugin(), sveltekit({ extensions: [".svelte", ".svx"] })],
+});
+```
+
+## Installation
+
+The `init` item installs both plugins. Install one on its own with its item.
+
+```pm
+npx remote0 add https://plainsv.com/r/svx-plugin.json
+```
+
+```pm
+npx remote0 add https://plainsv.com/r/dev-plugin.json
+```
+
+Install `svx-plugin-simple` instead of `svx-plugin` to compile `.svx` pages without the `CodeBlock` and `PackageCommand` components.
+
+```pm
+npx remote0 add https://plainsv.com/r/svx-plugin-simple.json
+```
+
+## SVX pages
+
+The `svxPlugin` in `src/lib/server/plugins/svx` turns a `+page.svx` file in `src/routes` into a Svelte page. Start the file with a frontmatter block, and the plugin renders a `PageMeta` tag from its `title` and `description`. The rest is Markdown, parsed with `marked`.
+
+```markdown title="+page.svx"
+---
+title: "Guide"
+description: "A short guide written in Markdown."
+---
+
+<script lang="ts">
+	import Counter from "./counter.svelte";
+</script>
+
+# Guide
+
+Write paragraphs, headings, and inline `code` as Markdown.
+
+<Counter start={1} />
+```
+
+Fenced code blocks render with the `CodeBlock` component and Shiki highlighting. Set the language after the fence, and add `title="file.ts"` to show a file name in the header, which also picks the language from its extension. Add line numbers in braces, such as `ts {1,3-5}`, to highlight those lines. A line that starts with a capitalized tag, such as `<Counter />`, renders as a Svelte component, so import it in the page's `script` block. A `style` block is kept as the page's scoped styles.
+
+A `pm` fence holds one npm command and renders the `PackageCommand` component, with a tab for pnpm, bun, npm, and Yarn, in that order. Write the command as `npx`, `npm install <package>`, `npm install -D <package>`, `npm install`, `npm run`, or `npm create`, and the other tabs are built from it. Write `--` before script flags, such as `npm run deploy -- --port 8000`, and the other tabs leave it out. Bun commands such as `bunx` still work, so older pages keep their tabs. Every `pm` block shares the `plainsv-package-manager` storage key, so the reader's choice carries across pages. A `pm` fence with any other command renders as a `bash` code block.
+
+````markdown title="+page.svx"
+```pm
+npx remote0 add https://plainsv.com/r/button.json
+```
+````
+
+Every docs page on this site, including this one, is an `.svx` page.
+
+## Simple SVX pages
+
+The `svxPluginSimple` in `src/lib/server/plugins/svx/simple.ts` compiles `+page.svx` files the same way, with frontmatter, `PageMeta`, Svelte components, and a scoped `style` block, but renders every fenced code block, including `pm` fences, as a plain `<pre><code>` element from `marked`. Use it when a project wants Markdown pages without the `CodeBlock` and `PackageCommand` components, and style the code blocks in the page or app styles. Add it to `vite.config.ts` in place of `svxPlugin`.
+
+```ts title="vite.config.ts"
+import svxPluginSimple from "#lib/server/plugins/svx/simple.js";
+import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+	plugins: [svxPluginSimple(), sveltekit({ extensions: [".svelte", ".svx"] })],
+});
+```
+
+## Markdown routes
+
+Read a page's frontmatter and Markdown on the server with `getFileData` from `src/lib/server/plugins/svx/utils.ts`. This site uses it to serve every docs page as plain Markdown at the same path with a `.md` extension, such as `/docs/utilities/plugins.md`.
+
+```ts title="src/routes/docs.md/+server.ts"
+import fs from "node:fs/promises";
+import { getFileData } from "#lib/server/plugins/svx/utils.js";
+
+/** Serves the docs page as plain Markdown */
+export const GET = async () => {
+	const { markdown } = getFileData((await fs.readFile("src/routes/docs/+page.svx")).toString());
+	return new Response(markdown);
+};
+```
+
+## Dev plugin
+
+The `devPlugin` in `src/lib/server/plugins/dev` rewrites barrel imports from `@lucide/svelte` and `@tabler/icons-svelte` into one import per icon file, so Vite does not load every icon in the library during development. Keep importing icons the usual way, and the plugin handles the rest.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	// Rewritten to import only the two icon files.
+	import { HomeIcon, UserIcon } from "@lucide/svelte";
+	import { IconBrandGithub } from "@tabler/icons-svelte";
+</script>
+```
+
+## Env file
+
+The `devPlugin` also writes `src/env.ts` from the variable names in `.env` when the dev server or a build starts, and again whenever `.env` changes during development. Names that start with `PUBLIC_` are marked as public.
+
+```ts title="src/env.ts"
+import { defineEnvVars } from "@sveltejs/kit/env";
+export const variables = defineEnvVars({
+	DOMAIN_URL: {},
+});
+```
+
+## Replace strings
+
+Pass `replace` to swap plain strings in `src/routes` files while the dev server runs, such as pointing production links at a local URL. Builds leave the files unchanged.
+
+```ts title="vite.config.ts"
+devPlugin({ replace: { "https://plainsv.com/r/": `${process.env.DOMAIN_URL}/r/` } });
+```
+
+## API
+
+```ts title="src/lib/server/plugins/dev/index.ts"
+/** Optimizes icon imports, writes src/env.ts, and replaces strings in routes during development */
+function devPlugin(options?: DevPluginOptions): Plugin;
+
+/** Options for the dev plugin */
+interface DevPluginOptions {
+	/** Plain strings to replace in route files while the dev server runs */
+	replace?: Record<string, string>;
+}
+```
+
+```ts title="src/lib/server/plugins/svx/index.ts"
+/** Compiles .svx pages in src/routes into Svelte pages */
+function svxPlugin(): Plugin;
+```
+
+```ts title="src/lib/server/plugins/svx/simple.ts"
+/** Compiles .svx pages in src/routes into Svelte pages with plain HTML code blocks */
+function svxPluginSimple(): Plugin;
+```
+
+```ts title="src/lib/server/plugins/svx/utils.ts"
+/** Returns the frontmatter, script, style, and Markdown of an .svx file */
+function getFileData(fileData: string): { frontmatter: Record<string, string>; scriptData: string; styleData: string; markdown: string };
+```

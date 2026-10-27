@@ -1,0 +1,57 @@
+{
+	"name": "plainsv.com",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"homepage": "https://plainsv.com",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/DimeloTony/plainsv.com.git"
+	},
+	"bugs": "https://github.com/DimeloTony/plainsv.com/issues",
+	"packageManager": "pnpm@12.15.0",
+	"scripts": {
+		"dev": "node --env-file-if-exists=.env ./node_modules/vite/bin/vite.js --port 5173",
+		"build": "pn run registry && node --env-file-if-exists=.env ./node_modules/vite/bin/vite.js build",
+		"preview": "node --env-file-if-exists=.env --env-file-if-exists=.env.production ./node_modules/vite/bin/vite.js preview --port 5173",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"registry": "rm -rf static/r && pnx remote0@latest build",
+		"deploy": "node src/lib/server/deploy/index.ts",
+		"db:push": "drizzle-kit push --config=src/lib/server/drizzle/config.ts",
+		"db:generate": "drizzle-kit generate --config=src/lib/server/drizzle/config.ts",
+		"db:migrate": "drizzle-kit migrate --config=src/lib/server/drizzle/config.ts",
+		"db:studio": "drizzle-kit studio --config=src/lib/server/drizzle/config.ts"
+	},
+	"devDependencies": {
+		"@fontsource-variable/geist": "^5.3.0",
+		"@lucide/svelte": "^1.59.0",
+		"@sveltejs/adapter-node": "^6.0.0",
+		"@sveltejs/kit": "^3.0.0",
+		"@sveltejs/vite-plugin-svelte": "^7.2.0",
+		"@tabler/icons-svelte": "^3.49.0",
+		"@types/node": "^26.6.5",
+		"drizzle-kit": "^1.0.0-rc.5",
+		"magic-string": "^1.4.3",
+		"prettier-plugin-css-order": "^2.2.0",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte": "^5.57.1",
+		"svelte-check": "^4.6.0",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.0"
+	},
+	"imports": {
+		"#lib": "./src/lib/index.js",
+		"#lib/*": "./src/lib/*"
+	},
+	"dependencies": {
+		"@shikijs/langs": "^4.5.0",
+		"@shikijs/themes": "^4.5.0",
+		"drizzle-orm": "^1.0.0-rc.5",
+		"marked": "^18.1.1",
+		"mongodb": "^7.7.0",
+		"shiki": "^4.5.0",
+		"zod": "^4.6.7"
+	}
+}

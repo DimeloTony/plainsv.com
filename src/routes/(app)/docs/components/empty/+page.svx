@@ -1,0 +1,93 @@
+---
+title: "Empty"
+description: "An empty state with media, a title, a description, and actions, with an outline variant and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Empty
+
+Shows an empty state, such as a list with no items or a search with no results. Compose it from `Empty`, `EmptyHeader`, `EmptyMedia`, `EmptyTitle`, `EmptyDescription`, and `EmptyContent`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "#lib/components/ui/empty/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { FolderCodeIcon } from "@lucide/svelte";
+</script>
+
+<Empty>
+	<EmptyHeader>
+		<EmptyMedia variant="icon"><FolderCodeIcon /></EmptyMedia>
+		<EmptyTitle>No projects yet</EmptyTitle>
+		<EmptyDescription>Get started by creating your first project.</EmptyDescription>
+	</EmptyHeader>
+	<EmptyContent>
+		<Button>Create project</Button>
+	</EmptyContent>
+</Empty>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/empty.json
+```
+
+## Anatomy
+
+`Empty` centers its parts in a column and fills the room of its container. `EmptyHeader` holds the media, the `h3` title, and the muted description in a readable width. `EmptyMedia` shows an image or avatar as is, or puts an icon on a muted square with `variant="icon"`. `EmptyContent` holds actions, such as buttons or a search input. Links in the description are underlined.
+
+## Outline
+
+Set `variant="outline"` to draw a dashed border, such as around an upload area.
+
+<Demo section="outline" />
+
+```svelte title="+page.svelte"
+<Empty variant="outline">...</Empty>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `lg`, like the shadcn empty state, and the padding, gaps, text size, and corner radius follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Empty variant="outline" size="sm">...</Empty>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the outline that follows `size`. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Empty variant="outline" rounded="sm">...</Empty>
+```
+
+## API
+
+`Empty`, `EmptyMedia`, and `EmptyContent` extend the native `div` attributes. `EmptyHeader`, `EmptyTitle`, and `EmptyDescription` extend the `header`, `h3`, and `p` attributes.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** `default` has no border; `outline` draws a dashed border */
+	variant?: "default" | "outline";
+	/** Padding, gap, and text size on the shared scale; defaults to `lg` */
+	size?: UiSize;
+	/** Corner radius of the outline; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+
+interface MediaProps extends CompPropsWithChild<"div"> {
+	/** `default` shows the media as is; `icon` puts an icon on a muted square */
+	variant?: "default" | "icon";
+}
+```

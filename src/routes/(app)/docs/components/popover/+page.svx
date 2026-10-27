@@ -1,0 +1,219 @@
+---
+title: "Popover"
+description: "Rich content in a panel opened from a button, with a header, keyboard and focus support, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Popover
+
+Shows rich content, such as a short form or details, in a panel beside a trigger. Compose it from `Popover`, `PopoverTrigger`, and `PopoverContent`, and add a heading with `PopoverHeader`, `PopoverTitle`, and `PopoverDescription`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle, PopoverDescription } from "#lib/components/ui/popover/index.js";
+</script>
+
+<Popover>
+	<PopoverTrigger>Open Popover</PopoverTrigger>
+	<PopoverContent>
+		<PopoverHeader>
+			<PopoverTitle>Title</PopoverTitle>
+			<PopoverDescription>Description text here.</PopoverDescription>
+		</PopoverHeader>
+	</PopoverContent>
+</Popover>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/popover.json
+```
+
+## Anatomy
+
+`Popover` holds the open state and the style settings, and renders no element of its own. `PopoverTrigger` renders an outline `Button` that toggles the popover. `PopoverContent` renders a non-modal `role="dialog"` panel beside the trigger and stacks its children with a gap. `PopoverHeader` groups a `PopoverTitle` and a `PopoverDescription`, which name and describe the panel for assistive technology. Without a title, the trigger names it.
+
+The panel opens in the top layer with the native popover API, so no ancestor's `overflow` or `z-index` can clip it. It flips to the other side of the trigger when there is not enough room, shifts to stay inside the viewport, and scrolls when it is taller than the space available.
+
+## Focus
+
+Opening the popover focuses its first control, or the panel itself when it has none. Tab moves through the controls in the panel and then on to the page, which closes the popover. Escape and clicking outside also close it, and return focus to the trigger when it was in the panel.
+
+## Form
+
+Place form controls after the header. The first control takes focus when the popover opens.
+
+<Demo section="form" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle, PopoverDescription } from "#lib/components/ui/popover/index.js";
+	import { Input } from "#lib/components/ui/input/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+</script>
+
+<Popover>
+	<PopoverTrigger>Dimensions</PopoverTrigger>
+	<PopoverContent>
+		<PopoverHeader>
+			<PopoverTitle>Dimensions</PopoverTitle>
+			<PopoverDescription>Set the dimensions for the layer.</PopoverDescription>
+		</PopoverHeader>
+		<Label for="width">Width</Label>
+		<Input id="width" size="sm" value="100%" />
+	</PopoverContent>
+</Popover>
+```
+
+## Trigger
+
+To open the popover from any other element, pass a `trigger` snippet to `PopoverTrigger`. It receives `props` with the ARIA attributes, the handlers, and an attachment that registers the element the popover is placed against. Spread them onto the element, such as an icon button.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Popover, PopoverTrigger, PopoverContent, PopoverDescription } from "#lib/components/ui/popover/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { SettingsIcon } from "@lucide/svelte";
+</script>
+
+<Popover>
+	<PopoverTrigger>
+		{#snippet trigger({ props })}
+			<Button variant="ghost" size="icon-md" aria-label="Settings" {...props}>
+				<SettingsIcon />
+			</Button>
+		{/snippet}
+	</PopoverTrigger>
+	<PopoverContent>
+		<PopoverDescription>The trigger snippet receives the props that open the popover.</PopoverDescription>
+	</PopoverContent>
+</Popover>
+```
+
+## Controlled
+
+Use `bind:open` or `onOpenChange` on `Popover` to read and set the open state from your own code, such as a button inside the panel that closes it. The binding updates in both directions, so closing the popover from Escape or an outside click sets the variable back to `false`.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle } from "#lib/components/ui/popover/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let isOpen = $state(false);
+</script>
+
+<Popover bind:open={isOpen}>
+	<PopoverTrigger>Account</PopoverTrigger>
+	<PopoverContent>
+		<PopoverHeader>
+			<PopoverTitle>Controlled</PopoverTitle>
+		</PopoverHeader>
+		<Button size="sm" onclick={() => (isOpen = false)}>Done</Button>
+	</PopoverContent>
+</Popover>
+```
+
+## Side
+
+Set `side` on `Popover` to `top`, `right`, `bottom`, or `left` to choose the preferred side of the trigger. It defaults to `bottom`. Set `align` to `start`, `center`, or `end` to line the panel up along the trigger's edge, and `sideOffset` to change the gap in pixels.
+
+<Demo section="side" />
+
+```svelte title="+page.svelte"
+<Popover side="right" align="start">
+	<PopoverTrigger>Open</PopoverTrigger>
+	<PopoverContent>Opens on the right side.</PopoverContent>
+</Popover>
+```
+
+## Size
+
+Set `size` on `Popover` to `xs`, `sm`, `md`, or `lg` to change the default trigger and the panel's padding, gap, and text. It defaults to `md`. The panel is `18rem` wide; pass a `class` or `style` to `PopoverContent` to change it.
+
+<Demo section="size" />
+
+```svelte title="+page.svelte"
+<Popover size="lg">
+	<PopoverTrigger>Open</PopoverTrigger>
+	<PopoverContent style="width: 24rem">Wider and roomier.</PopoverContent>
+</Popover>
+```
+
+## Rounded
+
+Set `rounded` on `Popover` to `xs` through `4xl` or `pill` to override the radius that follows `size`. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Popover rounded="lg">
+	<PopoverTrigger>Open</PopoverTrigger>
+	<PopoverContent>Rounded lg</PopoverContent>
+</Popover>
+```
+
+## Overrides
+
+The default `PopoverTrigger` button takes `variant`, `size`, `rounded`, and `class`, and its size follows the popover's `size` when omitted. `PopoverContent` takes `size` and `rounded`, which win over the popover's for the panel only.
+
+```svelte title="+page.svelte"
+<Popover size="sm">
+	<PopoverTrigger variant="ghost">Open</PopoverTrigger>
+	<PopoverContent size="lg" rounded="lg">...</PopoverContent>
+</Popover>
+```
+
+## API
+
+`PopoverContent` extends the `div` attributes, and `PopoverHeader`, `PopoverTitle`, and `PopoverDescription` extend the `header`, `h2`, and `p` attributes. Extra attributes pass through.
+
+```ts title="index.ts"
+interface Props {
+	/** Whether the popover is shown; supports `bind:open` */
+	open?: boolean;
+	/** Called when the popover opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Preferred side; flips to the opposite side when there is not enough room; defaults to `bottom` */
+	side?: "top" | "right" | "bottom" | "left";
+	/** Alignment along the trigger's edge; defaults to `center` */
+	align?: "start" | "center" | "end";
+	/** Gap in pixels between the trigger and the popover; defaults to `4` */
+	sideOffset?: number;
+	/** Padding and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the content; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** The trigger and content parts */
+	children: Snippet;
+}
+
+interface TriggerProps {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the popover */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default trigger button, including the square `icon-*` sizes; follows the popover's `size` when omitted */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default trigger button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Padding and text of this content; overrides the popover's `size` */
+	size?: UiSize;
+	/** Corner radius of this content; overrides the popover's `rounded`. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

@@ -1,0 +1,133 @@
+---
+title: "Input"
+description: "A text field with sizes, rounded corners, file picking, and focus, invalid, and disabled states."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Input
+
+Displays a form input field. Styled with theme tokens like the shadcn input, and fills the width of its container.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Input } from "#lib/components/ui/input/index.js";
+</script>
+
+<Input type="email" placeholder="Email" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/input.json
+```
+
+## Binding
+
+Use `bind:value` to read and write the value. Event handlers such as `oninput` and `onchange` also pass through to the element.
+
+<Demo section="binding" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Input } from "#lib/components/ui/input/index.js";
+
+	let email = $state("");
+</script>
+
+<Input type="email" placeholder="Email" bind:value={email} />
+<p>Value: {email}</p>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, the height matches the button of the same size, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Input size="xs" placeholder="Size xs" />
+<Input size="sm" placeholder="Size sm" />
+<Input size="md" placeholder="Size md" />
+<Input size="lg" placeholder="Size lg" />
+```
+
+## File
+
+Set `type="file"` to render a file picker, and use `bind:files` to read the selected files.
+
+<Demo section="file" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Input } from "#lib/components/ui/input/index.js";
+
+	let files: FileList | null = $state(null);
+</script>
+
+<Input type="file" bind:files />
+```
+
+## With button
+
+Place an input next to a `Button` of the same size so their heights line up.
+
+<Demo section="button" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Input } from "#lib/components/ui/input/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<form>
+	<Input type="email" placeholder="Email" />
+	<Button type="submit" variant="outline">Subscribe</Button>
+</form>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Input rounded="sm" placeholder="Rounded sm" />
+<Input rounded="pill" placeholder="Rounded pill" />
+```
+
+## States
+
+Set `disabled` to dim the input and block interaction. Set `aria-invalid="true"` to show the invalid ring, such as for a field that failed validation.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Input placeholder="Disabled" disabled />
+<Input placeholder="Invalid" aria-invalid="true" />
+```
+
+## API
+
+The `Input` props extend the native `input` attributes, except the numeric `size` attribute, which is replaced by the shared size scale.
+
+```ts title="index.ts"
+interface Props extends Omit<CompProps<"input">, "size" | "value" | "files"> {
+	/** Current value (bindable) */
+	value?: CompProps<"input">["value"];
+	/** Selected files when `type="file"` (bindable) */
+	files?: FileList | null;
+	/** Height, padding, and text size on the shared scale */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+	/** Classes merged onto the input */
+	class?: CompProps<"input">["class"];
+}
+```

@@ -1,0 +1,62 @@
+---
+title: "Utilities"
+description: "Plain CSS classes, type-safe server functions, and Vite plugins for Svelte development, built with as few external packages as possible."
+---
+
+# Utilities
+
+PlainSv ships more than components. The utilities cover the parts of a Svelte app that usually need a package: CSS effects without Tailwind, typed calls to server code, sign in, a typed MongoDB client, Drizzle on SQLite, and Vite plugins for Markdown pages and faster icon imports. Like the components, each one is copied into your project, so you own the source.
+
+Every `init` item installs the CSS utilities and the `dev-plugin` and `svx-plugin-simple` Vite plugins below, along with the theme and the app shell. Install the server functions, the full `svx-plugin`, auth, Drizzle, and MongoDB on their own with their items.
+
+```pm
+npx remote0 add https://plainsv.com/r/init.json
+```
+
+## CSS utilities
+
+Global `shimmer` and `scroll-fade` classes that bring the shadcn Tailwind utilities to plain CSS. Change the effect with CSS variables instead of value classes. Read more on the [CSS utilities page](/docs/utilities/css).
+
+```svelte title="+page.svelte"
+<p class="shimmer">Generating response...</p>
+```
+
+## Functions
+
+Call server code from the client by name, with input and output types inferred from Zod schemas. Every call goes through one `POST /api/functions` endpoint, and Zod only runs on the server. Read more on the [functions page](/docs/utilities/functions).
+
+```ts title="+page.svelte"
+const response = await useFunc("userCreate", { email: "ada@example.com" });
+```
+
+## Auth
+
+Google or GitHub sign in with 30-day cookie sessions, built on `fetch` and Node's `crypto`. Install one item per provider and database pair, such as `auth-google-sqlite` or `auth-github-mongodb`. Read more on the [auth page](/docs/utilities/auth).
+
+```pm
+npx remote0 add https://plainsv.com/r/auth-google-sqlite.json
+```
+
+## Drizzle
+
+Drizzle ORM on SQLite with Node's built-in `node:sqlite` driver, with tables defined in TypeScript and `drizzle-kit` migrations. The SQLite auth items use it. Read more on the [Drizzle page](/docs/utilities/drizzle).
+
+```pm
+npx remote0 add https://plainsv.com/r/drizzle.json
+```
+
+## MongoDB
+
+A typed client for the official `mongodb` driver. Define each collection with Zod in `schema.ts`, and a generator writes typed create, find, update, and delete methods for it. Read more on the [MongoDB page](/docs/utilities/mongodb).
+
+```pm
+npx remote0 add https://plainsv.com/r/mongodb.json
+```
+
+## Plugins
+
+Two Vite plugins in `src/lib/server/plugins`: `svxPlugin` compiles Markdown `.svx` pages, and `devPlugin` speeds up icon imports and writes `src/env.ts` from `.env`. Read more on the [plugins page](/docs/utilities/plugins).
+
+```ts title="vite.config.ts"
+plugins: [devPlugin(), svxPlugin(), sveltekit({ extensions: [".svelte", ".svx"] })],
+```

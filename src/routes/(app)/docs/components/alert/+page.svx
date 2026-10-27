@@ -1,0 +1,124 @@
+---
+title: "Alert"
+description: "A callout for important messages with an optional icon, a title, a description, and an action."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Alert
+
+Shows a short, important message without interrupting the user. Compose it from `Alert`, an optional icon, `AlertTitle`, `AlertDescription`, and `AlertAction`. The root sets `role="alert"`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Alert, AlertTitle, AlertDescription } from "#lib/components/ui/alert/index.js";
+	import { CircleCheckIcon } from "@lucide/svelte";
+</script>
+
+<Alert>
+	<CircleCheckIcon />
+	<AlertTitle>Success! Your changes have been saved</AlertTitle>
+	<AlertDescription>This is an alert with an icon, title, and description.</AlertDescription>
+</Alert>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/alert.json
+```
+
+## Icon
+
+Place an icon as the first child of `Alert`. It gets a leading column beside the title and description, and inherits the alert's text color. Without an icon, the text fills the full width.
+
+## Destructive
+
+Set `variant="destructive"` to tint the text, icon, and description with the destructive color. `AlertDescription` can hold several paragraphs.
+
+<Demo section="destructive" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Alert, AlertTitle, AlertDescription } from "#lib/components/ui/alert/index.js";
+	import { CircleAlertIcon } from "@lucide/svelte";
+</script>
+
+<Alert variant="destructive">
+	<CircleAlertIcon />
+	<AlertTitle>Unable to process your payment.</AlertTitle>
+	<AlertDescription>
+		<p>Please verify your billing information and try again.</p>
+		<p>Check your card details, ensure sufficient funds, and verify your billing address.</p>
+	</AlertDescription>
+</Alert>
+```
+
+## Action
+
+Place `AlertAction` last inside `Alert` to show trailing content, such as a button. It sits in a final column beside the title and description.
+
+<Demo section="action" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Alert, AlertTitle, AlertDescription, AlertAction } from "#lib/components/ui/alert/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { InfoIcon } from "@lucide/svelte";
+</script>
+
+<Alert>
+	<InfoIcon />
+	<AlertTitle>A new version is available</AlertTitle>
+	<AlertDescription>Reload the page to get the latest features.</AlertDescription>
+	<AlertAction>
+		<Button size="sm" variant="outline">Reload</Button>
+	</AlertAction>
+</Alert>
+```
+
+## Size
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the padding, gap, text, and icon size. It defaults to `lg`.
+
+<Demo section="size" />
+
+```svelte title="+page.svelte"
+<Alert size="xs">
+	<InfoIcon />
+	<AlertTitle>Size xs</AlertTitle>
+	<AlertDescription>A compact alert for forms and inline messages.</AlertDescription>
+</Alert>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius, which follows `size` when omitted. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Alert rounded="3xl">
+	<InfoIcon />
+	<AlertTitle>Rounded 3xl</AlertTitle>
+</Alert>
+```
+
+## API
+
+The `Alert` props extend the native `div` attributes, and so do `AlertTitle`, `AlertDescription`, and `AlertAction`. Extra attributes and event handlers such as `onclick` pass through to each element.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Visual style of the alert */
+	variant?: "default" | "destructive";
+	/** Padding, gap, text, and icon size on the shared scale; defaults to `lg` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

@@ -1,0 +1,214 @@
+---
+title: "Prompt Input"
+description: "A chat prompt box with an auto-growing textarea, attached images, a model picker, and a send button."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Prompt Input
+
+A prompt box for chat apps. The text field grows as you type, Enter sends, and images can be picked, dropped, previewed, renamed, and removed. Pair it with `Svdown` to show the response.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import {
+		PromptInput,
+		PromptInputTextarea,
+		PromptInputFiles,
+		PromptInputActions,
+		PromptInputFilesButton,
+		PromptInputSelect,
+		PromptInputSubmit,
+		type PromptInputData,
+	} from "#lib/components/ui/prompt-input/index.js";
+
+	const models = { fable: "Fable 5.1", opus: "Opus 5.5" };
+	let model = $state("opus");
+	let sending = $state(false);
+	let textareaElement: HTMLTextAreaElement | undefined = $state();
+
+	/** Sends the prompt; the box stays busy until this resolves, then clears. */
+	async function sendPrompt({ text, files }: PromptInputData) {
+		const body = new FormData();
+		body.set("text", text);
+		body.set("model", model);
+		for (const file of files) body.append("files", file);
+		await fetch("/api/chat", { method: "POST", body });
+	}
+</script>
+
+<PromptInput bind:sending onSubmit={sendPrompt}>
+	<PromptInputFiles />
+	<PromptInputTextarea bind:element={textareaElement} placeholder="Ask me anything..." />
+	<PromptInputActions>
+		<PromptInputFilesButton />
+		<PromptInputSelect bind:selected={model} options={models} />
+		<PromptInputSubmit aria-label="Submit prompt" />
+	</PromptInputActions>
+</PromptInput>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/prompt-input.json
+```
+
+## Anatomy
+
+`PromptInput` renders the `form` and holds the text and files. `PromptInputTextarea` is the text field. `PromptInputFiles` renders the hidden file picker and a row of attached images; click an image to open it in an `ImageViewer`, where it can be renamed or removed. `PromptInputActions` is the row of controls: `PromptInputFilesButton` opens the picker, `PromptInputButton` is a pill for your own actions, `PromptInputSelect` picks an option such as the model, and `PromptInputSubmit` sends.
+
+## Sending
+
+Enter sends the prompt, and Shift and Enter adds a line. On touch keyboards Enter always adds a line, and the send button sends. Both go through the form's submit.
+
+`onSubmit` receives the text, the files, and the submit event, in place of a native submit. Return a promise to keep the box sending until it settles: while sending, the text is read-only, the controls are disabled, and the send button shows a spinner. The prompt clears once the promise resolves, and stays when it throws so it can be sent again.
+
+`onsubmit` is the form's own submit handler. It runs first, and calling `preventDefault` in it stops the send.
+
+Use `bind:sending`, `bind:text`, and `bind:files` to read or set the state yourself, such as to keep the box busy while a reply streams in. A form reset clears the prompt and the sending state.
+
+## Native submit
+
+Without `onSubmit`, the form submits natively, such as to a SvelteKit form action. The text posts as `text` and the attached files as `files`; change the names with `name` on `PromptInputTextarea` and `PromptInputFiles`. `PromptInputSelect` posts its value when it has a `name`. The box stays sending until the page changes or the form resets. This example reads the fields in `onsubmit` instead of leaving the page.
+
+<Demo section="native" />
+
+```svelte title="+page.svelte"
+<PromptInput method="POST" action="?/ask">
+	<PromptInputFiles />
+	<PromptInputTextarea />
+	<PromptInputActions>
+		<PromptInputSelect options={models} name="model" />
+		<PromptInputSubmit />
+	</PromptInputActions>
+</PromptInput>
+```
+
+## Custom triggers
+
+Pass a `trigger` snippet to `PromptInputFilesButton` or `PromptInputSubmit` to use your own element, and spread its `props` onto it. They carry the type, the disabled state, the accessible name, the click handler, and the element binding, so `bind:element` still works. The files tooltip still shows, and the send trigger also receives `sending` and `ready` for its own look.
+
+<Demo section="triggers" />
+
+```svelte title="+page.svelte"
+<PromptInputFilesButton tooltip="Attach images">
+	{#snippet trigger({ props })}
+		<button {...props}>Attach</button>
+	{/snippet}
+</PromptInputFilesButton>
+<PromptInputSubmit>
+	{#snippet trigger({ props, sending })}
+		<button {...props}>{sending ? "Sending…" : "Send"}</button>
+	{/snippet}
+</PromptInputSubmit>
+```
+
+## Elements
+
+Every part takes `bind:element`: the `form` on `PromptInput`, the `textarea` on `PromptInputTextarea`, the hidden file input on `PromptInputFiles`, the trigger on `PromptInputSelect`, and the button on `PromptInputFilesButton`, `PromptInputButton`, and `PromptInputSubmit`. Use it to focus the text field or reset the form from your own code.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let textareaElement: HTMLTextAreaElement | undefined = $state();
+</script>
+
+<PromptInput onSubmit={sendPrompt}>
+	<PromptInputTextarea bind:element={textareaElement} />
+</PromptInput>
+<button onclick={() => textareaElement?.focus()}>Focus the prompt</button>
+```
+
+## Blocking
+
+The send button stays disabled until the trimmed text has `minLength` characters, which defaults to 1. Set `canSubmit` to `false` to block sending for another reason, such as a signed-out user. `onSubmitBlocked` runs when Enter is pressed while sending is blocked, such as to ask the user to sign in.
+
+<Demo section="blocked" />
+
+```svelte title="+page.svelte"
+<PromptInput minLength={5} canSubmit={isSignedIn} onSubmitBlocked={() => toast.info("Sign in to send prompts")}>...</PromptInput>
+```
+
+## Files
+
+Images can be added with `PromptInputFilesButton` or dropped anywhere on the box. `accept` sets the allowed types, which default to JPEG, PNG, WebP, and GIF images, and `maxFiles` sets the limit, which defaults to 5. A refused file shows a toast; pass `onFileReject` to handle it yourself. The same file is never added twice, and previews are released when files are removed. The text field and the row of images fade at their edges while they scroll, using the `scroll-fade-y` and `scroll-fade-x` classes in `src/styles/utils.css`, which the `init` item installs.
+
+## Drafts
+
+Set `draftKey` to keep an unsent prompt in `localStorage` under that key. The draft is restored when the box starts empty, and removed once the prompt is sent. The first example on this page keeps a draft, so reload the page to see it come back.
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the padding, the text, the chips, and the controls, which sit one size smaller than the box. The text field starts at 32, 40, 48, or 56 pixels and grows one line at a time, by 16, 20, 20, or 24 pixels. It defaults to `md`, with the extra large radius of the AI Elements prompt input. `PromptInputSelect`, `PromptInputButton`, `PromptInputFilesButton`, and `PromptInputSubmit` take their own `size`, which overrides the one they get from the box.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<PromptInput size="sm">
+	<PromptInputTextarea />
+	<PromptInputActions>
+		<PromptInputSelect options={models} size="md" />
+		<PromptInputSubmit />
+	</PromptInputActions>
+</PromptInput>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the box. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe. It defaults to `3xl`. The controls follow the box one radius step smaller, so `lg` gives them the medium radius, they read as pills when the box is `2xl` or rounder, and they stay pills when the box is `pill`. `PromptInputSelect`, `PromptInputButton`, `PromptInputFilesButton`, and `PromptInputSubmit` take their own `rounded`, which overrides the one they get from the box.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<PromptInput rounded="lg">
+	<PromptInputTextarea />
+	<PromptInputActions>
+		<PromptInputFilesButton />
+		<PromptInputSelect options={models} rounded="pill" />
+		<PromptInputSubmit />
+	</PromptInputActions>
+</PromptInput>
+```
+
+## API
+
+`PromptInput` extends the `form` attributes and `PromptInputTextarea` the `textarea` attributes. The buttons take the `Button` props, and `PromptInputSelect` takes the `Select` options, such as `size`, `rounded`, `required`, and `bind:open`, and passes the rest to its trigger button.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"form"> {
+	/** The form element; supports `bind:element` */
+	element?: HTMLFormElement;
+	/** Prompt text; supports `bind:text` */
+	text?: string;
+	/** Attached files; supports `bind:files` */
+	files?: File[];
+	/** Whether the prompt is being sent; supports `bind:sending` */
+	sending?: boolean;
+	/** Called with the text, files, and submit event instead of a native submit; return a promise to stay sending until it settles, and the prompt clears once it resolves */
+	onSubmit?: (data: { text: string; files: File[]; event: SubmitEvent }) => void | Promise<unknown>;
+	/** Native submit handler; runs first, and calling `preventDefault` stops the send. Without `onSubmit`, the form posts `text` and `files` natively */
+	onsubmit?: (e: SubmitEvent) => void;
+	/** Called when a send is blocked, such as text shorter than `minLength` or `canSubmit` set to false */
+	onSubmitBlocked?: () => void;
+	/** Extra condition for sending, such as being signed in; defaults to `true` */
+	canSubmit?: boolean;
+	/** Characters the trimmed text needs before it can be sent; defaults to `1` */
+	minLength?: number;
+	/** Most files that can be attached; defaults to `5` */
+	maxFiles?: number;
+	/** File types the picker and drop zone accept; defaults to JPEG, PNG, WebP, and GIF images */
+	accept?: string[];
+	/** Called for a file that is refused for its type or the file limit; shows a toast when omitted */
+	onFileReject?: (file: File, reason: "type" | "limit") => void;
+	/** localStorage key that keeps an unsent draft between visits; drafts are off when omitted */
+	draftKey?: string;
+	/** Padding, text, and control size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the box; defaults to `3xl`, with the controls one step below so they read as pills */
+	rounded?: UiRounded;
+}
+```

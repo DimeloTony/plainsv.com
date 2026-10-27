@@ -1,0 +1,125 @@
+---
+title: "Button"
+description: "A button that triggers an action or renders as a link, with variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Button
+
+Triggers an action, or renders an anchor when given an `href`. Styled with theme tokens and shadcn variant names.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Button>Button</Button>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/button.json
+```
+
+## Variants
+
+Set `variant` to `default`, `secondary`, `outline`, `ghost`, `destructive`, `link`, or `bare`. The default is `default`, and `bare` drops the background, border, and padding so the content is the whole button.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Button>Default</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="destructive">Destructive</Button>
+<Button variant="link">Link</Button>
+<Button variant="bare">Bare</Button>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Button size="xs">Size xs</Button>
+<Button size="sm">Size sm</Button>
+<Button size="md">Size md</Button>
+<Button size="lg">Size lg</Button>
+```
+
+## Icons
+
+Place an icon before or after the text and the padding tightens to fit. For icon-only buttons, use the square sizes `icon-xs`, `icon-sm`, `icon-md`, and `icon-lg`, and add an `aria-label`. With `variant="bare"`, the square shrinks 8 pixels below the control height and the icon fills it with no padding, so `icon-xs`, `icon-sm`, `icon-md`, and `icon-lg` show 16, 24, 28, and 32 pixel icons for inline actions such as copy or close. Bare buttons take the surrounding text color, dim on hover, and show a thin `--ring` outline instead of the focus ring.
+
+<Demo section="icons" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { ArrowRightIcon, MailIcon, PlusIcon, XIcon } from "@lucide/svelte";
+</script>
+
+<Button><MailIcon />Login with email</Button>
+<Button variant="outline">Continue<ArrowRightIcon /></Button>
+<Button size="icon-md" variant="outline" aria-label="Add"><PlusIcon /></Button>
+<Button size="icon-sm" variant="bare" aria-label="Close"><XIcon /></Button>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Button variant="secondary" rounded="sm">Rounded sm</Button>
+<Button variant="secondary" rounded="pill">Rounded pill</Button>
+<Button size="icon-md" rounded="pill" aria-label="Add"><PlusIcon /></Button>
+```
+
+## Links
+
+Pass `href` to render an anchor with the same styles. A disabled link drops its `href`, sets `aria-disabled`, and leaves the tab order.
+
+<Demo section="links" />
+
+```svelte title="+page.svelte"
+<Button href="/docs/components">Browse components</Button>
+<Button href="/docs/components" variant="link">Text link</Button>
+<Button href="/docs/components" variant="outline" disabled>Disabled link</Button>
+```
+
+## States
+
+Set `disabled` to dim the button and block clicks. Set `aria-invalid="true"` to show the invalid ring, such as for a form submit that failed validation.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Button disabled>Disabled</Button>
+<Button variant="outline" aria-invalid="true">Invalid</Button>
+```
+
+## API
+
+The `Button` props extend the native `button` attributes, or the `a` attributes when `href` is set. Extra attributes and event handlers such as `onclick` pass through to the element.
+
+```ts title="index.ts"
+interface ButtonBaseProps {
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+	/** Visual style of the button; `bare` drops the background, border, and padding, and its icon fills an `icon-*` size */
+	variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link" | "bare";
+	/** Size on the shared scale, or a square `icon-*` size for icon-only buttons */
+	size?: UiSize | `icon-${UiSize}`;
+}
+```

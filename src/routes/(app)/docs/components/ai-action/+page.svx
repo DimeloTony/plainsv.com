@@ -1,0 +1,109 @@
+---
+title: "AI Action"
+description: "One step of an AI response with an icon, a shimmering status title, and details that expand below it."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# AI Action
+
+One step of an AI response, such as thinking, searching the web, or reading files. The title shimmers while the step runs, and the details expand below it. Stack several to show the steps of a response.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { AIAction, AIActionContent } from "#lib/components/ui/ai-action/index.js";
+	import { BrainIcon, GlobeIcon, SparklesIcon } from "@lucide/svelte";
+</script>
+
+<AIAction title="Thought for 4 seconds" icon={BrainIcon} done>
+	<AIActionContent>The user wants a summary of Svelte 5 runes, so I should look up the official docs first.</AIActionContent>
+</AIAction>
+<AIAction title="Searched the web" icon={GlobeIcon} done>
+	<AIActionContent>svelte.dev/docs/svelte/what-are-runes</AIActionContent>
+</AIAction>
+<AIAction title="Writing the answer" icon={SparklesIcon} />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/ai-action.json
+```
+
+## Anatomy
+
+`AIAction` renders the `icon` and the `title` in one row. With children, the row is a button that shows and hides them, and the icon turns into a chevron while it is hovered or focused. Put the details in `AIActionContent`, which is indented under the title with a line beside it and slides open and closed. Without children, the row is plain text.
+
+The shimmer comes from the `shimmer` class in `src/styles/utils.css`, which the `init` item installs. It shows plain text for people who prefer reduced motion.
+
+## Done
+
+The title shimmers while the step runs. Set `done` once it finishes to stop the shimmer.
+
+<Demo section="done" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let isDone = $state(false);
+</script>
+
+<AIAction title={isDone ? "Read 3 files" : "Reading files"} icon={FileTextIcon} done={isDone} />
+```
+
+## Controlled
+
+A step with details starts open. Use `bind:open` to read or set whether the details are shown, such as to start closed, or `onOpenChange` to run code when they open or close.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let open = $state(false);
+</script>
+
+<AIAction title="Thought for 2 seconds" icon={BrainIcon} done bind:open>
+	<AIActionContent>Checked the question against the earlier messages before answering.</AIActionContent>
+</AIAction>
+<Button onclick={() => (open = !open)}>Show reasoning</Button>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the title, the details, and the icon. It defaults to `md`, with a 16 pixel icon, small title text, and extra small details.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<AIAction size="lg" title="Searched the web" icon={GlobeIcon} done>
+	<AIActionContent>Details use a smaller text size.</AIActionContent>
+</AIAction>
+```
+
+## API
+
+`AIAction` and `AIActionContent` extend the `div` attributes. Extra attributes pass through.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Status text beside the icon */
+	title: string;
+	/** Icon shown before the title; a chevron replaces it while an expandable step is hovered or focused */
+	icon: Component;
+	/** Details shown below the title, usually an `AIActionContent`; makes the step expandable */
+	children?: Snippet;
+	/** Whether the details are shown; supports `bind:open`; defaults to `true` when there are details */
+	open?: boolean;
+	/** Called when the details open or close */
+	onOpenChange?: (open: boolean) => void;
+	/** Stops the title shimmer once the step has finished */
+	done?: boolean;
+	/** Text and icon size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {}
+```

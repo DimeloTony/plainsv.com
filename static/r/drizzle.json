@@ -1,0 +1,27 @@
+{
+    "name": "drizzle",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/lib/server/drizzle/index.ts",
+            "content": "import { mkdirSync } from \"node:fs\";\nimport { dirname } from \"node:path\";\nimport { drizzle } from \"drizzle-orm/node-sqlite\";\nimport * as schema from \"./schema.js\";\nexport { schema };\n\n/** SQLite file path from the project root, read from `DATABASE_URL` with the same fallback as `config.ts` */\nexport const DB_FILE = process.env.DATABASE_URL ?? \"db/db.sqlite\";\n\n// Create the database folder first, since SQLite only creates the file.\nmkdirSync(dirname(DB_FILE), { recursive: true });\n\n/** Drizzle client on Node's built-in `node:sqlite`, with `db.query` typed from the schema relations */\nexport const db = drizzle({ connection: DB_FILE, relations: schema.relations });\n\n// Let reads run while a write is in progress, and enforce foreign keys such as sessions → users.\ndb.$client.exec(\"PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;\");\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/server/drizzle/schema.ts",
+            "content": "import { defineRelations } from \"drizzle-orm\";\nimport { integer, sqliteTable, text } from \"drizzle-orm/sqlite-core\";\n\n/** Users who signed in with an OAuth provider */\nexport const users = sqliteTable(\"users\", {\n\t/** User id */\n\tid: text().primaryKey(),\n\t/** Verified email, used to match returning users */\n\temail: text().notNull().unique(),\n\t/** Avatar URL from the provider */\n\timage: text().notNull(),\n\t/** When the user first signed in */\n\tcreatedAt: integer({ mode: \"timestamp_ms\" }).notNull(),\n\t/** When the user last signed in */\n\tupdatedAt: integer({ mode: \"timestamp_ms\" }).notNull(),\n});\n\n/** Login sessions; deleting a user deletes their sessions */\nexport const sessions = sqliteTable(\"sessions\", {\n\t/** SHA-256 hash of the session cookie token */\n\tid: text().primaryKey(),\n\t/** Id of the user who owns the session */\n\tuserId: text()\n\t\t.notNull()\n\t\t.references(() => users.id, { onDelete: \"cascade\" }),\n\t/** When the session stops being valid */\n\texpiresAt: integer({ mode: \"timestamp_ms\" }).notNull(),\n});\n\n/** Links between tables, used by `db.query` to load related rows */\nexport const relations = defineRelations({ users, sessions }, (r) => ({\n\tusers: {\n\t\t/** Sessions the user owns */\n\t\tsessions: r.many.sessions(),\n\t},\n\tsessions: {\n\t\t/** User who owns the session */\n\t\tuser: r.one.users({ from: r.sessions.userId, to: r.users.id }),\n\t},\n}));\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/server/drizzle/config.ts",
+            "content": "import { mkdirSync } from \"node:fs\";\nimport { dirname } from \"node:path\";\nimport { defineConfig } from \"drizzle-kit\";\n\n// Read the path from `DATABASE_URL`, and keep the fallback in sync with `DB_FILE` in `src/lib/server/drizzle/index.ts`.\nconst DB_FILE = process.env.DATABASE_URL ?? \"db/db.sqlite\";\n\n// Create the database folder first, since SQLite only creates the file.\nmkdirSync(dirname(DB_FILE), { recursive: true });\n\n/** drizzle-kit settings; run it with `--config=src/lib/server/drizzle/config.ts`, and paths resolve from the project root */\nexport default defineConfig({\n\tdialect: \"sqlite\",\n\tschema: \"./src/lib/server/drizzle/schema.ts\",\n\tout: \"./src/lib/server/drizzle/migrations\",\n\tdbCredentials: { url: DB_FILE },\n});\n"
+        }
+    ],
+    "dependencies": [
+        "drizzle-orm@rc"
+    ],
+    "devDependencies": [
+        "drizzle-kit@rc"
+    ],
+    "description": "A Drizzle ORM client on Node's built-in node:sqlite, with a typed schema and drizzle-kit migrations."
+}

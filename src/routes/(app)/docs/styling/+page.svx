@@ -1,0 +1,262 @@
+---
+title: "Styling"
+description: "Customize PlainSv with theme tokens, the inline style attribute, and the component source you own."
+---
+
+# Styling
+
+PlainSv components are styled with plain CSS in scoped Svelte `<style>` blocks. Every color, radius, spacing step, and font size comes from a CSS variable in `src/styles/theme.css`. Start with the `variant`, `size`, and `rounded` props on each component. Beyond those, override a single component with the `style` attribute, restyle the whole app by changing a few tokens, or edit the component source directly, since it lives in your project. Scoped themes, custom classes, and data attributes also work, and are covered at the end of the page.
+
+## Variant
+
+Components that come in more than one style accept a `variant` prop. The names match shadcn: `default`, `secondary`, `outline`, `ghost`, `destructive`, and `link`. Each component supports only the variants that make sense for it, and its docs page lists them.
+
+```svelte title="+page.svelte"
+<Button>Save</Button>
+<Button variant="secondary">Draft</Button>
+<Button variant="outline">Cancel</Button>
+<Button variant="ghost">Skip</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="link">Learn more</Button>
+```
+
+## Size
+
+Components whose padding, gap, text, or dimensions can scale accept a `size` prop with the values `xs`, `sm`, `md`, and `lg`. This includes containers such as `Card`, `Alert`, `Dialog`, and `Sheet`, not only controls. Each component defaults to the size that matches shadcn, such as `md` for `Button` and `lg` for `Card`. Some components add their own sizes, such as the square `icon-sm` and `icon-md` sizes for icon-only buttons.
+
+```svelte title="+page.svelte"
+<Button size="xs">Extra small</Button>
+<Button size="sm">Small</Button>
+<Button size="md">Medium</Button>
+<Button size="lg">Large</Button>
+<Button size="icon-sm" aria-label="Search"><SearchIcon /></Button>
+```
+
+## Rounded
+
+Components with a visible box accept a `rounded` prop with every step of the radius scale, `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, and `4xl`, plus `pill`. When you leave it out, the corner radius follows `size`, so a small button gets a small radius and a large card gets a large one. Set `rounded` to pick a radius on its own, such as `pill` for a pill-shaped button.
+
+```svelte title="+page.svelte"
+<Button rounded="sm">Square</Button>
+<Button rounded="lg">Rounded</Button>
+<Button rounded="pill">Pill</Button>
+<Button size="sm" rounded="pill">Small pill</Button>
+```
+
+A few components start with a default `rounded` to match shadcn, such as `Avatar`, which is always a circle. `pill` is always a true pill, so on a tall box, such as a card or dialog, it makes an oval that can clip the corners. Use `3xl` or `4xl` for boxes that should look round without clipping. Parts that are usually one line but can wrap, such as `MessageContent` and `Tooltip`, set `pill` to half their one-line height, so they are pills on one line and keep round corners when they wrap. Nested parts, such as menu items, are rounded one step below their container so the corners line up, and stay pills inside a pill.
+
+## Theme tokens
+
+The `init` item installs `src/styles/theme.css`, and the root layout loads it through `src/styles/app.css`. The light palette is set on `:root`, and the dark palette is set on the `.dark` class. Change a token in both places to restyle every component that uses it.
+
+```css title="src/styles/theme.css"
+:root {
+	--primary: oklch(0.546 0.245 262.881);
+	--primary-foreground: oklch(0.985 0 0);
+}
+
+.dark {
+	--primary: oklch(0.623 0.214 259.815);
+	--primary-foreground: oklch(0.985 0 0);
+}
+```
+
+The color tokens use the shadcn names, such as `--background`, `--foreground`, `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`, and `--ring`. Each surface color has a matching `-foreground` token for the text on top of it. Hover and focus states mix these tokens with `color-mix()`, so they follow your colors without any extra changes.
+
+You can copy a palette from the shadcn themes page and paste the values into `theme.css`, because the token names match.
+
+## Radius
+
+Every radius derives from the base `--radius` token. Change it once to make every component sharper or rounder.
+
+```css title="src/styles/theme.css"
+:root {
+	--radius: 0.375rem;
+}
+```
+
+The scale goes from `--radius-xs` to `--radius-4xl`, with `--radius-pill` for pill shapes. Components pick a step from their `size`, or from the `rounded` prop when you set it.
+
+```css title="src/styles/theme.css"
+:root {
+	--radius-xs: calc(var(--radius) - 0.375rem); /* 0.25rem, 4px */
+	--radius-sm: calc(var(--radius) - 0.25rem); /* 0.375rem, 6px */
+	--radius-md: calc(var(--radius) - 0.125rem); /* 0.5rem, 8px */
+	--radius-lg: var(--radius); /* 0.625rem, 10px */
+	--radius-xl: calc(var(--radius) + 0.25rem); /* 0.875rem, 14px */
+	--radius-2xl: calc(var(--radius) + 0.5rem); /* 1.125rem, 18px */
+	--radius-3xl: calc(var(--radius) + 0.75rem); /* 1.375rem, 22px */
+	--radius-4xl: calc(var(--radius) + 1rem); /* 1.625rem, 26px */
+	--radius-pill: 9999px;
+}
+```
+
+## Sizes and spacing
+
+Padding and gaps derive from the base `--spacing` token, and text sizes and line heights derive from the base `--text` token. Change either one to make every component more compact or more spacious. Controls such as buttons, inputs, and selects take fixed heights from `--control-height-xs` through `--control-height-lg`, so change those separately.
+
+```css title="src/styles/theme.css"
+:root {
+	--spacing: 0.2rem; /* 3.2px */
+	--text: 0.9375rem; /* 15px */
+	--control-height-md: 2.5rem; /* 40px */
+}
+```
+
+The spacing scale goes from `--spacing-xs` to `--spacing-xl` as multiples of `--spacing`. The text scale goes from `--text-xs` to `--text-4xl`, with a matching `--line-height-*` token for each step, as multiples of `--text`. Each step keeps its ratio to the base, so the whole scale stays in proportion when the base changes.
+
+```css title="src/styles/theme.css"
+:root {
+	--spacing-xs: var(--spacing); /* 0.25rem, 4px */
+	--spacing-sm: calc(var(--spacing) * 2); /* 0.5rem, 8px */
+	--spacing-md: calc(var(--spacing) * 3); /* 0.75rem, 12px */
+	--spacing-lg: calc(var(--spacing) * 4); /* 1rem, 16px */
+	--spacing-xl: calc(var(--spacing) * 6); /* 1.5rem, 24px */
+
+	--text-xs: calc(var(--text) * 0.75); /* 0.75rem, 12px */
+	--text-sm: calc(var(--text) * 0.875); /* 0.875rem, 14px */
+	--text-md: var(--text); /* 1rem, 16px */
+	--text-lg: calc(var(--text) * 1.125); /* 1.125rem, 18px */
+	--text-xl: calc(var(--text) * 1.25); /* 1.25rem, 20px */
+	--text-2xl: calc(var(--text) * 1.5); /* 1.5rem, 24px */
+	--text-3xl: calc(var(--text) * 1.875); /* 1.875rem, 30px */
+	--text-4xl: calc(var(--text) * 2.25); /* 2.25rem, 36px */
+
+	--line-height-xs: var(--text); /* 1rem, 16px */
+	--line-height-sm: calc(var(--text) * 1.25); /* 1.25rem, 20px */
+	--line-height-md: calc(var(--text) * 1.5); /* 1.5rem, 24px */
+	--line-height-lg: calc(var(--text) * 1.75); /* 1.75rem, 28px */
+	--line-height-xl: calc(var(--text) * 1.75); /* 1.75rem, 28px */
+	--line-height-2xl: calc(var(--text) * 2); /* 2rem, 32px */
+	--line-height-3xl: calc(var(--text) * 2.25); /* 2.25rem, 36px */
+	--line-height-4xl: calc(var(--text) * 2.5); /* 2.5rem, 40px */
+}
+```
+
+## Fonts
+
+Components use `--font-sans` for text and `--font-mono` for code. Both are set in `theme.css`, and the theme imports the Geist font from `@fontsource-variable/geist`. To use another font, install it, replace the import, and update the variable.
+
+```css title="src/styles/theme.css"
+@import "@fontsource-variable/inter";
+
+:root {
+	--font-sans: "Inter Variable", system-ui, sans-serif;
+}
+```
+
+## Inline style
+
+The recommended way to override a single component is the `style` attribute. Components spread extra attributes onto their root element, so the inline styles land on the component itself and win over its scoped rules. You need no class, no wrapper, and no `:global()` selector. Use it for layout and one-off tweaks, and keep `variant`, `size`, and `rounded` for the look.
+
+```svelte title="+page.svelte"
+<Button style="margin-top: 1rem">Save</Button>
+<Button style="width: 100%">Login</Button>
+<Input style="text-align: center" />
+<Badge style="text-transform: uppercase">New</Badge>
+<Card style="max-width: 24rem; margin: 0 auto">...</Card>
+```
+
+## Dark mode
+
+The dark palette applies when the `dark` class is on the `body`. The `init` item sets it on the server from a `theme` cookie, so the page renders in the right theme before it reaches the browser, and the theme toggle in the starter layout switches it. Add any dark-only override under `.dark`.
+
+```css title="src/styles/app.css"
+.dark {
+	--border: oklch(1 0 0 / 15%);
+}
+```
+
+## Typeset content
+
+The `typeset` class from `src/styles/typeset.css` styles plain HTML, such as headings, paragraphs, and lists, in pages like this one. Every component adds the `not-typeset` class to its root, so typeset styles never reach inside a component. Add `not-typeset` to your own markup to opt it out as well.
+
+```svelte title="+page.svelte"
+<article class="typeset">
+	<h2>Release notes</h2>
+	<div class="not-typeset">
+		<!-- Custom markup without typeset styles -->
+	</div>
+</article>
+```
+
+## Edit the source
+
+Each component is copied into `src/lib/components/ui`, so you can change anything the tokens and props do not cover. Styles are grouped in the same order in every component: base, Variants, States, Sizes, and Rounded. To add a variant, add its name to the component's `variant` type in `index.ts`, then add a rule for its `data-variant` value. Define any new color as a token in `theme.css` first, with a light and a dark value.
+
+```css title="src/styles/theme.css"
+:root {
+	--brand: oklch(0.546 0.245 262.881);
+	--brand-foreground: oklch(0.985 0 0);
+}
+
+.dark {
+	--brand: oklch(0.623 0.214 259.815);
+}
+```
+
+```css title="src/lib/components/ui/button/_.svelte"
+/* Brand action */
+.button[data-variant="brand"] {
+	background-color: var(--brand);
+	color: var(--brand-foreground);
+}
+
+.button[data-variant="brand"]:hover {
+	background-color: color-mix(in oklab, var(--brand) 90%, transparent);
+}
+```
+
+When you add the component again with `remote0`, it asks before overwriting each file, so you can keep your changes.
+
+## Other ways
+
+The `style` attribute covers most overrides. The three options below are secondary ways to override components, best when many components share the same override.
+
+## Scoped themes
+
+Tokens are CSS variables, so they inherit. Set them on a wrapper to restyle only the components inside it, such as a danger zone in a settings page, without touching the rest of the app.
+
+```svelte title="+page.svelte"
+<section class="dangerZone">
+	<Button>Delete account</Button>
+</section>
+
+<style>
+	.dangerZone {
+		--primary: var(--destructive);
+		--primary-foreground: var(--destructive-foreground);
+		--radius: 0.25rem;
+	}
+</style>
+```
+
+## Custom classes
+
+Components pass `class` to their root element. Svelte scopes the styles in a `<style>` block to the markup in that file, so wrap the class in `:global()` when you style a component from its parent. Put a scoped parent class in front of it to keep the rule from leaking to other pages.
+
+```svelte title="+page.svelte"
+<div class="toolbar">
+	<Button class="saveButton">Save</Button>
+</div>
+
+<style>
+	.toolbar :global(.saveButton) {
+		min-width: 8rem;
+	}
+</style>
+```
+
+Use a class for layout changes, such as width, margins, or alignment. For colors and corners, prefer the tokens and the `variant`, `size`, and `rounded` props, so the hover, focus, and dark mode states stay in sync.
+
+## Data attributes
+
+Components render their props as `data-variant`, `data-size`, and `data-rounded` on the root element. Target them to adjust one variant or size across a section.
+
+```svelte title="+page.svelte"
+<style>
+	.toolbar :global([data-variant="outline"]) {
+		border-style: dashed;
+	}
+</style>
+```

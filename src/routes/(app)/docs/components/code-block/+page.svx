@@ -1,0 +1,188 @@
+---
+title: "Code Block"
+description: "A syntax highlighted code block with a file label header and a copy button, powered by Shiki."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Code Block
+
+Displays highlighted code with Shiki, and an optional header with a file label and a copy button. The theme follows the `.dark` class by default, or you can set it with `theme`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { CodeBlock, CodeBlockCode, CodeBlockHeader } from "#lib/components/ui/code-block/index.js";
+
+	const code = `export const add = (a: number, b: number) => a + b;`;
+</script>
+
+<CodeBlock data={{ code, path: "src/lib/math.ts" }}>
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/code-block.json
+```
+
+## Parts
+
+`CodeBlock` is the root and shares its `data`, `theme`, and `size` with its children through context. `CodeBlockHeader` shows the label and copy button, and `CodeBlockCode` shows the highlighted code. Leave out the header to show code only.
+
+## Language and title
+
+Pass a `path` to detect the language from the file extension, or pass `lang` to set it directly. Supported languages are `typescript`, `svelte`, `json`, `css`, `bash`, and `markdown`. Unknown extensions fall back to `bash`. Add a `title` to replace the path in the header.
+
+<Demo section="title" />
+
+```svelte title="+page.svelte"
+<CodeBlock data={{ code, lang: "css", title: "Card styles" }}>
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## Header label
+
+The header uses `data.title` first, then its own `path` prop, then `data.path`. When none is set, the header is hidden.
+
+<Demo section="header" />
+
+```svelte title="+page.svelte"
+<CodeBlock data={{ code, lang: "bash" }}>
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+
+<CodeBlock data={{ code, lang: "bash" }}>
+	<CodeBlockHeader path="Terminal" />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## Line highlight
+
+Set `highlightLines` to an array of line numbers, such as `[2, 4]`, or a range string, such as `"1,3-5"`. Lines start at `1`, and numbers past the last line are ignored. `CodeBlockCode` also accepts `highlightLines`, which overrides the code block's `highlightLines`. In `.svx` pages and `Svdown`, add the lines in braces after the language, such as `ts {1,3-5}`.
+
+<Demo section="highlight" />
+
+```svelte title="+page.svelte"
+<CodeBlock data={{ code, path: "src/lib/math.ts" }} highlightLines="1-2">
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+
+<CodeBlock data={{ code, lang: "css" }}>
+	<CodeBlockHeader />
+	<CodeBlockCode highlightLines={[2, 4]} />
+</CodeBlock>
+```
+
+## Encoded data
+
+Set `usingEncodedData` when `data.code` is UTF-8 Base64, such as code embedded by a build step. The code is decoded before display and copying, and malformed Base64 throws.
+
+<Demo section="encoded" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { CodeBlock, CodeBlockCode, CodeBlockHeader, encodeAndDecodeString } from "#lib/components/ui/code-block/index.js";
+
+	const code = encodeAndDecodeString(`console.log("Hello");`, "encode");
+</script>
+
+<CodeBlock data={{ code, path: "encoded.ts" }} usingEncodedData>
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## Theme
+
+`theme` defaults to `auto`, which renders both highlight themes and switches to dark when an ancestor has the `.dark` class. Set `theme` to `light` or `dark` to force one, such as when your app tracks dark mode in its own state. `CodeBlockCode` also accepts `theme`, which overrides the code block's `theme`.
+
+<Demo section="theme" />
+
+```svelte title="+page.svelte"
+<CodeBlock data={{ code, lang: "bash", title: "Light" }} theme="light">
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+
+<CodeBlock data={{ code, lang: "bash", title: "Dark" }} theme="dark">
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the header height, code padding, and font size. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<CodeBlock data={{ code, lang: "bash" }} size="sm">
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<CodeBlock data={{ code, lang: "bash" }} rounded="lg">
+	<CodeBlockHeader />
+	<CodeBlockCode />
+</CodeBlock>
+```
+
+## API
+
+`CodeBlock` extends the native `div` attributes. `CodeBlockHeader` extends the `header` attributes, and `CodeBlockCode` extends the `div` attributes. Each part merges `class` onto its element.
+
+```ts title="index.ts"
+type CodeBlockData = { code: string; lang: AvailableShikiLangs; title?: string } | { code: string; path: string; title?: string };
+
+type CodeBlockTheme = "auto" | "light" | "dark";
+
+type CodeBlockHighlightLines = number[] | string;
+
+interface Props extends CompPropsWithChild<"div"> {
+	/** Code and language metadata; `title` takes precedence over the header path label */
+	data: CodeBlockData;
+	/** Decodes `data.code` from UTF-8 Base64 before display and copying; malformed Base64 throws during decoding */
+	usingEncodedData?: boolean;
+	/** Highlight theme shared with the code; defaults to `auto`, which follows the `.dark` class on an ancestor */
+	theme?: CodeBlockTheme;
+	/** Lines to highlight, such as `[2, 4]` or `"1,3-5"`; shared with the code */
+	highlightLines?: CodeBlockHighlightLines;
+	/** Header height, code padding, and font size */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+
+interface HeaderProps extends CompProps<"header"> {
+	/** Header label used after `data.title` and before `data.path`; a nonempty value also shows the header */
+	path?: string;
+}
+
+interface CodeProps extends CompProps<"div"> {
+	/** Highlight theme; overrides the code block's `theme` */
+	theme?: CodeBlockTheme;
+	/** Lines to highlight, such as `[2, 4]` or `"1,3-5"`; overrides the code block's `highlightLines` */
+	highlightLines?: CodeBlockHighlightLines;
+}
+```
