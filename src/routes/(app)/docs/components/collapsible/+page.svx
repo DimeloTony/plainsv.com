@@ -1,0 +1,132 @@
+---
+title: "Collapsible"
+description: "A trigger that shows and hides a section of content, with a slide animation and a custom trigger snippet."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Collapsible
+
+Shows and hides one section of content, such as extra rows or advanced settings. The trigger sets `aria-expanded` and `aria-controls`, and the content slides open and closed. Use `Accordion` instead for a list of sections that work together.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "#lib/components/ui/collapsible/index.js";
+	import { ChevronsUpDownIcon } from "@lucide/svelte";
+</script>
+
+<Collapsible>
+	<header>
+		<h4>@peduarte starred 3 repositories</h4>
+		<CollapsibleTrigger variant="ghost" size="icon-sm" aria-label="Toggle repositories">
+			<ChevronsUpDownIcon />
+		</CollapsibleTrigger>
+	</header>
+	<div>@radix-ui/primitives</div>
+	<CollapsibleContent>
+		<div>@radix-ui/colors</div>
+		<div>@stitches/react</div>
+	</CollapsibleContent>
+</Collapsible>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/collapsible.json
+```
+
+## Anatomy
+
+`Collapsible` holds the open state and renders an unstyled `div`, so lay out its parts with a `class`. `CollapsibleTrigger` toggles the content, and `CollapsibleContent` renders its children only while open. Content outside `CollapsibleContent` always shows.
+
+## Trigger
+
+`CollapsibleTrigger` renders an outline `Button` and passes `variant`, `size`, `rounded`, and other button attributes to it. To toggle from any other element, pass a `trigger` snippet. It receives `props` with the ids, `aria-expanded`, `data-state`, `disabled`, and an `onclick` that toggles the content. Spread them onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<CollapsibleTrigger>
+	{#snippet trigger({ props })}
+		<button type="button" {...props}>
+			<ChevronRightIcon />
+			Advanced settings
+		</button>
+	{/snippet}
+</CollapsibleTrigger>
+```
+
+Every part sets `data-state` to `open` or `closed`, so you can style the trigger by its state, such as turning a chevron while open.
+
+## Controlled
+
+Use `bind:open` to open or close the content from your own code, or `onOpenChange` to run code on each toggle. Without either, set `defaultOpen` to start open.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "#lib/components/ui/collapsible/index.js";
+
+	let isOpen = $state(false);
+</script>
+
+<Collapsible bind:open={isOpen}>
+	<CollapsibleTrigger>{isOpen ? "Hide" : "Show"} details</CollapsibleTrigger>
+	<CollapsibleContent>
+		<p>The details are open.</p>
+	</CollapsibleContent>
+</Collapsible>
+```
+
+A passed `onclick` on the default trigger runs before the toggle. Call `e.preventDefault()` in it to keep the current state.
+
+## States
+
+Set `disabled` on `Collapsible` to disable the trigger and keep the content in its current state. The root sets `data-disabled` for custom styles.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Collapsible defaultOpen disabled>
+	<CollapsibleTrigger>Disabled</CollapsibleTrigger>
+	<CollapsibleContent>
+		<p>The trigger is disabled, so this stays open.</p>
+	</CollapsibleContent>
+</Collapsible>
+```
+
+## API
+
+`Collapsible` and `CollapsibleContent` extend the native `div` attributes. `CollapsibleTrigger` passes extra attributes to its `Button`, and ignores them when a `trigger` snippet is given.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Whether the content is shown; supports `bind:open` */
+	open?: boolean;
+	/** Starting state when `open` is not set; defaults to `false` */
+	defaultOpen?: boolean;
+	/** Called when the content opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Blocks opening and closing */
+	disabled?: boolean;
+}
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that toggles the content */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Visual style of the default button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default button; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

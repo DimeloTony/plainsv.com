@@ -1,0 +1,92 @@
+---
+title: "Fluid Orb"
+description: "An animated WebGL orb with a fluid surface, with theme colors, variants, sizes, and speed."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Fluid Orb
+
+Shows a round, slowly moving fluid surface drawn with WebGL, such as the face of a voice assistant or a hero accent. The orb fades from a highlight at the top to its color at the bottom, and both colors come from CSS, so it follows the theme. It pauses while scrolled out of view, holds still when the user prefers reduced motion, and shows a CSS gradient when WebGL is unavailable.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { FluidOrb } from "#lib/components/ui/fluid-orb/index.js";
+</script>
+
+<FluidOrb size="lg" style="color: oklch(0.55 0.2 255)" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/fluid-orb.json
+```
+
+## Variants
+
+Set `variant` to `default` or `destructive`. The default variant follows the text color, which is `--foreground` unless a parent changes it.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<FluidOrb variant="destructive" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the canvas resolution follows the displayed size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<FluidOrb size="sm" />
+```
+
+## Colors
+
+Set `color` on the orb to change its base color, and set `--fluid-orb-highlight` to change the top color, which defaults to `--background`. The orb reads both again when the theme or its own `class`, `style`, or `variant` changes.
+
+<Demo section="colors" />
+
+```svelte title="+page.svelte"
+<FluidOrb style="color: oklch(0.6 0.2 300)" />
+<FluidOrb style="color: oklch(0.65 0.17 160); --fluid-orb-highlight: oklch(0.97 0.05 100)" />
+```
+
+## Speed
+
+Set `speed` to scale the animation. The default is `1`, and `0` holds the orb still.
+
+<Demo section="speed" />
+
+```svelte title="+page.svelte"
+<FluidOrb speed={3} />
+```
+
+## Accessibility
+
+The orb is decorative, so the canvas is hidden from screen readers. Set `role="img"` and an `aria-label` on the orb when it carries meaning, such as an assistant's listening state.
+
+```svelte title="+page.svelte"
+<FluidOrb role="img" aria-label="Assistant is listening" />
+```
+
+## API
+
+The `FluidOrb` props extend the native `div` attributes, and extra attributes pass through to the root. Each page can hold a limited number of WebGL contexts, so keep the number of orbs on screen small.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Base color of the orb; `default` follows the CSS `color` of the orb or its parent */
+	variant?: "default" | "destructive";
+	/** Orb width and height on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Animation speed multiplier; `1` is the default pace and `0` holds still */
+	speed?: number;
+}
+```

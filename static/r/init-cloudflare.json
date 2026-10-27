@@ -1,0 +1,38 @@
+{
+    "name": "init-cloudflare",
+    "files": [
+        {
+            "type": "file",
+            "path": "template/viteConfigCloudflare.txt",
+            "target": "vite.config.ts",
+            "content": "import adapter from \"@sveltejs/adapter-cloudflare\";\nimport devPlugin from \"#lib/server/plugins/dev/index.js\";\nimport svxPlugin from \"#lib/server/plugins/svx/index.js\";\nimport { sveltekit } from \"@sveltejs/kit/vite\";\nimport { defineConfig } from \"vite\";\n\nexport default defineConfig(() => {\n\treturn {\n\t\tplugins: [\n\t\t\t// Point registry links at the local DOMAIN_URL on dev\n\t\t\tdevPlugin(),\n\t\t\tsvxPlugin(),\n\t\t\tsveltekit({\n\t\t\t\tadapter: adapter(),\n\t\t\t\textensions: [\".svelte\", \".svx\"],\n\t\t\t\tcompilerOptions: {\n\t\t\t\t\t// Force runes mode for the project, except for libraries. Can be removed in svelte 6.\n\t\t\t\t\trunes: ({ filename }) => (filename.split(/[/\\\\]/).includes(\"node_modules\") ? undefined : true),\n\t\t\t\t\twarningFilter: (warning) => (warning.code === \"state_referenced_locally\" ? false : true),\n\t\t\t\t},\n\t\t\t}),\n\t\t],\n\t};\n});\n"
+        },
+        {
+            "type": "file",
+            "path": "template/layoutServer.txt",
+            "target": "src/routes/+layout.server.ts",
+            "content": "import type { LayoutServerLoad } from \"./$types\";\n\n// When using the static adapter ? set to true : set to false to remove dark mode flash since we set dark class inside hook\nexport const prerender = false;\n\nexport const load: LayoutServerLoad = async (event) => {\n\tconst userData = event.locals.userData;\n\tconst isDarkMode = event.locals.isDarkMode;\n\tconst isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(event.request.headers.get(\"user-agent\") || \"\");\n\tevent.depends(\"layout\");\n\treturn { isMobile, isDarkMode, userData };\n};"
+        },
+        {
+            "type": "file",
+            "path": "template/wrangler.txt",
+            "target": "wrangler.jsonc",
+            "content": "{\n\t\"$schema\": \"./node_modules/wrangler/config-schema.json\",\n\t\"name\": \"my-app\",\n\t\"main\": \".svelte-kit/cloudflare/_worker.js\",\n\t\"compatibility_date\": \"2026-06-01\",\n\t\"compatibility_flags\": [\"nodejs_compat\"],\n\t\"assets\": {\n\t\t\"binding\": \"ASSETS\",\n\t\t\"directory\": \".svelte-kit/cloudflare\"\n\t},\n\t\"workers_dev\": true,\n\t\"preview_urls\": true,\n\t\"vars\": {\n\t\t\"DOMAIN_URL\": \"https://example.com\"\n\t}\n}\n"
+        }
+    ],
+    "itemDependencies": [
+        "/r/init-project-cloudflare.json",
+        "/r/init-base.json",
+        "/r/styles.json",
+        "/r/button.json",
+        "/r/toaster.json",
+        "/r/dev-plugin.json",
+        "/r/svx-plugin-simple.json"
+    ],
+    "devDependencies": [
+        "@lucide/svelte",
+        "@sveltejs/adapter-cloudflare",
+        "wrangler"
+    ],
+    "description": "A starter SvelteKit app on the Cloudflare adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on Cloudflare Workers."
+}

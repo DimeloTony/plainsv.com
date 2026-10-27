@@ -1,0 +1,205 @@
+---
+title: "Toaster"
+description: "Stacked toasts with types, promises, actions, and swipe to dismiss, built without dependencies."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Toaster
+
+Stacked toasts written with Svelte runes and no packages. New toasts stack at the front and older ones peek out behind them. Hovering or focusing the stack spreads it out and pauses the timers, and a swipe toward the edge closes a toast.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { toast } from "#lib/components/ui/toaster/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Button variant="outline" onclick={() => toast("Event has been created", { description: "Sunday, December 3 at 9:00 AM" })}>Show toast</Button>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/toaster.json
+```
+
+## Setup
+
+Place `Toaster` once in the root layout. Then call `toast` from anywhere, including outside components, such as after a fetch. The toasts are shared by the whole page, so there is nothing to pass around.
+
+```svelte title="+layout.svelte"
+<script lang="ts">
+	import { Toaster } from "#lib/components/ui/toaster/index.js";
+
+	const { children } = $props();
+</script>
+
+<Toaster />
+{@render children()}
+```
+
+## Types
+
+Call `toast.success`, `toast.info`, `toast.warning`, `toast.error`, or `toast.loading` for a toast with that type's icon. A loading toast stays open until it is updated or dismissed. `toast.promise` takes a promise, or a function that returns one, and shows a loading toast that turns into a success or error toast when it settles. The `success` and `error` messages can be functions of the result.
+
+<Demo section="types" />
+
+```svelte title="+page.svelte"
+<Button onclick={() => toast.success("Event has been created")}>Success</Button>
+<Button onclick={() => toast.promise(saveSettings, { loading: "Saving...", success: "Settings saved", error: (error) => `Could not save: ${error}` })}>Promise</Button>
+```
+
+## Content
+
+Pass `description` for muted text under the title. `action` adds a button and `cancel` adds a quieter one, and both close the toast after their `onClick`, unless it calls `preventDefault`. Set `duration` in milliseconds, or `Infinity` to keep the toast open. Every call returns the toast's id. Pass it back as `id` to update that toast in place, or to `toast.dismiss` to close it, and call `toast.dismiss()` with no id to close every toast.
+
+<Demo section="content" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	function connect() {
+		const id = toast.loading("Connecting...");
+		setTimeout(() => toast.success("Connected", { id }), 1500);
+	}
+</script>
+
+<Button onclick={() => toast("Message archived", { action: { label: "Undo", onClick: restore }, cancel: { label: "Dismiss" } })}>Archive</Button>
+<Button onclick={connect}>Connect</Button>
+```
+
+## Position
+
+Set `position` on `Toaster` to `top-left`, `top-center`, `top-right`, `bottom-left`, `bottom-center`, or `bottom-right`. The default is `bottom-right`. Toasts enter from the nearest edge, and on narrow screens they span the width.
+
+<Demo section="position" />
+
+```svelte title="+layout.svelte"
+<Toaster position="top-center" />
+```
+
+## Options
+
+Set `expand` to keep the toasts spread out instead of stacked. Set `closeButton` to show a close button on every toast, and `richColors` to tint error toasts with the destructive color. The theme has no success, info, or warning colors, so those toasts stay neutral. Each toast can override these with its own `closeButton` and `richColors`. `visibleToasts` sets how many show at once, and `duration` sets how long each stays open, with defaults of `3` and `4000`.
+
+<Demo section="options" />
+
+```svelte title="+layout.svelte"
+<Toaster expand closeButton richColors visibleToasts={5} duration={6000} />
+```
+
+## Swipe and keyboard
+
+Drag a toast toward the edge it stacks from, or toward its side, to close it. A short, fast flick also works. Press Alt+T to move focus to the toasts, which spreads them out so Tab can reach their buttons, and press Escape to leave. Set `hotkey` to change the keys, such as `["metaKey", "KeyJ"]`. The timers pause while the stack is hovered, focused, or swiped, and while the tab is in the background.
+
+## Sizes
+
+Set `size` on `Toaster` to `xs`, `sm`, `md`, or `lg` to change the padding, text, and icon size. The default is `md`. Set `gap` on the same scale to change the space between spread-out toasts and how far stacked ones peek out.
+
+<Demo section="sizes" />
+
+```svelte title="+layout.svelte"
+<Toaster size="sm" gap="sm" />
+```
+
+## Rounded
+
+Set `rounded` on `Toaster` to `xs` through `4xl` or `pill`. The default is `lg`. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+layout.svelte"
+<Toaster rounded="sm" />
+```
+
+## Multiple toasters
+
+Give a `Toaster` an `id` and pass the same value as `toasterId` to send a toast there. Toasts without a `toasterId` go to the toasters without an `id`. Each demo on this page uses its own toaster this way.
+
+```svelte title="+page.svelte"
+<Toaster id="editor" position="top-center" />
+<Button onclick={() => toast("Draft saved", { toasterId: "editor" })}>Save</Button>
+```
+
+## API
+
+`Toaster` renders a `section` live region and extends its attributes. `toast` returns the id of the toast it shows.
+
+```ts title="index.ts"
+interface Props extends CompProps<"section"> {
+	/** Shows only the toasts whose `toasterId` matches; leave it out for the main toaster */
+	id?: string;
+	/** Where the toasts stack; defaults to `bottom-right` */
+	position?: ToasterPosition;
+	/** Keeps the toasts spread out instead of stacked; they always spread while hovered or focused */
+	expand?: boolean;
+	/** Number of toasts shown at once; older ones wait behind; defaults to `3` */
+	visibleToasts?: number;
+	/** Milliseconds each toast stays open; defaults to `4000` */
+	duration?: number;
+	/** Shows a close button on every toast */
+	closeButton?: boolean;
+	/** Tints error toasts with the destructive color */
+	richColors?: boolean;
+	/** Space between spread-out toasts, and how far stacked toasts peek out, on the shared scale; defaults to `md` */
+	gap?: UiSize;
+	/** Padding, text, and icon size of the toasts on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the toasts; defaults to `lg`. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** Keys that move focus to the toasts: modifier names such as `altKey`, then a key code; defaults to Alt+T */
+	hotkey?: string[];
+}
+
+interface ToastOptions {
+	/** Id of an existing toast to update in place, or a custom id for a new one */
+	id?: ToastId;
+	/** Muted text under the title */
+	description?: string;
+	/** Milliseconds before the toast closes; `Infinity` keeps it open; follows the toaster's `duration` when omitted */
+	duration?: number;
+	/** Whether a swipe or `toast.dismiss` can close the toast; defaults to `true` */
+	dismissible?: boolean;
+	/** Shows a close button in the corner; follows the toaster's `closeButton` when omitted */
+	closeButton?: boolean;
+	/** Tints error toasts with the destructive color; follows the toaster's `richColors` when omitted */
+	richColors?: boolean;
+	/** Main button, such as Undo */
+	action?: ToastAction;
+	/** Secondary button that closes the toast, such as Cancel */
+	cancel?: ToastAction;
+	/** Icon in place of the type's icon */
+	icon?: Snippet;
+	/** Id of the `Toaster` that shows the toast; toasts without one show in toasters without an `id` */
+	toasterId?: string;
+	/** Classes merged onto the toast */
+	class?: string;
+	/** Called when the toast is closed by a swipe, a button, or `toast.dismiss` */
+	onDismiss?: (toast: ToastData) => void;
+	/** Called when the toast closes after its duration */
+	onAutoClose?: (toast: ToastData) => void;
+}
+
+interface ToastAction {
+	/** Button text */
+	label: string;
+	/** Called on click; the toast closes afterwards unless the handler calls `preventDefault` */
+	onClick?: (e: MouseEvent) => void;
+}
+
+const toast: {
+	(title: string, options?: ToastOptions): ToastId;
+	message(title: string, options?: ToastOptions): ToastId;
+	success(title: string, options?: ToastOptions): ToastId;
+	info(title: string, options?: ToastOptions): ToastId;
+	warning(title: string, options?: ToastOptions): ToastId;
+	error(title: string, options?: ToastOptions): ToastId;
+	loading(title: string, options?: ToastOptions): ToastId;
+	promise<T>(promise: Promise<T> | (() => Promise<T>), options: ToastPromiseOptions<T>): ToastId;
+	dismiss(id?: ToastId): void;
+};
+```

@@ -1,0 +1,74 @@
+<script lang="ts">
+	import "../styles/app.css";
+	import { setAppCtx } from "#lib/context/app.svelte.ts";
+	import { Logo } from "#lib/components/shared/index.js";
+	import { SunIcon, MoonIcon } from "@lucide/svelte";
+	import { Toaster } from "#lib/components/ui/toaster/index.js";
+	import { Button } from "#lib/components/ui/button/index.ts";
+	const { children, data } = $props();
+	const app = setAppCtx({ ...data });
+	const ThemeIcon = $derived(app.isDarkMode ? SunIcon : MoonIcon);
+	const onclick = () => app.toggleDarkMode();
+</script>
+
+<Toaster richColors size="sm" rounded="xl" />
+
+<div class="layout">
+	<div class="header navHeader">
+		<nav class="nav maxWidth">
+			<Logo href="/" />
+			<!-- Nav links -->
+			<ul class="navLinks">
+				{#each [{ href: "/", label: "Home" }, { href: "/about", label: "About" }] as link (link.href)}
+					<li class="navLink">
+						<a href={link.href}>{link.label}</a>
+					</li>
+				{/each}
+			</ul>
+			<!-- Dark mode toggler -->
+			<Button size="icon-sm" variant="ghost" rounded="pill" {onclick}>
+				<ThemeIcon />
+			</Button>
+		</nav>
+	</div>
+	{@render children()}
+</div>
+
+<style>
+	.layout {
+		width: 100%;
+		min-height: 100dvh;
+		overflow-y: auto;
+	}
+	.navHeader {
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+		border-bottom: 1px solid var(--border);
+		background-color: color-mix(in oklab, var(--sidebar) 10%, transparent);
+		height: var(--nav-height);
+	}
+	.nav {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--spacing-lg);
+		height: 100%;
+	}
+	.navLinks {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-md);
+		margin-left: auto;
+		list-style: none;
+	}
+	.navLink {
+		color: var(--foreground);
+		font-weight: 400;
+		font-size: var(--text-sm);
+	}
+	.navLink:hover,
+	.navLink:active {
+		color: var(--muted-foreground);
+		text-decoration: underline;
+	}
+</style>

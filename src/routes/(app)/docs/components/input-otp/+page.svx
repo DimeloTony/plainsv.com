@@ -1,0 +1,210 @@
+---
+title: "Input OTP"
+description: "A one-time code field with joined slots, separators, pattern filtering, paste support, and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Input OTP
+
+An accessible field for one-time passwords and verification codes. Compose it from `InputOTP`, `InputOTPGroup`, `InputOTPSlot`, and `InputOTPSeparator`. It has no dependencies beyond the theme.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "#lib/components/ui/input-otp/index.js";
+</script>
+
+<InputOTP maxlength={6}>
+	<InputOTPGroup>
+		<InputOTPSlot index={0} />
+		<InputOTPSlot index={1} />
+		<InputOTPSlot index={2} />
+	</InputOTPGroup>
+	<InputOTPSeparator />
+	<InputOTPGroup>
+		<InputOTPSlot index={3} />
+		<InputOTPSlot index={4} />
+		<InputOTPSlot index={5} />
+	</InputOTPGroup>
+</InputOTP>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/input-otp.json
+```
+
+## Anatomy
+
+`InputOTP` holds the value and the style settings, and shares them with its parts. It renders one transparent native `input` stretched over the slots, so typing, pasting, deleting, and one-time code autofill all work like a normal text field. Each `InputOTPSlot` shows the character at its `index`. `InputOTPGroup` joins its slots with shared borders and rounds the outer corners. `InputOTPSeparator` renders `role="separator"` between groups.
+
+Set `maxlength` to the number of slots. While the field has focus, the slot that receives the next character shows a focus ring and a blinking caret. The caret stays after the last character, so Backspace always removes the last one.
+
+## Pattern
+
+Set `pattern` to a regular expression source that the whole value must match. Typed or pasted text that breaks it is ignored. The default is `REGEXP_ONLY_DIGITS`, which also opens the number pad on touch keyboards. Use `REGEXP_ONLY_CHARS` or `REGEXP_ONLY_DIGITS_AND_CHARS` for letters, or pass your own.
+
+<Demo section="pattern" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { InputOTP, InputOTPGroup, InputOTPSlot, REGEXP_ONLY_DIGITS_AND_CHARS } from "#lib/components/ui/input-otp/index.js";
+</script>
+
+<InputOTP maxlength={6} pattern={REGEXP_ONLY_DIGITS_AND_CHARS}>
+	<InputOTPGroup>
+		{#each { length: 6 }, index (index)}
+			<InputOTPSlot {index} />
+		{/each}
+	</InputOTPGroup>
+</InputOTP>
+```
+
+Whitespace is removed before the pattern check, so a pasted code such as `123 456` fills all six slots.
+
+## Separator
+
+Pass children to `InputOTPSeparator` to replace the default dash, such as with another icon. Separators scale with the size.
+
+<Demo section="separator" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "#lib/components/ui/input-otp/index.js";
+	import { DotIcon } from "@lucide/svelte";
+</script>
+
+<InputOTP maxlength={6}>
+	<InputOTPGroup>
+		<InputOTPSlot index={0} />
+		<InputOTPSlot index={1} />
+	</InputOTPGroup>
+	<InputOTPSeparator><DotIcon /></InputOTPSeparator>
+	<InputOTPGroup>
+		<InputOTPSlot index={2} />
+		<InputOTPSlot index={3} />
+	</InputOTPGroup>
+	<InputOTPSeparator><DotIcon /></InputOTPSeparator>
+	<InputOTPGroup>
+		<InputOTPSlot index={4} />
+		<InputOTPSlot index={5} />
+	</InputOTPGroup>
+</InputOTP>
+```
+
+## Controlled
+
+Use `bind:value` to read and set the code from your own code, or `onValueChange` to run code when it changes. `onComplete` runs once every slot is filled, such as to submit the code.
+
+Other attributes, such as `id`, `name`, `required`, and `autofocus`, pass through to the native input, so a `Label` with a matching `for` focuses the field and a form submits the value under `name`.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { InputOTP, InputOTPGroup, InputOTPSlot } from "#lib/components/ui/input-otp/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+
+	let code = $state("");
+</script>
+
+<Label for="otp">Verification code</Label>
+<InputOTP id="otp" maxlength={6} bind:value={code} onComplete={(value) => console.log(value)}>
+	<InputOTPGroup>
+		{#each { length: 6 }, index (index)}
+			<InputOTPSlot {index} />
+		{/each}
+	</InputOTPGroup>
+</InputOTP>
+<p>Value: {code}</p>
+```
+
+## Sizes
+
+Set `size` on `InputOTP` to `xs`, `sm`, `md`, or `lg`. The default is `md`, each slot is as tall and wide as the input of the same size, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<InputOTP maxlength={6} size="sm">...</InputOTP>
+```
+
+## Rounded
+
+Set `rounded` on `InputOTP` to `xs` through `4xl` or `pill` to override the radius from the size. Only the outer corners of each group are rounded, and `pill` turns each group into a pill.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<InputOTP maxlength={6} rounded="pill">...</InputOTP>
+```
+
+## States
+
+Set `disabled` to dim the field and block interaction. Set `aria-invalid="true"` to give every slot the destructive border, such as for a code that failed verification.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<InputOTP maxlength={6} disabled>...</InputOTP>
+<InputOTP maxlength={6} aria-invalid="true">...</InputOTP>
+```
+
+## Overrides
+
+`InputOTPSlot` takes `size` and `rounded`, which win over the input's for that slot only. The radius shows on the outer corners of each group.
+
+```svelte title="+page.svelte"
+<InputOTPGroup>
+	<InputOTPSlot index={0} rounded="pill" />
+	<InputOTPSlot index={1} />
+</InputOTPGroup>
+```
+
+## API
+
+`InputOTP` extends the native `input` attributes and passes them to the hidden input, except `class`, which is merged onto the root container. `InputOTPGroup`, `InputOTPSlot`, and `InputOTPSeparator` extend the native `div` attributes. Slots set `data-active` and `data-invalid` for custom styles.
+
+```ts title="index.ts"
+interface Props extends Omit<CompProps<"input">, "size" | "value" | "type" | "maxlength" | "pattern" | "class"> {
+	/** Characters entered so far; supports `bind:value` */
+	value?: string;
+	/** Number of characters the code needs; match it to the number of slots */
+	maxlength: number;
+	/** Regular expression source the whole value must match; defaults to `REGEXP_ONLY_DIGITS` */
+	pattern?: string;
+	/** Called with the new value when it changes */
+	onValueChange?: (value: string) => void;
+	/** Called with the value once every slot is filled */
+	onComplete?: (value: string) => void;
+	/** Slot size, gap, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of each group's outer slots; follows `size` when omitted */
+	rounded?: UiRounded;
+	/** Groups, slots, and separators */
+	children: Snippet;
+	/** Classes merged onto the root container */
+	class?: CompProps<"div">["class"];
+}
+
+interface GroupProps extends CompPropsWithChild<"div"> {}
+
+interface SlotProps extends CompProps<"div"> {
+	/** Position of the character in the value, starting at 0 */
+	index: number;
+	/** Size of this slot; overrides the input's `size` */
+	size?: UiSize;
+	/** Corner radius of this slot's outer corners; overrides the input's `rounded` */
+	rounded?: UiRounded;
+}
+
+interface SeparatorProps extends CompProps<"div"> {
+	/** Custom divider content in place of the dash */
+	children?: Snippet;
+}
+```

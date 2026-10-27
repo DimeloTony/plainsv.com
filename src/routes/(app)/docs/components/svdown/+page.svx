@@ -1,0 +1,130 @@
+---
+title: "Svdown"
+description: "Renders streamed Markdown from an AI response, with plan, thinking, and files blocks, code blocks, and safe links."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Svdown
+
+Renders Markdown from an AI response while it streams. Pass the text received so far as `content` and append to it as chunks arrive. New text is typed out, code fences become highlighted code blocks, and `<SvThink>`, `<SvPlan>`, and `<SvFiles>` blocks show as activity steps.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Svdown } from "#lib/components/ui/svdown/index.js";
+
+	let content = $state("");
+
+	// Append each chunk as it arrives from the model.
+	async function ask() {
+		const response = await fetch("/api/chat", { method: "POST" });
+		const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader();
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			content += value;
+		}
+	}
+</script>
+
+<Svdown {content} />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/svdown.json
+```
+
+## Markdown
+
+Headings, paragraphs, emphasis, strikethrough, inline code, links, images, blockquotes, ordered, unordered, and task lists, tables, and dividers follow GitHub Flavored Markdown. Wide tables scroll sideways.
+
+Svdown does not style the Markdown itself. Each run of prose renders in a `typeset typeset-chat` wrapper, styled by `typeset.css`, which installs with this component. Import it once in your root layout. Change the fonts, line height, and spacing for chat responses in the `.typeset-chat` rule at the top of that file.
+
+```svelte title="+layout.svelte"
+<script lang="ts">
+	import "../styles/typeset.css";
+</script>
+```
+
+Code fences render with `CodeBlock`. Add a `path` after the language, such as `svelte path="src/App.svelte"`, to show it in the header. Add line numbers in braces, such as `ts {1,3-5}`, to highlight those lines. Languages without highlighting show as plain text.
+
+## Streaming
+
+Appended text is typed out a few characters at a time, faster when it falls behind. Replacing `content` with text that does not start with the old text, such as a new message, shows it at once. Set `removeAnimation` to show text at once, such as for earlier messages. People who prefer reduced motion always see text at once.
+
+A custom tag that is still arriving, such as `<SvTh`, stays hidden until it is complete.
+
+## Activity blocks
+
+Wrap reasoning in `<SvThink>` and a plan in `<SvPlan>` to show them as an `AIAction` step. The step shimmers and stays open while the block streams, and closes once its closing tag arrives.
+
+Wrap code fences with a `path` in `<SvFiles>` to show the files being written, with a spinner on the current one. An optional `title` attribute replaces the step title. Set `onFileClick` to run code when a file is clicked, `onFiles` to receive the block while it streams, or `renderFiles` to render the block yourself.
+
+<Demo section="files" />
+
+```svelte title="+page.svelte"
+<Svdown {content} onFileClick={(path) => openFile(path)} />
+```
+
+## Safety
+
+Model output is untrusted, so raw HTML shows as text by default and cannot run scripts. Links and images keep only relative addresses and the `http`, `https`, `mailto`, and `tel` schemes; others, such as `javascript:`, are dropped. Set `allowHtml` only for content you trust.
+
+<Demo section="html" />
+
+```svelte title="+page.svelte"
+<Svdown content={trustedMarkdown} allowHtml />
+```
+
+## Extensions
+
+`svdownMarked` is the Marked instance Svdown parses with. Add your own extensions with `svdownMarked.use()`, and render their tokens with the `renderCustom` snippet. `getSvdownTokens` and `getFilesBlockDataFromSvdown` parse Markdown without rendering it.
+
+```svelte title="+page.svelte"
+<Svdown {content}>
+	{#snippet renderCustom(token)}
+		<p>Custom token: {token.type}</p>
+	{/snippet}
+</Svdown>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the typeset text size, the spacing between blocks, and the size of the code blocks and activity steps. It defaults to `md`. Setting `--typeset-size` in the `.typeset-chat` rule overrides it.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Svdown size="sm" {content} />
+```
+
+## API
+
+`Svdown` extends the `div` attributes. Extra attributes pass through.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Markdown source; append to it as the response streams */
+	content: string;
+	/** Shows new text at once instead of typing it out; reduced motion always shows it at once */
+	removeAnimation?: boolean;
+	/** Renders raw HTML in the Markdown; off by default, so HTML shows as text and cannot run scripts */
+	allowHtml?: boolean;
+	/** Called with a file's path when it is clicked in the default files list */
+	onFileClick?: (path: string) => void;
+	/** Called with the files block while it is still streaming */
+	onFiles?: (data: FilesToken) => void;
+	/** Replaces the default files list for each files block */
+	renderFiles?: Snippet<[FilesToken]>;
+	/** Renders tokens from Marked extensions you add with `svdownMarked.use()` */
+	renderCustom?: Snippet<[Tokens.Generic]>;
+	/** Typeset text size, spacing between blocks, and the size of the code blocks and activities; defaults to `md` */
+	size?: UiSize;
+}
+```

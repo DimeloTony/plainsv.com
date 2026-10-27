@@ -1,0 +1,245 @@
+---
+title: "Tabs"
+description: "Layered panels shown one at a time, with default, outline, ghost, and line variants, vertical orientation, and keyboard support."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Tabs
+
+Shows one panel at a time from a set, switched by a row of triggers. Compose it from `Tabs`, `TabsList`, `TabsTrigger`, and `TabsContent`. A trigger and a panel with the same `value` belong together.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from "#lib/components/ui/tabs/index.js";
+</script>
+
+<Tabs defaultValue="account">
+	<TabsList>
+		<TabsTrigger value="account">Account</TabsTrigger>
+		<TabsTrigger value="password">Password</TabsTrigger>
+	</TabsList>
+	<TabsContent value="account">Make changes to your account here.</TabsContent>
+	<TabsContent value="password">Change your password here.</TabsContent>
+</Tabs>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/tabs.json
+```
+
+## Anatomy
+
+`Tabs` holds the active value and the style settings, and shares them with its parts. `TabsList` renders `role="tablist"` and holds the triggers. Each `TabsTrigger` renders a `button` with `role="tab"`, linked by id to the `TabsContent` with the same `value`. Only the active panel is rendered.
+
+## Line
+
+Set `variant="line"` to drop the container and underline the active tab. The list draws a rule along the edge facing the panel, and the active trigger covers it with a thicker line.
+
+<Demo section="line" />
+
+```svelte title="+page.svelte"
+<Tabs defaultValue="overview" variant="line">
+	<TabsList>
+		<TabsTrigger value="overview">Overview</TabsTrigger>
+		<TabsTrigger value="analytics">Analytics</TabsTrigger>
+		<TabsTrigger value="reports">Reports</TabsTrigger>
+	</TabsList>
+	<TabsContent value="overview">A summary of your account activity.</TabsContent>
+	<TabsContent value="analytics">Traffic and engagement over time.</TabsContent>
+	<TabsContent value="reports">Exports you have scheduled.</TabsContent>
+</Tabs>
+```
+
+## Variants
+
+Set `variant` on `Tabs` to `default`, `outline`, `ghost`, or `line`. `default` is a muted segmented control with a raised active tab. `outline` swaps the muted background for a border. `ghost` drops the container and fills the active tab.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Tabs defaultValue="overview" variant="outline">...</Tabs>
+<Tabs defaultValue="overview" variant="ghost">...</Tabs>
+```
+
+## Vertical
+
+Set `orientation="vertical"` to place the list beside the panel. Triggers stack and align their labels to the start, and the `line` rule moves to the edge facing the panel.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<Tabs defaultValue="overview" orientation="vertical">...</Tabs>
+<Tabs defaultValue="overview" orientation="vertical" variant="line">...</Tabs>
+```
+
+## Keyboard
+
+Only the active trigger is in the tab order, so Tab moves from the list into the panel. The arrow keys move between triggers along the orientation, Left and Right for horizontal and Up and Down for vertical, and wrap around at the ends. Home and End jump to the first and last trigger. Disabled triggers are skipped.
+
+By default, moving focus with the arrow keys also opens the tab. Set `activationMode="manual"` to open it only on Enter or Space, such as when each panel is slow to load.
+
+## Trigger
+
+`TabsTrigger` renders a tab button styled by the list's variant. To open the tab from any other element, pass a `trigger` snippet. It receives `props` with `role="tab"`, the ids, `aria-selected`, `tabindex`, `data-state`, `data-orientation`, and an `onclick` that opens the tab. Spread them onto the element, and the list's arrow keys still move between the tabs.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<TabsTrigger value="preview">
+	{#snippet trigger({ props })}
+		<Button variant={props["data-state"] === "active" ? "secondary" : "ghost"} size="sm" {...props}>
+			<EyeIcon />
+			Preview
+		</Button>
+	{/snippet}
+</TabsTrigger>
+```
+
+## Controlled
+
+Use `bind:value` to read and set the active tab from your own code, or `onValueChange` to run code when a tab opens. Without either, set `defaultValue` to choose the starting tab.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from "#lib/components/ui/tabs/index.js";
+
+	let activeTab = $state("overview");
+</script>
+
+<Tabs bind:value={activeTab}>
+	<TabsList>
+		<TabsTrigger value="overview">Overview</TabsTrigger>
+		<TabsTrigger value="analytics">Analytics</TabsTrigger>
+	</TabsList>
+	<TabsContent value="overview">The active tab is {activeTab}.</TabsContent>
+	<TabsContent value="analytics">The active tab is {activeTab}.</TabsContent>
+</Tabs>
+```
+
+A passed `onclick` on `TabsTrigger` runs before the tab opens. Call `e.preventDefault()` in it to keep the current tab, such as when a form has unsaved changes.
+
+## Icons
+
+Place an icon before or after a trigger label. Icons scale with the size.
+
+<Demo section="icons" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Tabs, TabsList, TabsTrigger } from "#lib/components/ui/tabs/index.js";
+	import { AppWindowIcon, CodeIcon } from "@lucide/svelte";
+</script>
+
+<Tabs defaultValue="preview" variant="line">
+	<TabsList>
+		<TabsTrigger value="preview"><AppWindowIcon />Preview</TabsTrigger>
+		<TabsTrigger value="code"><CodeIcon />Code</TabsTrigger>
+	</TabsList>
+</Tabs>
+```
+
+## Sizes
+
+Set `size` on `Tabs` to `xs`, `sm`, `md`, or `lg`. The default is `md`, a 36 pixel list like shadcn.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Tabs defaultValue="overview" size="sm">...</Tabs>
+```
+
+## Rounded
+
+Set `rounded` on `Tabs` to `xs` through `4xl` or `pill` to change the radius. It defaults to `lg`, like shadcn, instead of following `size`. Inside a `default` or `outline` list, the triggers use the radius one step smaller so the corners nest, such as `md` triggers in an `lg` list. `pill` keeps both as pills.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Tabs defaultValue="overview" rounded="pill">...</Tabs>
+```
+
+## Disabled
+
+Set `disabled` on a `TabsTrigger` to dim it and block it. The arrow keys skip it.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<TabsTrigger value="analytics" disabled>Analytics</TabsTrigger>
+```
+
+## Overrides
+
+`TabsList` takes its own `variant`, `size`, and `rounded`, which win over the ones on `Tabs`, and its triggers follow the list. `TabsTrigger` takes `variant`, `size`, and `rounded` for that trigger only. Its size still fits inside the list's padding, and an own `rounded` sets that exact radius.
+
+```svelte title="+page.svelte"
+<Tabs value="account">
+	<TabsList variant="outline" size="lg">
+		<TabsTrigger value="account">Account</TabsTrigger>
+		<TabsTrigger value="billing" variant="ghost" rounded="pill">Billing</TabsTrigger>
+	</TabsList>
+</Tabs>
+```
+
+## API
+
+`Tabs`, `TabsList`, and `TabsContent` extend the native `div` attributes, and `TabsTrigger` extends the native `button` attributes. Extra attributes pass through to each element. Triggers set `data-state` to `active` or `inactive`, and every part sets `data-orientation`, for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Value of the active tab; supports `bind:value` */
+	value?: string;
+	/** Starting tab when `value` is not set */
+	defaultValue?: string;
+	/** Called with the new value when a tab opens */
+	onValueChange?: (value: string) => void;
+	/** Direction of the list; `vertical` places it beside the content */
+	orientation?: "horizontal" | "vertical";
+	/** `automatic` opens a tab when the arrow keys focus it; `manual` waits for Enter or Space */
+	activationMode?: "automatic" | "manual";
+	/** Visual style of the list and triggers */
+	variant?: "default" | "outline" | "ghost" | "line";
+	/** Trigger size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the list, with triggers one step smaller; defaults to `lg`, like shadcn */
+	rounded?: UiRounded;
+}
+
+interface ListProps extends CompPropsWithChild<"div"> {
+	/** Style of the list and its triggers; overrides the tabs' `variant` */
+	variant?: Props["variant"];
+	/** Height, padding, and text of the list and its triggers; overrides the tabs' `size` */
+	size?: UiSize;
+	/** Corner radius of the list, with triggers one step smaller; overrides the tabs' `rounded` */
+	rounded?: UiRounded;
+}
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Value that links the trigger to its `TabsContent` */
+	value: string;
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the tab */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger; overrides the list's `variant` */
+	variant?: Props["variant"];
+	/** Height, padding, and text of the default trigger; overrides the list's `size` */
+	size?: UiSize;
+	/** Corner radius of the default trigger with this exact value; overrides the inherited radius */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Value that links the panel to its `TabsTrigger` */
+	value: string;
+}
+```

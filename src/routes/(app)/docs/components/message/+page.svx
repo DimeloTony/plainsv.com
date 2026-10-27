@@ -1,0 +1,157 @@
+---
+title: "Message"
+description: "A chat message with an avatar, a content bubble, and actions, aligned by who sent it."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Message
+
+Shows one message in a chat, with an avatar, the message text, and actions such as copy and regenerate. User messages sit on the right in a bubble, and assistant messages sit on the left as plain text. Compose it from `Message`, `MessageAvatar`, `MessageAvatarImage`, `MessageAvatarFallback`, `MessageContent`, `MessageActions`, and `MessageAction`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Message, MessageAvatar, MessageAvatarImage, MessageAvatarFallback, MessageContent, MessageActions, MessageAction } from "#lib/components/ui/message/index.js";
+	import { RotateCwIcon } from "@lucide/svelte";
+</script>
+
+<Message>
+	<MessageAvatar>
+		<MessageAvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+		<MessageAvatarFallback>CN</MessageAvatarFallback>
+	</MessageAvatar>
+	<MessageContent>How can I help you today?</MessageContent>
+	<MessageActions>
+		<MessageAction>
+			<RotateCwIcon />
+			Regenerate
+		</MessageAction>
+	</MessageActions>
+</Message>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/message.json
+```
+
+## Anatomy
+
+`Message` lays out its parts and sets the style, size, and radius they share. `MessageAvatar` is an `Avatar` that sits beside the content, and `MessageAvatarImage` and `MessageAvatarFallback` are the `AvatarImage` and `AvatarFallback` parts. `MessageContent` holds the text, and `MessageActions` holds a row of `MessageAction` buttons under it. The avatar and actions are optional, and the content takes the full row when there is no avatar.
+
+## From
+
+Set `from` to `user` or `assistant`. The default is `assistant`, which sits on the left. User messages sit on the right, put the avatar after the content, and keep their bubble narrower than the row.
+
+<Demo section="from" />
+
+```svelte title="+page.svelte"
+<Message from="user">
+	<MessageAvatar>
+		<MessageAvatarFallback>AT</MessageAvatarFallback>
+	</MessageAvatar>
+	<MessageContent>Can you help me name a component?</MessageContent>
+</Message>
+```
+
+## Variants
+
+Set `variant` to `default`, `secondary`, `outline`, `ghost`, or `destructive` to style the content bubble. When `variant` is omitted, user messages use `secondary` and assistant messages use `ghost`, which shows plain text with no bubble. Use `destructive` for a message that failed to send.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Message variant="outline">
+	<MessageContent>This message uses the outline variant.</MessageContent>
+</Message>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`. The size sets the text, the bubble padding, and the gaps, and the avatar and actions use the size one step below it.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Message from="user" size="lg">
+	<MessageContent>This message is size lg.</MessageContent>
+</Message>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to round the bubble. The default is `pill`, which sets the radius to half the height of a one-line bubble. A short message is a pill at every size, and a longer message keeps round corners without clipping the text.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Message from="user" rounded="lg">
+	<MessageContent>This bubble is rounded lg.</MessageContent>
+</Message>
+<Message from="user" rounded="pill">
+	<MessageContent>A longer message wraps onto several lines, so the pill radius keeps round corners here instead of stretching into an oval, and none of the text is clipped.</MessageContent>
+</Message>
+```
+
+## Part overrides
+
+`MessageContent` takes its own `variant`, `size`, and `rounded`, which override the message's for that bubble only. A bubble with its own `size` in a `pill` message stays a pill at that size. `MessageAvatar` and `MessageAction` take the `Avatar` and `Button` props, so a `size` set on them replaces the one they get from the message.
+
+<Demo section="overrides" />
+
+```svelte title="+page.svelte"
+<Message from="user">
+	<MessageContent variant="outline" size="sm" rounded="sm">A smaller outlined bubble in a medium message.</MessageContent>
+</Message>
+<Message from="user">
+	<MessageContent size="lg">A large pill in a medium message.</MessageContent>
+</Message>
+```
+
+## Actions
+
+`MessageAction` is a `ghost` `Button` with `type="button"`. Use an `icon-*` size and an `aria-label` for icon-only actions.
+
+```svelte title="+page.svelte"
+<MessageActions>
+	<MessageAction size="icon-sm" aria-label="Copy"><CopyIcon /></MessageAction>
+	<MessageAction size="icon-sm" aria-label="Good response"><ThumbsUpIcon /></MessageAction>
+</MessageActions>
+```
+
+## API
+
+`Message` extends the native `article` attributes, `MessageContent` and `MessageActions` extend the native `div` attributes, `MessageAvatar` takes the `Avatar` props, and `MessageAction` takes the `Button` props. Extra attributes and event handlers pass through to each element.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"article"> {
+	/** Who sent the message; `user` messages sit on the right; defaults to `assistant` */
+	from?: "user" | "assistant";
+	/** Style of the content bubble; defaults to `secondary` for `user` and `ghost`, plain text, for `assistant` */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "destructive";
+	/** Text, padding, and gap on the shared scale, and the avatar and action size one step below; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the content bubble; defaults to `pill`, a pill on one line that keeps round corners on long messages without clipping */
+	rounded?: UiRounded;
+}
+
+type AvatarProps = AvatarRootProps;
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Style of this bubble; overrides the message's `variant` */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "destructive";
+	/** Text and padding of this bubble; overrides the message's `size` */
+	size?: UiSize;
+	/** Corner radius of this bubble; overrides the message's `rounded` */
+	rounded?: UiRounded;
+}
+
+interface ActionsProps extends CompPropsWithChild<"div"> {}
+
+type ActionProps = Partial<Omit<Extract<ButtonProps, { href?: undefined }>, "href">>;
+```

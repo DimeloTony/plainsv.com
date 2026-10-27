@@ -1,0 +1,107 @@
+---
+title: "Form"
+description: "Form state checked by a zod schema, with fields that show their errors and wire up labels and aria attributes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Form
+
+Builds forms on the `Field` parts with validation from a zod schema. `createForm` holds the values and checks them as they change, and `Form`, `FormField`, `FormControl`, `FormLabel`, `FormDescription`, and `FormFieldErrors` wire the ids, labels, and aria attributes for you.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { z } from "zod";
+	import { Form, FormField, FormControl, FormLabel, FormDescription, FormFieldErrors, createForm } from "#lib/components/ui/form/index.js";
+	import { Input } from "#lib/components/ui/input/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	const schema = z.object({
+		username: z.string().min(2, "Username must be at least 2 characters."),
+	});
+	const form = createForm(schema, {
+		initial: { username: "" },
+		onSubmit: async (data) => {
+			await saveProfile(data);
+		},
+	});
+</script>
+
+<Form {form}>
+	<FormField {form} name="username">
+		<FormLabel>Username</FormLabel>
+		<FormControl>
+			{#snippet children({ props })}
+				<Input bind:value={form.values.username} {...props} />
+			{/snippet}
+		</FormControl>
+		<FormDescription>This is your public display name.</FormDescription>
+		<FormFieldErrors />
+	</FormField>
+	<Button type="submit">Submit</Button>
+</Form>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/form.json
+```
+
+## Anatomy
+
+`Form` renders a `form` that uses the schema instead of the browser's own validation messages. Each `FormField` is a `Field` for one value, named by its dotted path, such as `email` or `address.city`. `FormControl` hands its child the `id`, `name`, `aria-invalid`, `aria-describedby`, and `onblur` attributes; spread `props` onto the control. `FormLabel` points at the control, `FormDescription` describes it, and `FormFieldErrors` lists its errors.
+
+## Validation
+
+The values are checked against the schema every time they change. A field shows its errors once the user has left it, or after the first submit, so nobody sees errors before typing. The field's label turns destructive, the control gets its invalid ring, and screen readers hear the message.
+
+## Submitting
+
+On submit, an invalid form is blocked and focus moves to the first invalid control. A valid form calls `onSubmit` with the parsed values, the output of the schema, while `form.submitting` is true, such as to disable the button. Without `onSubmit`, a valid form submits natively, so it works with a SvelteKit form action; each control's `name` comes from its field.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	const form = createForm(schema, { initial: { username: "" } });
+</script>
+
+<Form {form} method="POST" action="?/save">...</Form>
+```
+
+## State
+
+`createForm` returns state you can read and set: `values`, which controls bind to, `errors` by field path, `isValid`, `touched`, `submitted`, and `submitting`. Call `form.errorsFor(name)` to read a field's shown errors, `form.touch(name)` to show them, and `form.reset()` to restore the starting values and hide every error, or `form.reset(values)` to start from new ones.
+
+## API
+
+`Form` extends the native `form` attributes, and `FormField` takes the `Field` props. `FormLabel`, `FormDescription`, and `FormFieldErrors` take the `FieldLabel`, `FieldDescription`, and `FieldError` props.
+
+```ts title="index.ts"
+function createForm<S extends z.ZodType>(schema: S, options: FormOptions<S>): FormState<S>;
+
+interface FormOptions<S extends z.ZodType> {
+	/** Values the form starts with; also used by `reset` */
+	initial: z.input<S>;
+	/** Called with the parsed values when a valid form is submitted; without it, a valid form submits natively */
+	onSubmit?: (data: z.output<S>, e: SubmitEvent) => unknown;
+}
+
+interface FieldItemProps<S extends z.ZodType> extends FieldProps {
+	/** State from `createForm` */
+	form: FormState<S>;
+	/** Dotted path of the value, such as `email` or `address.city` */
+	name: string;
+}
+
+interface ControlAttrs {
+	id: string;
+	name: string;
+	"aria-invalid": boolean | undefined;
+	"aria-describedby": string | undefined;
+	onblur: () => void;
+}
+```

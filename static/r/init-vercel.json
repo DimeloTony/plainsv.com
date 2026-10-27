@@ -1,0 +1,31 @@
+{
+    "name": "init-vercel",
+    "files": [
+        {
+            "type": "file",
+            "path": "template/viteConfigVercel.txt",
+            "target": "vite.config.ts",
+            "content": "import adapter from \"@sveltejs/adapter-vercel\";\nimport devPlugin from \"#lib/server/plugins/dev/index.js\";\nimport svxPlugin from \"#lib/server/plugins/svx/index.js\";\nimport { sveltekit } from \"@sveltejs/kit/vite\";\nimport { defineConfig } from \"vite\";\n\nexport default defineConfig(() => {\n\treturn {\n\t\tplugins: [\n\t\t\t// Point registry links at the local DOMAIN_URL on dev\n\t\t\tdevPlugin(),\n\t\t\tsvxPlugin(),\n\t\t\tsveltekit({\n\t\t\t\tadapter: adapter(),\n\t\t\t\textensions: [\".svelte\", \".svx\"],\n\t\t\t\tcompilerOptions: {\n\t\t\t\t\t// Force runes mode for the project, except for libraries. Can be removed in svelte 6.\n\t\t\t\t\trunes: ({ filename }) => (filename.split(/[/\\\\]/).includes(\"node_modules\") ? undefined : true),\n\t\t\t\t\twarningFilter: (warning) => (warning.code === \"state_referenced_locally\" ? false : true),\n\t\t\t\t},\n\t\t\t}),\n\t\t],\n\t};\n});\n"
+        },
+        {
+            "type": "file",
+            "path": "template/layoutServer.txt",
+            "target": "src/routes/+layout.server.ts",
+            "content": "import type { LayoutServerLoad } from \"./$types\";\n\n// When using the static adapter ? set to true : set to false to remove dark mode flash since we set dark class inside hook\nexport const prerender = false;\n\nexport const load: LayoutServerLoad = async (event) => {\n\tconst userData = event.locals.userData;\n\tconst isDarkMode = event.locals.isDarkMode;\n\tconst isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(event.request.headers.get(\"user-agent\") || \"\");\n\tevent.depends(\"layout\");\n\treturn { isMobile, isDarkMode, userData };\n};"
+        }
+    ],
+    "itemDependencies": [
+        "/r/init-project.json",
+        "/r/init-base.json",
+        "/r/styles.json",
+        "/r/button.json",
+        "/r/toaster.json",
+        "/r/dev-plugin.json",
+        "/r/svx-plugin-simple.json"
+    ],
+    "devDependencies": [
+        "@lucide/svelte",
+        "@sveltejs/adapter-vercel"
+    ],
+    "description": "A starter SvelteKit app on the Vercel adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on Vercel functions."
+}

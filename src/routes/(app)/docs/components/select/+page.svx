@@ -1,0 +1,274 @@
+---
+title: "Select"
+description: "A button that opens a list of options to pick one, with groups, keyboard support, form submission, variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Select
+
+Picks one value from a list of options. Compose it from `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, and `SelectItem`, and organize long lists with `SelectGroup`, `SelectLabel`, and `SelectSeparator`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem, SelectSeparator } from "#lib/components/ui/select/index.js";
+</script>
+
+<Select>
+	<SelectTrigger style="width: 11.25rem">
+		<SelectValue placeholder="Select a fruit" />
+	</SelectTrigger>
+	<SelectContent>
+		<SelectGroup>
+			<SelectLabel>Fruits</SelectLabel>
+			<SelectItem value="apple">Apple</SelectItem>
+			<SelectItem value="banana">Banana</SelectItem>
+			<SelectItem value="blueberry">Blueberry</SelectItem>
+		</SelectGroup>
+		<SelectSeparator />
+		<SelectGroup>
+			<SelectLabel>Vegetables</SelectLabel>
+			<SelectItem value="carrot">Carrot</SelectItem>
+			<SelectItem value="spinach">Spinach</SelectItem>
+		</SelectGroup>
+	</SelectContent>
+</Select>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/select.json
+```
+
+## Anatomy
+
+`Select` holds the value, the open state, and the style settings, and renders no element of its own. `SelectTrigger` renders a `button` with `role="combobox"` that opens the list, and holds `SelectValue`, which shows the selected item's text or the `placeholder`. `SelectContent` renders the `role="listbox"` list, and each `SelectItem` renders a `role="option"` with a check mark while selected. `SelectGroup` wraps related items and is named by its `SelectLabel`, and `SelectSeparator` divides groups.
+
+The list opens in the top layer with the native popover API, so no ancestor's `overflow` or `z-index` can clip it. It opens below the trigger, or above it when there is more room there, is at least as wide as the trigger, and scrolls when it is taller than the space available.
+
+## Keyboard
+
+Enter, Space, and the up and down arrows open the list from the trigger, and focus moves to the selected item. In the list, the up and down arrows move between items, and Home and End jump to the first and last. Type the start of an item's text to jump to it, or repeat one letter to cycle through the items that start with it. Enter or Space selects the focused item. Escape, Tab, and clicking outside close the list and return focus to the trigger. Disabled items are skipped.
+
+## Scrollable
+
+Long lists scroll inside the space between the trigger and the edge of the viewport.
+
+<Demo section="scrollable" />
+
+```svelte title="+page.svelte"
+<Select>
+	<SelectTrigger style="width: 17.5rem">
+		<SelectValue placeholder="Select a timezone" />
+	</SelectTrigger>
+	<SelectContent>
+		{#each timezones as timezone (timezone)}
+			<SelectItem value={timezone}>{timezone}</SelectItem>
+		{/each}
+	</SelectContent>
+</Select>
+```
+
+## Trigger
+
+`SelectTrigger` renders a combobox button with a chevron. To open the list from any other element, pass a `trigger` snippet and put the `SelectValue` inside it. It receives `props` with `role="combobox"`, the ids, the ARIA attributes, `disabled`, `data-state`, the handlers, and an attachment that registers the element the list is placed against. Spread them onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<Select defaultValue="apple">
+	<SelectTrigger>
+		{#snippet trigger({ props })}
+			<Button variant="ghost" {...props}>
+				<SelectValue placeholder="Select a fruit" />
+				<ChevronsUpDownIcon />
+			</Button>
+		{/snippet}
+	</SelectTrigger>
+	<SelectContent>
+		<SelectItem value="apple">Apple</SelectItem>
+		<SelectItem value="banana">Banana</SelectItem>
+	</SelectContent>
+</Select>
+```
+
+## Controlled
+
+Use `bind:value` to read and set the selected value from your own code, or `onValueChange` to run code when it changes. Without either, set `defaultValue` to choose the starting item. Use `bind:open` or `onOpenChange` the same way for the open state.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "#lib/components/ui/select/index.js";
+
+	let fruit = $state("banana");
+</script>
+
+<Select bind:value={fruit}>
+	<SelectTrigger style="width: 11.25rem">
+		<SelectValue placeholder="Select a fruit" />
+	</SelectTrigger>
+	<SelectContent>
+		<SelectItem value="apple">Apple</SelectItem>
+		<SelectItem value="banana">Banana</SelectItem>
+		<SelectItem value="blueberry">Blueberry</SelectItem>
+	</SelectContent>
+</Select>
+<p>Selected value: {fruit}</p>
+```
+
+`SelectValue` shows the text of each item once the items mount, so on the first load it shows the placeholder briefly. Pass `label` to a `SelectItem` to set the text shown in `SelectValue` and matched by typeahead, such as when the item holds an icon or extra detail.
+
+## Forms
+
+Set `name` on `Select` to submit the value with a form, and `required` to block submission until a value is selected. A hidden native `select` holds the value, so form data, autofill, and validation work as usual. Give the trigger an `id` and point a `Label` at it with `for`.
+
+<Demo section="form" />
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<Label for="fruit">Favorite fruit</Label>
+	<Select name="fruit" required>
+		<SelectTrigger id="fruit" style="width: 11.25rem">
+			<SelectValue placeholder="Select a fruit" />
+		</SelectTrigger>
+		<SelectContent>
+			<SelectItem value="apple">Apple</SelectItem>
+			<SelectItem value="banana">Banana</SelectItem>
+		</SelectContent>
+	</Select>
+	<Button type="submit">Submit</Button>
+</form>
+```
+
+## Variants
+
+Set `variant` on `Select` to `default`, `secondary`, or `ghost` to change the trigger. `default` matches the `Input` field, `secondary` fills it without a border, and `ghost` shows no container until hovered or open.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Select variant="secondary">...</Select>
+<Select variant="ghost">...</Select>
+```
+
+## Sizes
+
+Set `size` on `Select` to `xs`, `sm`, `md`, or `lg` to change the trigger height and the item padding and text. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Select size="sm">...</Select>
+```
+
+## Rounded
+
+Set `rounded` on `Select` to `xs` through `4xl` or `pill` to override the radius from the size. The items inside the list use the radius one step smaller so the corners nest. `pill` makes the trigger and the list pills, and a pill list clips its items, so use `3xl` or `4xl` for a pill-like trigger with a round list.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Select rounded="3xl">...</Select>
+```
+
+## Disabled
+
+Set `disabled` on `Select` to dim the trigger and block opening, or on a `SelectItem` to block selecting it. Set `aria-invalid="true"` on the trigger to show the invalid ring.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<Select disabled>...</Select>
+<SelectItem value="banana" disabled>Banana</SelectItem>
+```
+
+## Overrides
+
+`SelectTrigger` takes its own `variant`, `size`, and `rounded`, and `SelectContent` takes `size` and `rounded`. Each wins over the select's for that part only, so the trigger and the list can be sized apart. `SelectItem` takes `rounded` to set that item's exact radius.
+
+```svelte title="+page.svelte"
+<Select>
+	<SelectTrigger size="sm" rounded="pill">
+		<SelectValue placeholder="Pick a fruit" />
+	</SelectTrigger>
+	<SelectContent size="lg">
+		<SelectItem value="apple" rounded="pill">Apple</SelectItem>
+	</SelectContent>
+</Select>
+```
+
+## API
+
+`Select` takes the settings below and its parts as children. `SelectTrigger` extends the native `button` attributes, `SelectValue` extends `span`, and the other parts extend `div`. Extra attributes pass through to each element, and the trigger ignores them when a `trigger` snippet is given. The trigger and list set `data-state` to `open` or `closed`, and items set it to `checked` or `unchecked`, for custom styles.
+
+```ts title="index.ts"
+interface SelectOptions {
+	/** Value of the selected item; supports `bind:value` */
+	value?: string;
+	/** Starting value when `value` is not set */
+	defaultValue?: string;
+	/** Called with the new value when an item is selected */
+	onValueChange?: (value: string) => void;
+	/** Whether the list is shown; supports `bind:open` */
+	open?: boolean;
+	/** Called when the list opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Dims the trigger and blocks opening */
+	disabled?: boolean;
+	/** Form field name; the value submits through a hidden native select */
+	name?: string;
+	/** Blocks form submission until a value is selected; needs `name` */
+	required?: boolean;
+	/** Visual style of the trigger */
+	variant?: "default" | "secondary" | "ghost";
+	/** Trigger height and item size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the trigger, list, and items; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+}
+
+type Props = CompPropsWithChildSimple<SelectOptions>;
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Content of the default trigger button, such as a `SelectValue` */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the list */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger; overrides the select's `variant` */
+	variant?: Props["variant"];
+	/** Height, padding, and text of the default trigger; overrides the select's `size` */
+	size?: UiSize;
+	/** Corner radius of the default trigger; overrides the select's `rounded` */
+	rounded?: UiRounded;
+}
+
+interface ValueProps extends CompProps<"span"> {
+	/** Text shown when no item is selected */
+	placeholder?: string;
+}
+
+interface ItemProps extends CompPropsWithChild<"div"> {
+	/** Value set on the select when this item is chosen */
+	value: string;
+	/** Blocks selecting the item; the arrow keys skip it */
+	disabled?: boolean;
+	/** Text shown in `SelectValue` and matched by typeahead; defaults to the item's text */
+	label?: string;
+	/** Corner radius of this item with this exact value; overrides the list's item radius */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Item size of this list; overrides the select's `size` */
+	size?: UiSize;
+	/** Corner radius of this list, with items one step smaller; overrides the select's `rounded`. `pill` makes it a pill too, which can clip its items, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

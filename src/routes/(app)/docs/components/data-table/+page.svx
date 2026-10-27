@@ -1,0 +1,196 @@
+---
+title: "Data Table"
+description: "A data table with sorting, filtering, pagination, column visibility, and row selection, built on the table."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Data Table
+
+A table of rows with sorting, filtering, pagination, column visibility, and row selection. `createDataTable` holds that state without a dependency, and `DataTable`, `DataTablePagination`, and `DataTableViewOptions` render it with the `Table`, `Checkbox`, `Button`, `NativeSelect`, and `DropdownMenu` components.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { DataTable, DataTablePagination, DataTableViewOptions, createDataTable, type DataTableColumn } from "#lib/components/ui/data-table/index.js";
+	import { Input } from "#lib/components/ui/input/index.js";
+
+	const { data } = $props();
+	const columns: DataTableColumn<Payment>[] = [
+		{ id: "status", header: "Status", accessor: "status" },
+		{ id: "email", header: "Email", accessor: "email" },
+		{ id: "amount", header: "Amount", accessor: "amount", align: "right" },
+	];
+	const table = createDataTable({ data: () => data.payments, columns, getRowId: (row) => row.id, enableRowSelection: true });
+</script>
+
+<Input placeholder="Filter emails..." oninput={(e) => table.setColumnFilter("email", e.currentTarget.value)} />
+<DataTableViewOptions {table} />
+<DataTable {table} />
+<DataTablePagination {table} />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/data-table.json
+```
+
+## Columns
+
+Each column has an `id` and a `header`. Set `accessor` to a row key or a function that reads the value; leave it out for display-only columns, such as actions. Columns with an accessor sort when their heading is clicked, cycling through ascending, descending, and unsorted, and are searched by the global filter. Set `sortable`, `searchable`, or `hideable` to `false` to turn those off, `align` to align the heading and cells, and `sortFn` or `filterFn` for a custom order or match.
+
+Set `initialSort` in `createDataTable` to start sorted, `emptyText` on `DataTable` for the row shown when nothing matches, and `pageSizes` on `DataTablePagination` for the rows-per-page choices. In this demo the status column cannot be sorted or hidden, the amount is not searched, and the table starts sorted by amount, highest first.
+
+<Demo section="columns" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	const columns: DataTableColumn<Payment>[] = [
+		{ id: "status", header: "Status", accessor: "status", sortable: false, hideable: false },
+		{ id: "email", header: "Email", accessor: "email" },
+		{ id: "amount", header: "Amount", accessor: "amount", align: "right", searchable: false },
+	];
+	const table = createDataTable({ data: () => payments, columns, pageSize: 5, initialSort: { id: "amount", desc: true } });
+</script>
+
+<Input placeholder="Search..." value={table.globalFilter} oninput={(e) => table.setGlobalFilter(e.currentTarget.value)} />
+<DataTableViewOptions {table} />
+<DataTable {table} emptyText="No payments match your search." />
+<DataTablePagination {table} pageSizes={[5, 15, 30]} />
+```
+
+## State
+
+`createDataTable` takes `data` as a getter, so the table follows changes to the rows. Set `getRowId` so the selection survives sorting and data changes. The returned state has reactive fields you can read and set, such as `sort`, `globalFilter`, `columnFilters`, `pageIndex`, `pageSize`, `hiddenColumns`, and `selectedRows`, and derived lists, such as `filteredRows`, `pageRows`, `pageCount`, and `selectedRowList`. Its methods include `toggleSort`, `setGlobalFilter`, `setColumnFilter`, `setPage`, `setPageSize`, `setColumnVisible`, and `setRowSelected`.
+
+## Cells
+
+`DataTable` shows each value as text. Pass a `cell` snippet to render every cell yourself; it receives the `row`, the `column`, and the `value`, such as to show a status as a `Badge` or format an amount.
+
+```svelte title="+page.svelte"
+<DataTable {table}>
+	{#snippet cell({ row, column, value })}
+		{#if column.id === "amount"}
+			{currency.format(Number(value))}
+		{:else}
+			{value}
+		{/if}
+	{/snippet}
+</DataTable>
+```
+
+## Selection
+
+Set `enableRowSelection` to add a checkbox column. The heading checkbox selects every row on the page and shows the mixed state when some are selected. Selected rows are highlighted, and `DataTablePagination` shows the count.
+
+## Rows
+
+Pass a `leading` snippet to add a cell at the start of every row, before the checkbox column, such as a drag handle; it receives the `row`. Set `leadingLabel` to name that column for screen readers. Pass `rowProps` to spread attributes and event handlers onto each row, such as `ondragover` to reorder rows or a `data-*` attribute for styling. Set `hideHeader` on a column to keep its heading for screen readers only, such as for an actions column.
+
+<Demo section="rows" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	const columns: DataTableColumn<Payment>[] = [
+		{ id: "email", header: "Email", accessor: "email", sortable: false },
+		{ id: "actions", header: "Actions", hideable: false, hideHeader: true },
+	];
+	const table = createDataTable({ data: () => payments, columns, getRowId: (row) => row.id });
+
+	/** Lets a row take the dragged row's place. */
+	function getRowProps(row: DataTableRow<Payment>) {
+		return { ondragover: (e: DragEvent) => handleDragOver(e, row.original.id) };
+	}
+</script>
+
+<DataTable {table} leadingLabel="Reorder" rowProps={getRowProps}>
+	{#snippet leading({ row })}
+		<button type="button" draggable="true" aria-label="Drag to reorder" ondragstart={() => (draggingId = row.original.id)}>
+			<GripVerticalIcon />
+		</button>
+	{/snippet}
+</DataTable>
+```
+
+## Custom layout
+
+The state is headless, so you can render it with the `Table` parts yourself instead of `DataTable`, such as for expandable rows. Use `DataTableColumnHeader` for a sortable heading in your own table.
+
+<Demo section="custom" />
+
+```svelte title="+page.svelte"
+<Table>
+	<TableHeader>
+		<TableRow>
+			{#each table.visibleColumns as column (column.id)}
+				<TableHead><DataTableColumnHeader {table} {column} /></TableHead>
+			{/each}
+		</TableRow>
+	</TableHeader>
+	<TableBody>
+		{#each table.pageRows as row (row.id)}
+			<TableRow>
+				{#each table.visibleColumns as column (column.id)}
+					<TableCell>{table.getValue(row, column)}</TableCell>
+				{/each}
+			</TableRow>
+		{/each}
+	</TableBody>
+</Table>
+```
+
+## API
+
+`DataTable` extends the native `table` attributes and takes a `size` like `Table`. `DataTablePagination` extends the `div` attributes.
+
+```ts title="index.ts"
+interface DataTableColumn<T> {
+	id: string;
+	header: string;
+	accessor?: keyof T | ((row: T) => unknown);
+	sortable?: boolean;
+	searchable?: boolean;
+	hideable?: boolean;
+	/** Keeps the heading for screen readers only, such as for an actions column */
+	hideHeader?: boolean;
+	align?: "left" | "center" | "right";
+	sortFn?: (a: unknown, b: unknown) => number;
+	filterFn?: (value: unknown, filter: string, row: T) => boolean;
+}
+
+interface DataTableOptions<T> {
+	/** Returns the rows; a getter, so the table follows changes to them */
+	data: () => T[];
+	/** Column definitions, in display order */
+	columns: DataTableColumn<T>[];
+	/** Builds a stable id for a row; the index by default */
+	getRowId?: (row: T, index: number) => string;
+	/** Rows per page; defaults to `10` */
+	pageSize?: number;
+	/** Adds a checkbox column for selecting rows */
+	enableRowSelection?: boolean;
+	/** Starting sort */
+	initialSort?: { id: string; desc: boolean };
+}
+
+interface Props<T> extends CompProps<"table"> {
+	/** State from `createDataTable` */
+	table: DataTableState<T>;
+	/** Custom content for every cell; receives the row, column, and value */
+	cell?: Snippet<[{ row: DataTableRow<T>; column: DataTableColumn<T>; value: unknown }]>;
+	/** Content of an extra cell at the start of every row, before the checkbox column, such as a drag handle */
+	leading?: Snippet<[{ row: DataTableRow<T> }]>;
+	/** Heading of the `leading` column, kept for screen readers only, such as `Reorder` */
+	leadingLabel?: string;
+	/** Attributes and event handlers spread onto each row, such as drag handlers or data attributes */
+	rowProps?: (row: DataTableRow<T>) => CompProps<"tr">;
+	/** Text shown when no row matches; defaults to `No results.` */
+	emptyText?: string;
+	/** Row height, cell padding, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+```

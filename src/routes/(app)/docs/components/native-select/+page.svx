@@ -1,0 +1,113 @@
+---
+title: "Native Select"
+description: "A native select styled like the input, with a chevron, sizes, rounded corners, and states."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Native Select
+
+A styled native `select`. It opens the browser's own picker, which suits mobile screens and long option lists, and needs no JavaScript. Use `Select` when you need custom option content or search.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { NativeSelect, NativeSelectOption } from "#lib/components/ui/native-select/index.js";
+</script>
+
+<NativeSelect>
+	<NativeSelectOption value="">Select status</NativeSelectOption>
+	<NativeSelectOption value="todo">Todo</NativeSelectOption>
+	<NativeSelectOption value="in-progress">In progress</NativeSelectOption>
+	<NativeSelectOption value="done">Done</NativeSelectOption>
+</NativeSelect>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/native-select.json
+```
+
+## Groups
+
+Wrap options in `NativeSelectOptGroup` and set its `label` to group them under a heading.
+
+<Demo section="groups" />
+
+```svelte title="+page.svelte"
+<NativeSelect>
+	<NativeSelectOptGroup label="Engineering">
+		<NativeSelectOption value="frontend">Frontend</NativeSelectOption>
+		<NativeSelectOption value="backend">Backend</NativeSelectOption>
+	</NativeSelectOptGroup>
+</NativeSelect>
+```
+
+## Binding
+
+Use `bind:value` to read and set the selected option. Other attributes, such as `name`, `id`, `required`, and `onchange`, pass through to the `select`.
+
+<Demo section="binding" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { NativeSelect, NativeSelectOption } from "#lib/components/ui/native-select/index.js";
+
+	let status = $state("todo");
+</script>
+
+<NativeSelect bind:value={status}>
+	<NativeSelectOption value="todo">Todo</NativeSelectOption>
+	<NativeSelectOption value="done">Done</NativeSelectOption>
+</NativeSelect>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, the height matches the input of the same size, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<NativeSelect size="sm">...</NativeSelect>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius that follows `size`.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<NativeSelect rounded="pill">...</NativeSelect>
+```
+
+## States
+
+Set `disabled` to dim the select and block it. Set `aria-invalid="true"` to show the invalid ring.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<NativeSelect disabled>...</NativeSelect>
+<NativeSelect aria-invalid="true">...</NativeSelect>
+```
+
+## API
+
+`NativeSelect` extends the native `select` attributes, except the numeric `size` attribute, which is replaced by the shared size scale. The `class` goes on the wrapper that holds the select and the chevron. `NativeSelectOption` and `NativeSelectOptGroup` extend the `option` and `optgroup` attributes.
+
+```ts title="index.ts"
+interface Props extends Omit<CompPropsWithChild<"select">, "size" | "value"> {
+	/** Value of the selected option; supports `bind:value` */
+	value?: CompPropsWithChild<"select">["value"];
+	/** Height, padding, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

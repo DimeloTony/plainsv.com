@@ -1,0 +1,162 @@
+---
+title: "Slider"
+description: "A draggable control for picking a value or a range, with keyboard support, variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Slider
+
+Picks a value from a range by dragging a thumb, pressing the track, or using the keyboard. Each thumb has `role="slider"`, so give the slider an `aria-label`, which passes to the thumb, or name each thumb with `thumbLabels`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Slider } from "#lib/components/ui/slider/index.js";
+</script>
+
+<Slider defaultValue={[33]} max={100} step={1} aria-label="Volume" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/slider.json
+```
+
+## Value
+
+The value is an array with one number per thumb. Set `defaultValue` to start from a value and let the slider manage it, or use `bind:value` to read and set it from your own state. Without either, the slider starts at `min`. Values snap to `step` and stay between `min` and `max`.
+
+## Range
+
+Pass two values to get two thumbs with the track filled between them. Thumbs cannot pass each other, and pressing the track moves the closest one.
+
+<Demo section="range" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Slider } from "#lib/components/ui/slider/index.js";
+
+	let priceRange = $state([25, 75]);
+</script>
+
+<Slider bind:value={priceRange} step={5} thumbLabels={["Minimum price", "Maximum price"]} />
+<p>${priceRange[0]} to ${priceRange[1]}</p>
+```
+
+## Callbacks
+
+`onValueChange` runs on every change while dragging. `onValueCommit` runs once when a drag ends or a key moves a thumb, which suits saving or fetching.
+
+<Demo section="commit" />
+
+```svelte title="+page.svelte"
+<Slider defaultValue={[50]} aria-label="Volume" onValueCommit={(next) => saveVolume(next[0])} />
+```
+
+## Keyboard
+
+Focus a thumb with Tab. The arrow keys move it by one `step`, and Shift with an arrow or Page Up and Page Down move it by ten. Home and End jump to `min` and `max`.
+
+## Vertical
+
+Set `orientation="vertical"` to run the track from bottom to top. A vertical slider fills its parent's height, with a minimum of `10rem`.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<div style="height: 10rem">
+	<Slider orientation="vertical" defaultValue={[50]} aria-label="Bass" />
+</div>
+```
+
+## Forms
+
+Set `name` to submit the slider with a form. Each value renders as a hidden input with that name, so a range submits two fields.
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<Slider name="price" defaultValue={[25, 75]} thumbLabels={["Minimum price", "Maximum price"]} />
+</form>
+```
+
+## Variants
+
+Set `variant` to `default` or `destructive` to color the range and thumbs.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Slider variant="destructive" defaultValue={[33]} aria-label="Volume" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the track thickness and thumb size. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Slider size="lg" defaultValue={[33]} aria-label="Volume" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the track and thumbs. Use `pill` for round thumbs at every size.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Slider rounded="pill" defaultValue={[33]} aria-label="Volume" />
+```
+
+## Disabled
+
+Set `disabled` to dim the slider and block pointer and keyboard input. Disabled thumbs leave the tab order.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<Slider disabled defaultValue={[33]} aria-label="Volume" />
+```
+
+## API
+
+The `Slider` props extend the native `div` attributes, and extra attributes pass through to the root. `aria-label` and `aria-labelledby` move to each thumb instead.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Thumb values from `min` to `max`, in order; supports `bind:value` */
+	value?: number[];
+	/** Starting values when `value` is not set; defaults to `[min]` */
+	defaultValue?: number[];
+	/** Lowest value; defaults to `0` */
+	min?: number;
+	/** Highest value; defaults to `100` */
+	max?: number;
+	/** Amount each value snaps to; defaults to `1` */
+	step?: number;
+	/** Direction of the track; `vertical` fills its parent's height */
+	orientation?: "horizontal" | "vertical";
+	/** Dims the slider and blocks pointer and keyboard input */
+	disabled?: boolean;
+	/** Form field name; each value submits as a hidden input with this name */
+	name?: string;
+	/** Accessible name for each thumb, such as `["Minimum", "Maximum"]`; falls back to `aria-label` */
+	thumbLabels?: string[];
+	/** Called with the new values on every change while dragging or typing */
+	onValueChange?: (value: number[]) => void;
+	/** Called with the final values when a drag ends or a key changes them */
+	onValueCommit?: (value: number[]) => void;
+	/** Visual style of the range and thumbs */
+	variant?: "default" | "destructive";
+	/** Track thickness and thumb size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the track and thumbs; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

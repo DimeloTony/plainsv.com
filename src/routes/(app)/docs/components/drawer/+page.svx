@@ -1,0 +1,162 @@
+---
+title: "Drawer"
+description: "A panel that slides in from an edge and closes by dragging it back, built on the native dialog element."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Drawer
+
+A panel that slides in from an edge of the screen, often used as a bottom sheet on mobile. Drag it back toward its edge, click the backdrop, or press Escape to close it. Compose it from `Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerHeader`, `DrawerTitle`, `DrawerDescription`, `DrawerFooter`, and `DrawerClose`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "#lib/components/ui/drawer/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<Drawer>
+	<DrawerTrigger>Open drawer</DrawerTrigger>
+	<DrawerContent>
+		<DrawerHeader>
+			<DrawerTitle>Move goal</DrawerTitle>
+			<DrawerDescription>Set your daily activity goal.</DrawerDescription>
+		</DrawerHeader>
+		<DrawerFooter>
+			<Button>Submit</Button>
+			<DrawerClose>Cancel</DrawerClose>
+		</DrawerFooter>
+	</DrawerContent>
+</Drawer>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/drawer.json
+```
+
+## Anatomy
+
+`Drawer` holds the open state and renders no element of its own. `DrawerContent` renders a modal `dialog` while open, named by `DrawerTitle` and described by `DrawerDescription`, with the panel docked to the drawer's edge. Bottom drawers show a grab bar at the top. Focus returns to the trigger when the drawer closes.
+
+## Dragging
+
+Drag the panel toward its edge to close it. Releasing past a quarter of its size, or with a quick flick, closes it; otherwise it springs back. Mouse drags start anywhere on the panel except its controls. Touch drags start on the grab bar or the header, so the content can still scroll.
+
+## Directions
+
+Set `direction` to `top`, `right`, `bottom`, or `left`. The default is `bottom`. Top and bottom drawers fill the width and take up to 80% of the height, and side drawers fill the height with a width set by `size`.
+
+<Demo section="directions" />
+
+```svelte title="+page.svelte"
+<Drawer direction="right">...</Drawer>
+```
+
+## Controlled
+
+Use `bind:open` to open or close the drawer from your own code, or `onOpenChange` to run code when it opens or closes. A trigger is optional. To use another element as the trigger, pass a `trigger` snippet to `DrawerTrigger` and spread its `props` onto it; `DrawerClose` takes a `trigger` snippet the same way.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let open = $state(false);
+</script>
+
+<Button variant="outline" onclick={() => (open = true)}>Open from code</Button>
+
+<Drawer bind:open>
+	<DrawerContent>
+		<DrawerHeader>
+			<DrawerTitle>Controlled drawer</DrawerTitle>
+		</DrawerHeader>
+		<DrawerFooter>
+			<DrawerClose>
+				{#snippet trigger({ props })}
+					<Button variant="link" {...props}>Done</Button>
+				{/snippet}
+			</DrawerClose>
+		</DrawerFooter>
+	</DrawerContent>
+</Drawer>
+```
+
+## Sizes
+
+Set `size` on `Drawer` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the header and footer padding, text size, and side drawer width follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Drawer direction="right" size="sm">...</Drawer>
+```
+
+## Rounded
+
+The corners facing the page use `rounded`, which defaults to `lg` like the shadcn drawer. Set it to `xs` through `4xl` or `pill`. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Drawer rounded="sm">...</Drawer>
+```
+
+## Overrides
+
+The default `DrawerTrigger` and `DrawerClose` buttons take `size`, `rounded`, and `class` next to `variant`, so you can restyle them without a `trigger` snippet.
+
+```svelte title="+page.svelte"
+<DrawerTrigger size="sm" rounded="pill">Open</DrawerTrigger>
+<DrawerClose variant="ghost" size="sm">Cancel</DrawerClose>
+```
+
+## API
+
+`Drawer` renders no element of its own. `DrawerContent` extends the native `div` attributes of the panel. `DrawerHeader`, `DrawerTitle`, `DrawerDescription`, and `DrawerFooter` extend the `header`, `h2`, `p`, and `footer` attributes.
+
+```ts title="index.ts"
+type Props = CompPropsWithChildSimple<{
+	/** Whether the drawer is shown; supports `bind:open` */
+	open?: boolean;
+	/** Called when the drawer opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Edge the drawer slides in from; drag it back toward that edge to close it; defaults to `bottom` */
+	direction?: "top" | "right" | "bottom" | "left";
+	/** Padding, text size, and side drawer width on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Radius of the corners facing the page; defaults to `lg` like shadcn. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}>;
+
+interface TriggerProps {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Style of the default trigger button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Custom trigger; spread `props` onto the element that opens the drawer */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Size of the default trigger button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default trigger button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface CloseProps {
+	/** Label for the default close button */
+	children?: Snippet;
+	/** Style of the default close button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Custom close trigger; spread `props` onto the element that closes the drawer */
+	trigger?: Snippet<[{ props: { onclick: () => void } }]>;
+	/** Size of the default close button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default close button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+```

@@ -1,0 +1,122 @@
+---
+title: "Toggle"
+description: "A two-state button that stays pressed until clicked again, with default and outline variants and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Toggle
+
+A button that can be on or off, such as for bold text in an editor. Renders a `button` with `aria-pressed`. Give icon-only toggles an `aria-label`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Toggle } from "#lib/components/ui/toggle/index.js";
+	import { BoldIcon } from "@lucide/svelte";
+</script>
+
+<Toggle aria-label="Toggle bold"><BoldIcon /></Toggle>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/toggle.json
+```
+
+## Outline
+
+Set `variant="outline"` to add a border. The default variant is transparent until hovered or pressed.
+
+<Demo section="outline" />
+
+```svelte title="+page.svelte"
+<Toggle variant="outline" aria-label="Toggle bold"><BoldIcon /></Toggle>
+<Toggle variant="outline" aria-label="Toggle italic"><ItalicIcon /></Toggle>
+```
+
+## With text
+
+Place text after the icon for a labeled toggle. It no longer needs an `aria-label`.
+
+<Demo section="text" />
+
+```svelte title="+page.svelte"
+<Toggle variant="outline"><ItalicIcon />Italic</Toggle>
+```
+
+## Controlled
+
+Use `bind:pressed` to read and set the state from your own code, or `onPressedChange` to run code when it changes. Without either, set `defaultPressed` to start pressed. A passed `onclick` runs first; call `e.preventDefault()` in it to keep the current state.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Toggle } from "#lib/components/ui/toggle/index.js";
+	import { BookmarkIcon } from "@lucide/svelte";
+
+	let isBookmarked = $state(false);
+</script>
+
+<Toggle variant="outline" bind:pressed={isBookmarked}>
+	<BookmarkIcon />
+	{isBookmarked ? "Bookmarked" : "Bookmark"}
+</Toggle>
+```
+
+## Disabled
+
+Set `disabled` to dim the toggle and block interaction.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<Toggle disabled aria-label="Toggle bold"><BoldIcon /></Toggle>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, the height matches the button of the same size, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Toggle size="sm" aria-label="Toggle bold"><BoldIcon /></Toggle>
+<Toggle size="lg" aria-label="Toggle bold"><BoldIcon /></Toggle>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Toggle variant="outline" rounded="pill" aria-label="Toggle bold"><BoldIcon /></Toggle>
+```
+
+## API
+
+The `Toggle` props extend the native `button` attributes. It sets `data-state` to `on` or `off` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"button"> {
+	/** Whether the toggle is pressed; supports `bind:pressed` */
+	pressed?: boolean;
+	/** Starting state when `pressed` is not set; defaults to `false` */
+	defaultPressed?: boolean;
+	/** Called with the new state when the toggle is pressed or released */
+	onPressedChange?: (pressed: boolean) => void;
+	/** `default` is transparent until pressed; `outline` adds a border */
+	variant?: "default" | "outline";
+	/** Height, padding, text, and icon size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

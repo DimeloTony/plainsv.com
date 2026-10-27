@@ -1,0 +1,144 @@
+---
+title: "Input Group"
+description: "A bordered field that joins an input or textarea with icons, text, and buttons on any side."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Input Group
+
+Adds icons, text, or buttons inside the border of an input or textarea. Compose it from `InputGroup`, `InputGroupInput` or `InputGroupTextarea`, `InputGroupAddon`, `InputGroupButton`, and `InputGroupText`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { InputGroup, InputGroupInput, InputGroupAddon } from "#lib/components/ui/input-group/index.js";
+	import { SearchIcon } from "@lucide/svelte";
+</script>
+
+<InputGroup>
+	<InputGroupInput placeholder="Search..." />
+	<InputGroupAddon><SearchIcon /></InputGroupAddon>
+	<InputGroupAddon align="inline-end">12 results</InputGroupAddon>
+</InputGroup>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/input-group.json
+```
+
+## Anatomy
+
+`InputGroup` draws the border, the focus ring, and the invalid ring around everything inside it. `InputGroupInput` and `InputGroupTextarea` are borderless controls that fill the group and accept the native attributes and `bind:value`. Each `InputGroupAddon` holds icons, text, or buttons, and clicking it outside a button focuses the control.
+
+## Align
+
+Set `align` on `InputGroupAddon` to `inline-start`, the default, or `inline-end` to place it beside the control, or to `block-start` or `block-end` to place it above or below. The markup order does not matter, so the control can come first for screen readers.
+
+## Text
+
+Wrap text, such as a prefix, suffix, or unit, in `InputGroupText` to mute it.
+
+<Demo section="text" />
+
+```svelte title="+page.svelte"
+<InputGroup>
+	<InputGroupAddon><InputGroupText>https://</InputGroupText></InputGroupAddon>
+	<InputGroupInput placeholder="example" />
+	<InputGroupAddon align="inline-end"><InputGroupText>.com</InputGroupText></InputGroupAddon>
+</InputGroup>
+```
+
+## Button
+
+`InputGroupButton` renders a compact ghost `Button` with `type="button"`, so it never submits a form unless you set `type="submit"`. It accepts every `Button` prop, such as `size="icon-xs"` for an icon. Give icon buttons an `aria-label`.
+
+<Demo section="button" />
+
+```svelte title="+page.svelte"
+<InputGroup>
+	<InputGroupInput value="https://plainsv.com/r/input-group.json" readonly />
+	<InputGroupAddon align="inline-end">
+		<InputGroupButton size="icon-xs" aria-label="Copy" onclick={copyUrl}><CopyIcon /></InputGroupButton>
+	</InputGroupAddon>
+</InputGroup>
+```
+
+## Textarea
+
+Use `InputGroupTextarea` for multi-line text. It grows with its content. An addon with `align="block-end"` turns into a toolbar below it.
+
+<Demo section="textarea" />
+
+```svelte title="+page.svelte"
+<InputGroup>
+	<InputGroupTextarea placeholder="Ask, search, or chat..." />
+	<InputGroupAddon align="block-end">
+		<InputGroupButton variant="outline" size="icon-xs" rounded="pill" aria-label="Add file"><PlusIcon /></InputGroupButton>
+		<InputGroupButton variant="default" size="icon-xs" rounded="pill" aria-label="Send"><ArrowUpIcon /></InputGroupButton>
+	</InputGroupAddon>
+</InputGroup>
+```
+
+## Sizes
+
+Set `size` on `InputGroup` to `xs`, `sm`, `md`, or `lg`. The default is `md`, the height matches the input of the same size, and the padding, text size, and corner radius follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<InputGroup size="sm">...</InputGroup>
+```
+
+## Rounded
+
+Set `rounded` on `InputGroup` to `xs` through `4xl` or `pill` to override the radius that follows `size`. Use `pill` for a one-line group. A group with a textarea or a `block-start` or `block-end` addon would become an oval as a pill, so use `3xl` or `4xl` for it.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<InputGroup rounded="pill">
+	<InputGroupInput placeholder="Rounded pill" />
+	<InputGroupAddon><SearchIcon /></InputGroupAddon>
+</InputGroup>
+<InputGroup rounded="3xl">
+	<InputGroupTextarea placeholder="Rounded 3xl with a textarea" />
+	<InputGroupAddon align="block-end">
+		<InputGroupButton variant="default" size="icon-xs" rounded="pill" aria-label="Send"><ArrowUpIcon /></InputGroupButton>
+	</InputGroupAddon>
+</InputGroup>
+```
+
+## States
+
+Set `disabled` or `aria-invalid="true"` on the control, and the group dims or shows the invalid ring.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<InputGroupInput placeholder="Disabled" disabled />
+<InputGroupInput placeholder="Invalid" aria-invalid="true" />
+```
+
+## API
+
+`InputGroup` and `InputGroupAddon` extend the native `div` attributes. `InputGroupInput` and `InputGroupTextarea` extend the `input` and `textarea` attributes, and `InputGroupText` extends the `span` attributes. `InputGroupButton` takes the `Button` props.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Height, padding, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill, so use `3xl` or `4xl` when the group stacks or holds a textarea */
+	rounded?: UiRounded;
+}
+
+interface AddonProps extends CompPropsWithChild<"div"> {
+	/** `inline-start` and `inline-end` sit beside the input; `block-start` and `block-end` sit above and below it; defaults to `inline-start` */
+	align?: "inline-start" | "inline-end" | "block-start" | "block-end";
+}
+```

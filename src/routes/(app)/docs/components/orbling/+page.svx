@@ -1,0 +1,132 @@
+---
+title: "Orbling"
+description: "An AI orb with a face that shows what an assistant is doing, such as thinking, reading, typing, working, and asking, drawn with CSS."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Orbling
+
+Shows an orb with a face that tells the user what an AI assistant is doing, such as thinking, reading, typing, working, or asking a question. Each mood plays its own CSS animation, the palette derives from one theme color, and the `OrblingStatus` part pairs a small orb with a shimmering label for chat status lines. Every part holds still when the user prefers reduced motion, and the component needs no WebGL or extra packages.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Orbling } from "#lib/components/ui/orbling/index.js";
+</script>
+
+<Orbling mood="thinking" size="lg" />
+```
+
+## Installation
+
+Run the command below to add the component to `src/lib/components/ui/orbling`.
+
+```pm
+npx remote0 add https://plainsv.com/r/orbling.json
+```
+
+## Moods
+
+Set `mood` to `idle`, `thinking`, `reading`, `typing`, `working`, `asking`, `waiting`, `watching`, `surprised`, `sleepy`, or `error`. The default is `idle`, a new mood starts its animation from the beginning, and `watching` turns the eyes toward the pointer.
+
+<Demo section="moods" />
+
+- Use `thinking` while the assistant works out an answer
+- Use `reading` while it reads pages, files, or results
+- Use `typing` while it writes the reply
+- Use `working` while a tool or task runs
+- Use `asking` when it asks the user a question, then `waiting` until the user answers
+- Use `watching` for an empty state that waits on the user
+- Use `error` when something fails
+
+```svelte title="+page.svelte"
+<Orbling mood="working" />
+```
+
+## Variants
+
+Set `variant` to `default`, `secondary`, or `destructive`. The default variant is blue from `--chart-1`, `secondary` is grey from `--muted-foreground`, and `destructive` is red from `--destructive`.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Orbling variant="secondary" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`, which sets a diameter of 16, 32, 72, or 120 pixels. The default is `md`.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Orbling size="sm" />
+```
+
+## Colors
+
+Set `--orbling-color` to change the base color. The orb keeps the lightness of its original palette and takes the hue and chroma of the color you set, so any theme token works.
+
+<Demo section="colors" />
+
+```svelte title="+page.svelte"
+<Orbling style="--orbling-color: var(--chart-3)" />
+```
+
+## Status
+
+Use `OrblingStatus` for a status line in a chat. It shows a 16 pixel orb beside the mood label, such as "Thinking…", uses `role="status"` so screen readers announce changes, and takes `mood`, `variant`, `size`, and a `label` that replaces the default text.
+
+<Demo section="status" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { OrblingStatus } from "#lib/components/ui/orbling/index.js";
+</script>
+
+<OrblingStatus mood="reading" label="Reading the docs…" />
+```
+
+## Accessibility
+
+The orb is decorative by default, so screen readers skip it. Set `label` when the orb carries meaning, which gives it `role="img"` and an accessible name.
+
+```svelte title="+page.svelte"
+<Orbling mood="thinking" label="Assistant is thinking" />
+```
+
+## API
+
+The `Orbling` and `OrblingStatus` props extend the native `span` attributes, and extra attributes pass through to the root. The package also exports `MOODS`, which maps each mood to its label, and `MOOD_NAMES`, which lists every mood.
+
+```ts title="index.ts"
+interface Props extends CompProps<"span"> {
+	/** What the assistant is doing; defaults to `idle` */
+	mood?: Mood;
+	/** Orb colors: `default` is blue from `--chart-1`, `secondary` is grey, and `destructive` is red; `--orbling-color` overrides the base color */
+	variant?: "default" | "secondary" | "destructive";
+	/** Orb diameter on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Accessible name; without it screen readers skip the orb */
+	label?: string;
+}
+
+interface StatusProps extends CompProps<"span"> {
+	/** What the assistant is doing; defaults to `idle` */
+	mood?: Mood;
+	/** Orb colors, as on `Orbling` */
+	variant?: "default" | "secondary" | "destructive";
+	/** Label text and gap on the shared scale; defaults to `sm` */
+	size?: UiSize;
+	/** Status text; defaults to the mood label, such as "Thinking…" */
+	label?: string;
+}
+```
+
+## Credits
+
+Orbling is a Svelte port of [orbling](https://orbling.vercel.app) by Timotej Kochjar, released under the MIT License. The original React component and its source live at [github.com/kochjar/orbling](https://github.com/kochjar/orbling). This port keeps its moods and motion, replaces the WebGL heat shader with the original's CSS glow, and derives the palette from theme tokens.

@@ -1,0 +1,121 @@
+---
+title: "Pagination"
+description: "Page navigation with previous and next links, page links, ellipses, and a page range helper."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Pagination
+
+Navigation between pages of results. Compose it from `Pagination`, `PaginationContent`, `PaginationItem`, `PaginationLink`, `PaginationPrevious`, `PaginationNext`, and `PaginationEllipsis`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from "#lib/components/ui/pagination/index.js";
+</script>
+
+<Pagination>
+	<PaginationContent>
+		<PaginationItem><PaginationPrevious href="?page=1" /></PaginationItem>
+		<PaginationItem><PaginationLink href="?page=1">1</PaginationLink></PaginationItem>
+		<PaginationItem><PaginationLink href="?page=2" isActive>2</PaginationLink></PaginationItem>
+		<PaginationItem><PaginationLink href="?page=3">3</PaginationLink></PaginationItem>
+		<PaginationItem><PaginationEllipsis /></PaginationItem>
+		<PaginationItem><PaginationNext href="?page=3" /></PaginationItem>
+	</PaginationContent>
+</Pagination>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/pagination.json
+```
+
+## Anatomy
+
+`Pagination` renders a `nav` landmark labeled `pagination`, and `PaginationContent` a list of `PaginationItem` entries. `PaginationLink`, `PaginationPrevious`, and `PaginationNext` render a `Button`: an `a` with `href`, so SvelteKit navigates on the client, or a `button` with `onclick` for state-driven pages. Set `isActive` on the current page to outline it and mark it with `aria-current="page"`. The previous and next labels hide on narrow screens, and their `aria-label` keeps them named. `PaginationEllipsis` marks a gap, read as "More pages".
+
+## Page range
+
+`getPageRange(currentPage, pageCount, siblingCount)` returns the pages to show around the current page, with `"ellipsis"` for the gaps. The first and last pages are always shown, and `siblingCount` sets how many pages show on each side of the current one; the default is `1`.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis, getPageRange } from "#lib/components/ui/pagination/index.js";
+
+	const pageCount = 20;
+	let currentPage = $state(8);
+	const pages = $derived(getPageRange(currentPage, pageCount));
+</script>
+
+<Pagination>
+	<PaginationContent>
+		<PaginationItem><PaginationPrevious disabled={currentPage === 1} onclick={() => currentPage--} /></PaginationItem>
+		{#each pages as page, index (index)}
+			<PaginationItem>
+				{#if page === "ellipsis"}
+					<PaginationEllipsis />
+				{:else}
+					<PaginationLink isActive={page === currentPage} onclick={() => (currentPage = page)}>{page}</PaginationLink>
+				{/if}
+			</PaginationItem>
+		{/each}
+		<PaginationItem><PaginationNext disabled={currentPage === pageCount} onclick={() => currentPage++} /></PaginationItem>
+	</PaginationContent>
+</Pagination>
+```
+
+## Sizes
+
+Set `size` on `Pagination` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and every link and the ellipsis follow it.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Pagination size="sm">...</Pagination>
+```
+
+## Overrides
+
+`PaginationLink`, `PaginationPrevious`, and `PaginationNext` take their own `size`, which wins over the pagination's for that link only. They also pass `rounded` to their button.
+
+```svelte title="+page.svelte"
+<PaginationItem>
+	<PaginationLink href="#" isActive size="lg" rounded="pill">2</PaginationLink>
+</PaginationItem>
+```
+
+## API
+
+`Pagination`, `PaginationContent`, and `PaginationItem` extend the native `nav`, `ul`, and `li` attributes. `PaginationLink`, `PaginationPrevious`, and `PaginationNext` take the `Button` props, except `size` and `variant`.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"nav"> {
+	/** Link size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+
+type LinkProps = ButtonAttrs & {
+	/** Marks the current page with an outline and `aria-current="page"` */
+	isActive?: boolean;
+	children: Snippet;
+	/** Size of this square link; overrides the pagination's `size` */
+	size?: UiSize;
+};
+
+type StepProps = ButtonAttrs & {
+	/** Label beside the chevron; defaults to `Previous` or `Next` */
+	children?: Snippet;
+	/** Size of this link; overrides the pagination's `size` */
+	size?: UiSize;
+};
+
+function getPageRange(currentPage: number, pageCount: number, siblingCount?: number): (number | "ellipsis")[];
+```

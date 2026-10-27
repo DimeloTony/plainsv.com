@@ -1,0 +1,16 @@
+{
+    "name": "skeleton",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/skeleton/_.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { Props } from \"./index.js\";\n\tconst { rounded, class: className, ...props }: Props = $props();\n</script>\n\n<!-- Decorative placeholder; mark the loading region with aria-busy instead. -->\n<div class={[\"skeleton not-typeset\", className]} data-rounded={rounded} aria-hidden=\"true\" {...props}></div>\n\n<style>\n\t/* Base skeleton */\n\t.skeleton {\n\t\tflex-shrink: 0;\n\t\tanimation: skeletonPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;\n\t\tborder-radius: var(--radius-md);\n\t\tbackground-color: var(--accent);\n\t}\n\n\t/* If the user prefers reduced motion: hold still at full opacity. */\n\t@media (prefers-reduced-motion: reduce) {\n\t\t.skeleton {\n\t\t\tanimation: none;\n\t\t}\n\t}\n\n\t@keyframes skeletonPulse {\n\t\t50% {\n\t\t\topacity: 50%;\n\t\t}\n\t}\n\n\t/* =============== Rounded =============== */\n\n\t/* Overrides the default radius */\n\t.skeleton[data-rounded=\"xs\"] {\n\t\tborder-radius: var(--radius-xs);\n\t}\n\n\t.skeleton[data-rounded=\"sm\"] {\n\t\tborder-radius: var(--radius-sm);\n\t}\n\n\t.skeleton[data-rounded=\"md\"] {\n\t\tborder-radius: var(--radius-md);\n\t}\n\n\t.skeleton[data-rounded=\"lg\"] {\n\t\tborder-radius: var(--radius-lg);\n\t}\n\n\t.skeleton[data-rounded=\"xl\"] {\n\t\tborder-radius: var(--radius-xl);\n\t}\n\n\t.skeleton[data-rounded=\"2xl\"] {\n\t\tborder-radius: var(--radius-2xl);\n\t}\n\n\t.skeleton[data-rounded=\"3xl\"] {\n\t\tborder-radius: var(--radius-3xl);\n\t}\n\n\t.skeleton[data-rounded=\"4xl\"] {\n\t\tborder-radius: var(--radius-4xl);\n\t}\n\n\t.skeleton[data-rounded=\"pill\"] {\n\t\tborder-radius: var(--radius-pill);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/skeleton/index.ts",
+            "content": "export { default as Skeleton } from \"./_.svelte\";\n\n/** Pulsing placeholder shown while content loads; size it with `style` or a class */\nexport interface Props extends CompProps<\"div\"> {\n\t/** Corner radius; `md` when omitted */\n\trounded?: UiRounded;\n\t/** Classes merged onto the skeleton */\n\tclass?: CompProps<\"div\">[\"class\"];\n}\n\nexport type SkeletonProps = Props;\n"
+        }
+    ],
+    "description": "A pulsing placeholder that holds the shape of content while it loads, with rounded corners."
+}

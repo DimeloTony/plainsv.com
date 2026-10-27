@@ -1,0 +1,225 @@
+---
+title: "Package Command"
+description: "A command block with a tab for each package manager, built from one command, with a copy button and a synced, remembered choice."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Package Command
+
+Shows a terminal command with one tab for each package manager, such as `npx`, `pnx`, `yarn dlx`, and `bunx`, and a button that copies the active command. Pass the command once without the package manager, and `PackageCommand` builds the right version for each tab. Pass `items` instead when each tab needs an exact command. Set `storageKey` to switch every block on the page together and remember the choice between visits.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { PackageCommand } from "#lib/components/ui/package-command/index.js";
+</script>
+
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/package-command.json
+```
+
+## Command types
+
+Set `type` to choose the kind of command to build. The default is `execute`. Set `dev` with `add` to add `-D` and save the packages as dev dependencies.
+
+- Use `execute` to run a package binary with `npx`, `pnx`, `yarn dlx`, `bunx`, or `deno run -A npm:`
+- Use `add` to install packages with `npm install`, `pn add`, `yarn add`, `bun add`, or `deno add npm:`
+- Use `install` to install the lockfile with `npm install`, `pn install`, `yarn install`, `bun install`, or `deno install`
+- Use `run` to run a script with `npm run`, `pn run`, `yarn`, `bun run`, or `deno task`
+- Use `create` to scaffold a project with `npm create`, `pn create`, `yarn create`, `bun create`, or `deno init --npm`
+
+<Demo section="types" />
+
+```svelte title="+page.svelte"
+<PackageCommand type="add" command="@lucide/svelte" />
+<PackageCommand type="add" command="prettier prettier-plugin-svelte" dev />
+<PackageCommand type="install" />
+<PackageCommand type="run" command="dev" />
+<PackageCommand type="create" command="vite my-app" />
+```
+
+## Package managers
+
+Set `managers` to choose the tabs and their order. The default is `npm`, `pnpm`, `yarn`, and `bun`, and `deno` is also available. The first tab opens by default, or set `defaultValue` to open another one.
+
+<Demo section="managers" />
+
+```svelte title="+page.svelte"
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" managers={["bun", "deno", "npm"]} />
+```
+
+## Exact commands
+
+Pass `items` to set each tab's `value`, `label`, and `command` yourself, such as when the flags differ between package managers. `items` overrides `command`, `type`, `dev`, and `managers`.
+
+<Demo section="items" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { PackageCommand } from "#lib/components/ui/package-command/index.js";
+	import type { PackageCommandItem } from "#lib/components/ui/package-command/index.js";
+
+	const items: PackageCommandItem[] = [
+		{ value: "bun", label: "bun", command: "bunx sv@latest create --install bun my-app" },
+		{ value: "npm", label: "npm", command: "npx sv@latest create --install npm my-app" },
+	];
+</script>
+
+<PackageCommand {items} />
+```
+
+## Sync and remember
+
+Set `storageKey` to save the chosen tab in `localStorage` under that key. Every block with the same key switches when one of them does, and the choice comes back on the next visit. A block without the chosen tab keeps its own. When storage is blocked, the blocks on the page still switch together.
+
+<Demo section="sync" />
+
+```svelte title="+page.svelte"
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" storageKey="package-manager" />
+<PackageCommand type="add" command="@lucide/svelte" storageKey="package-manager" />
+```
+
+## Controlled
+
+Use `bind:value` to read or set the active tab, and `onValueChange` to run code when it changes. `onValueChange` also runs when a block with the same `storageKey` switches this one.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { PackageCommand } from "#lib/components/ui/package-command/index.js";
+
+	let manager = $state("pnpm");
+</script>
+
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" bind:value={manager} onValueChange={(value) => console.log(value)} />
+```
+
+## Icons
+
+Pass an `icon` snippet to render content before each tab label. It receives the tab's `item`. Tabler has brand icons for `npm`, `pnpm`, `yarn`, and `deno`, but not for `bun`.
+
+<Demo section="icons" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { PackageCommand } from "#lib/components/ui/package-command/index.js";
+	import { IconBrandDeno, IconBrandNpm, IconBrandPnpm, IconBrandYarn } from "@tabler/icons-svelte";
+
+	const brandIcons: Record<string, typeof IconBrandNpm> = { npm: IconBrandNpm, pnpm: IconBrandPnpm, yarn: IconBrandYarn, deno: IconBrandDeno };
+</script>
+
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" managers={["npm", "pnpm", "yarn", "bun", "deno"]}>
+	{#snippet icon({ item })}
+		{@const BrandIcon = brandIcons[item.value]}
+		{#if BrandIcon}
+			<BrandIcon />
+		{/if}
+	{/snippet}
+</PackageCommand>
+```
+
+## Custom copy button
+
+Pass a `copy` snippet to replace the copy button. It receives `props` to spread onto the element that copies, with its `aria-label`, `disabled`, and `onclick`, and `copied`, which is `true` for one second after a copy.
+
+<Demo section="copy" />
+
+```svelte title="+page.svelte"
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json">
+	{#snippet copy({ props, copied })}
+		<Button size="xs" variant="outline" {...props}>
+			{copied ? "Copied" : "Copy"}
+		</Button>
+	{/snippet}
+</PackageCommand>
+```
+
+## Variants
+
+Set `variant` to `line`, `default`, `outline`, or `ghost` to change the style of the tabs. The default is `line`, which marks the active tab on the header's bottom border.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" variant="default" />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the header height, tab size, code padding, and font size. The default is `md`, the tabs are one size smaller so they fit the header, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" size="sm" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size. The tabs are rounded one step below the block. `pill` is a true pill and can clip the content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<PackageCommand command="remote0 add https://plainsv.com/r/button.json" rounded="xl" />
+```
+
+## API
+
+`PackageCommand` extends the native `div` attributes and merges `class` onto the root. The package exports `getPackageCommand` and `getPackageCommandItems` to build the same commands outside the component.
+
+```ts title="index.ts"
+type PackageManager = "npm" | "pnpm" | "yarn" | "bun" | "deno";
+
+type PackageCommandType = "execute" | "add" | "install" | "run" | "create";
+
+interface PackageCommandItem {
+	/** Value that identifies the tab, such as `bun` */
+	value: string;
+	/** Tab label */
+	label: string;
+	/** Command shown and copied while the tab is active */
+	command: string;
+}
+
+interface Props extends Omit<CompProps<"div">, "children"> {
+	/** Command without the package manager, such as `remote0 add https://plainsv.com/r/button.json`; ignored when `items` is given */
+	command?: string;
+	/** Kind of command to build for each package manager; defaults to `execute` */
+	type?: PackageCommandType;
+	/** Adds `-D` to an `add` command to save the packages as dev dependencies */
+	dev?: boolean;
+	/** Package managers to show, in order; defaults to `npm`, `pnpm`, `yarn`, and `bun` */
+	managers?: PackageManager[];
+	/** Exact tabs and commands; overrides `command`, `type`, `dev`, and `managers` */
+	items?: PackageCommandItem[];
+	/** Value of the active tab; supports `bind:value` */
+	value?: string;
+	/** Starting tab when `value` is not set; falls back to the first item */
+	defaultValue?: string;
+	/** Called with the new value when the tab changes, including when a block with the same `storageKey` switches it */
+	onValueChange?: (value: string) => void;
+	/** localStorage key that remembers the choice and switches every block with the same key together; off when omitted */
+	storageKey?: string;
+	/** Style of the tabs; defaults to `line` */
+	variant?: "default" | "outline" | "ghost" | "line";
+	/** Header height, tab size, code padding, and font size; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** Content before each tab label, such as a brand icon */
+	icon?: Snippet<[{ item: PackageCommandItem }]>;
+	/** Custom copy button; spread `props` onto the element that copies */
+	copy?: Snippet<[{ props: PackageCommandCopyAttrs; copied: boolean }]>;
+}
+```

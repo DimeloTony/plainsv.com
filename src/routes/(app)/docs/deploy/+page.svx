@@ -1,0 +1,254 @@
+---
+title: "Deploy svelte app"
+description: "Deploy a SvelteKit app on Ubuntu with Node.js, pm2, nginx, and Cloudflare, with a deploy script that sets up the domain and keeps the previous release for rollback"
+---
+
+# Deploy a SvelteKit App on Ubuntu with Node.js, pm2, nginx, and Cloudflare
+
+This page walks through deploying a SvelteKit app to an Ubuntu server with Node.js, pm2, nginx, and Cloudflare, from a fresh server to a repeatable redeploy and rollback. It is for developers who already have a SvelteKit app and a domain on Cloudflare and want a plain setup without containers. The steps follow the DigitalOcean initial server setup and nginx tutorials, install Node.js with nvm, build the app with `@sveltejs/adapter-node`, and deploy it with a small Node.js script that sets up the Cloudflare certificate and nginx site, then runs `build/index.js` under pm2. A finished setup serves HTTPS through a Cloudflare origin certificate and accepts public traffic only from Cloudflare, which keeps the origin private and the client IP trustworthy.
+
+## Requirements
+
+The steps assume a new server and a domain whose DNS is on Cloudflare.
+
+- Use Ubuntu 24.04 LTS or newer
+- Use a SvelteKit 3 project
+- Install Node.js 24 or newer on the local machine, since it runs the TypeScript deploy script without a build step
+- Install `rsync` on the local machine
+- Replace `example.com` with the domain
+- Replace `SERVER_IP` with the server address
+
+## Initial Server Setup
+
+Create a sudo user and enable the firewall before installing software, so root login is only needed once.
+
+- Log in with `ssh root@SERVER_IP`
+- Create the deploy user with `adduser deploy`
+- Grant sudo with `usermod -aG sudo deploy`
+- Allow SSH through the firewall with `ufw allow OpenSSH`
+- Enable the firewall with `ufw enable`
+- Check the rules with `ufw status`
+- Copy the SSH keys with `rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy`
+- Log in again with `ssh deploy@SERVER_IP`
+- Run all later server commands as `deploy`
+
+## Install nginx
+
+Ubuntu packages nginx and registers firewall profiles for it. Open HTTP and HTTPS now, and restrict them to Cloudflare later.
+
+- Update the package index with `sudo apt update`
+- Install nginx with `sudo apt install nginx`
+- Allow HTTP and HTTPS with `sudo ufw allow 'Nginx Full'`
+- Check the rules with `sudo ufw status`
+- Check the service with `systemctl status nginx`
+- Open `http://SERVER_IP` to see the default nginx page
+
+## Install Node.js
+
+nvm installs Node.js in `/home/deploy/.nvm` and adds it to `~/.bashrc`. Non-interactive SSH sessions skip `~/.bashrc`, so the deploy script loads `~/.nvm/nvm.sh` itself before it runs any command.
+
+- Install nvm with `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash`
+- Reload the profile with `source ~/.bashrc`
+- Install Node.js with `nvm install 24`
+- Check the version with `node --version`
+
+## Install pnpm and pm2
+
+pm2 keeps the app running, restarts it after a crash, and starts it on boot through a systemd unit that `pm2 startup` generates. The server installs production dependencies with the package manager that the deploy script names, which is pnpm by default.
+
+- Install pnpm and pm2 with `npm install -g pnpm pm2`
+- Check the versions with `pn --version` and `pm2 --version`
+- Generate the boot command with `pm2 startup`
+- Run the `sudo env PATH=...` command that `pm2 startup` prints
+
+## Build the App
+
+The official `adapter-node` builds a standalone Node.js server in `build`. SvelteKit 3 reads its configuration from `vite.config.js`. Node.js does not load `.env` on its own, so pass the env files when testing the build locally.
+
+- Run `pn add -D @sveltejs/adapter-node`
+- Run `pn run build`
+- Run `node --env-file-if-exists=.env build` to test the server locally
+
+```js title="vite.config.js"
+import adapter from "@sveltejs/adapter-node";
+import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+	plugins: [sveltekit({ adapter: adapter() })],
+});
+```
+
+## Configure Cloudflare
+
+Cloudflare terminates visitor HTTPS and connects to nginx with a free origin certificate that only Cloudflare trusts. Keep the DNS record Proxied, because browsers reject the origin certificate. Use Full (strict) mode, because Flexible mode causes redirect loops. The first deploy prints these steps and asks for the certificate, so create it when the script asks.
+
+- Add an `A` record for `example.com` pointing to `SERVER_IP`, Proxied
+- Set the SSL/TLS encryption mode to Full (strict)
+- Open SSL/TLS, then Origin Server, then Create Certificate
+- Keep the hostnames `example.com` and `*.example.com`
+
+## Configure nginx
+
+The deploy script creates this server block once, so later edits to it survive. nginx redirects HTTP to HTTPS and proxies HTTPS requests to the app on the `--port` the script passes. The `Host` and `X-Forwarded-Proto` headers let SvelteKit build the correct origin for form submissions.
+
+- Remove the default site with `sudo rm /etc/nginx/sites-enabled/default`
+- Uncomment `server_names_hash_bucket_size 64;` in `/etc/nginx/nginx.conf` for long domain names
+- Edit `/etc/nginx/sites-available/example.com` after the first deploy to change the server block, then run `sudo nginx -t` and `sudo systemctl reload nginx`
+
+```nginx title="/etc/nginx/sites-available/example.com"
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name example.com;
+
+    ssl_certificate /etc/ssl/cloudflare/example.com.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/example.com.key;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+## Restrict the Firewall to Cloudflare
+
+The app trusts `CF-Connecting-IP`, so only Cloudflare may reach ports 80 and 443. Cloudflare publishes its address ranges, and `ufw` accepts them one by one. Docker bypasses `ufw`, so publishing app ports through Docker defeats these rules.
+
+- Run `sudo ufw delete allow 'Nginx Full'`
+- Run `for ip in $(curl -fsS https://www.cloudflare.com/ips-v4) $(curl -fsS https://www.cloudflare.com/ips-v6); do sudo ufw allow from "$ip" to any port 80,443 proto tcp; done`
+- Check the rules with `sudo ufw status numbered`
+- Check [Cloudflare IP ranges](https://www.cloudflare.com/ips/) for changes and rerun the loop
+- Read [Authenticated Origin Pulls](https://developers.cloudflare.com/ssl/origin-configuration/authenticated-origin-pull/) for stricter origin checks
+
+## Add the Deploy Script
+
+The `deploy` item adds `src/lib/server/deploy/index.ts` and `src/lib/server/deploy/utils.ts`, which Node.js runs directly. Put the flags in the `deploy` script in `package.json`, so every package manager runs it the same way.
+
+- Add the script with the command below
+- Add the `deploy` script to `package.json` with your host, folder, and port
+- Pass `--host` with the SSH user and host, such as `deploy@SERVER_IP`
+- Pass `--dir` with the domain, which also names the folder in `/var/www`, the nginx site, and the certificate, such as `example.com`
+- Pass `--port` with the port nginx proxies to, such as `8000`, on the first deploy, since the script stops without it when the app is not running yet
+- Pass `--i` with a number of instances, or `max` for one per CPU core, to run the app in pm2 cluster mode
+- Leave out `--port` and `--i` on later deploys to keep what the running app uses
+- Pass `--name` to change the pm2 app name, which defaults to the first part of `--dir`, such as `example`
+- Pass `--pm` as `npm`, `bun`, `pnpm`, or `yarn` to build and install with that package manager, which defaults to `pnpm`
+- Add server-only files or folders to `keepPaths` in `src/lib/server/deploy/index.ts`, which holds `db` by default
+
+```pm
+npx remote0 add https://plainsv.com/r/deploy.json
+```
+
+```json title="package.json"
+{
+	"scripts": {
+		"deploy": "node src/lib/server/deploy/index.ts --host deploy@SERVER_IP --dir example.com --port 8000"
+	}
+}
+```
+
+## Set Up the Domain
+
+The first deploy sets up the domain when the server has no nginx site for it. It prints the Cloudflare steps, asks for the origin certificate and private key, and saves them in `~/.cloudflare` on the local machine, so later setups reuse them without asking. It then installs the certificate in `/etc/ssl/cloudflare`, creates and enables the nginx site, reloads nginx when the config is valid, and gives `deploy` ownership of `/var/www` so the script can create the `_next` and `_prev` folders. The server asks for the `deploy` password when `sudo` needs it.
+
+- Paste the certificate and private key when the first deploy asks
+- Press Return after each paste, since the script saves each one at its `-----END` line
+- Save the files as `~/.cloudflare/example.com.pem` and `~/.cloudflare/example.com.key` instead when the script runs without a terminal
+- Run the command below to recreate a missing certificate, nginx site, or `/var/www` access without deploying
+
+```pm
+npm run deploy setup
+```
+
+## Deploy the App
+
+Every deploy builds locally, so a broken build stops before the server changes. The script uploads `build`, `package.json`, the lock file, `.env`, and `.env.production` to `/var/www/example.com_next` while the live app keeps running, makes the env files readable only by `deploy`, and installs production dependencies there from the lock file. It then moves the live release to `/var/www/example.com_prev`, moves the new release into `/var/www/example.com`, and moves each path in `keepPaths` over, which keeps one live SQLite database. The first deploy starts the app with pm2, and later deploys reload it. pm2 saves `NODE_ENV`, `HOST`, `PORT`, `PROTOCOL_HEADER`, and `ADDRESS_HEADER` with the app on its first start, along with Node.js flags that load the env files. `HOST` binds the app to loopback so only nginx reaches it, and `PROTOCOL_HEADER` and `ADDRESS_HEADER` are safe to trust only because the firewall restricts traffic to Cloudflare. A 35 second kill timeout outlasts the 30 second `SHUTDOWN_TIMEOUT` default, so pending requests finish on a restart. `adapter-node` closes the server on shutdown but never exits, and pm2 keeps Node alive through its IPC channel, so the script also passes Node a one-line `--import` that exits on the `sveltekit:shutdown` event once open requests finish, which spares each reload the full kill timeout and a `SIGKILL`. The script restarts the app when these Node.js flags change, such as after updating the deploy script.
+
+- Run the command below for the first deploy and every update
+- Pass a new `--port` to move the app, which restarts it on that port, then update `proxy_pass` in `/etc/nginx/sites-available/example.com` and run `sudo systemctl reload nginx`
+
+```pm
+npm run deploy
+```
+
+## Cluster Mode
+
+Without `--i`, a new app runs as one process, and a running app keeps its mode and process count. With `--i`, pm2 runs that many processes behind the same port and spreads requests across them, and `--i max` starts one per CPU core. Every deploy and rollback reloads the app with `pm2 reload`, which restarts cluster processes one at a time with no downtime. pm2 cannot change the mode or the process count on a reload, so when `--i` changes between deploys, the script deletes the app and starts it again, with a short downtime. Each process has its own memory, so in-memory caches, rate limits, and sessions are not shared between them. Every process opens the same SQLite database, so writes from different processes wait on each other.
+
+- Add `--i max` or a number such as `--i 2` to the `deploy` script
+- Pass `--i 1` to return to one process
+- Check the processes with `pm2 status`
+
+```json title="package.json"
+{
+	"scripts": {
+		"deploy": "node src/lib/server/deploy/index.ts --host deploy@SERVER_IP --dir example.com --port 8000 --i max"
+	}
+}
+```
+
+## Roll Back
+
+Rollback swaps `/var/www/example.com` and `/var/www/example.com_prev`, keeps each path in `keepPaths` in the live folder, and reloads the app. A second rollback returns to the newer release. Rollback skips the build and upload, and it stops when no previous release exists.
+
+```pm
+npm run deploy rollback
+```
+
+## Remove the App
+
+Remove asks you to type the domain, since the app folder holds the database. It stops the app in pm2, deletes `/var/www/example.com` with its `db` folder and the `_prev`, `_next`, and `_tmp` folders, deletes the nginx site and reloads nginx, and deletes the certificate in `/etc/ssl/cloudflare`. It leaves nginx, Node.js, pm2, and the firewall rules in place for other apps, then offers to delete the certificate in `~/.cloudflare` as well.
+
+```pm
+npm run deploy remove
+```
+
+## Verify
+
+Check the site through Cloudflare, confirm the origin refuses direct connections, and follow the logs.
+
+- Run `curl -I https://example.com` and expect `200`
+- Run `curl -Ik --max-time 10 https://SERVER_IP` and expect a timeout
+- Follow logs with `pm2 logs example`
+- Confirm `event.getClientAddress()` returns the visitor IP
+
+## Troubleshoot
+
+Each Cloudflare, pm2, or SvelteKit error below points to one place to look first.
+
+- Check the `ssl_certificate` paths in `/etc/nginx/sites-available/example.com` on 526 errors
+- Run `pm2 status` on 521 errors
+- Run `sudo systemctl status nginx` on 521 errors
+- Recheck the Cloudflare rules in `sudo ufw status numbered` on 521 errors
+- Run `pm2 logs example` on 502 errors
+- Compare the missing variable with the env files in `/var/www/example.com` when the app fails to start
+- Check that `~/.nvm/nvm.sh` exists on the server on `pm2: command not found` errors
+- Run the setup command from Set Up the Domain on `Permission denied` errors while the script creates `_next`
+- Run `pm2 resurrect` when `pm2 status` is empty after a reboot
+- Run `systemctl status pm2-deploy` when the app does not start on boot
+- Recheck `Host`, `X-Forwarded-Proto`, and `PROTOCOL_HEADER` on Cross-site POST form submissions are forbidden errors
+- Check that requests arrive through Cloudflare when `event.getClientAddress()` throws
+- Raise `client_max_body_size` in nginx and `BODY_SIZE_LIMIT` in `.env.production` on 413 errors
+
+## Sources
+
+The steps combine the following guides.
+
+- Read [Initial Server Setup with Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04)
+- Read [How To Install Nginx on Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04)
+- Read [nvm installation](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Read [pm2 startup script](https://pm2.keymetrics.io/docs/usage/startup/)
+- Read [pm2 graceful stop](https://pm2.keymetrics.io/docs/usage/signals-clean-restart/)
+- Read [SvelteKit adapter-node](https://svelte.dev/docs/kit/adapter-node)
+- Read [Cloudflare Origin CA](https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/)

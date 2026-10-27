@@ -1,0 +1,128 @@
+---
+title: "Switch"
+description: "An on and off toggle for a single setting, with variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Switch
+
+Turns a single setting on or off, and takes effect right away. It renders a `button` with `role="switch"` and `aria-checked`, so Space and Enter toggle it. Link a `Label` with `for` and give the switch the same `id`, so clicking the label toggles it too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Switch } from "#lib/components/ui/switch/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+</script>
+
+<Switch id="airplaneMode" />
+<Label for="airplaneMode">Airplane mode</Label>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/switch.json
+```
+
+## Controlled
+
+Use `bind:checked` to read and set the state from your own code, or `onCheckedChange` to run code on each toggle. Without either, set `defaultChecked` to start the switch on.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Switch } from "#lib/components/ui/switch/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+
+	let isNotifying = $state(true);
+</script>
+
+<Switch id="notifications" bind:checked={isNotifying} />
+<Label for="notifications">Notifications</Label>
+<p>Notifications are {isNotifying ? "on" : "off"}.</p>
+```
+
+A passed `onclick` runs before the toggle. Call `e.preventDefault()` in it to keep the current state, such as while asking for confirmation.
+
+## Forms
+
+Set `name` to submit the switch with a form. Like a checkbox, it submits `value`, which defaults to `"on"`, only while the switch is on.
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<Switch id="newsletter" name="newsletter" value="yes" />
+	<Label for="newsletter">Subscribe to the newsletter</Label>
+</form>
+```
+
+## Variants
+
+Set `variant` to `default` or `destructive` to change the track color while the switch is on.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Switch variant="destructive" defaultChecked />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Switch size="lg" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the track and thumb. Use `pill` for a pill.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Switch rounded="pill" />
+```
+
+## States
+
+Set `disabled` to dim the switch and block toggling. Set `aria-invalid="true"` to show the invalid ring, such as for a required setting that is still off.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Switch disabled />
+<Switch aria-invalid="true" />
+```
+
+## API
+
+The `Switch` props extend the native `button` attributes, and extra attributes such as `id` pass through to the button. The root and thumb set `data-state` to `checked` or `unchecked` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompProps<"button"> {
+	/** Whether the switch is on; supports `bind:checked` */
+	checked?: boolean;
+	/** Starting state when `checked` is not set; defaults to `false` */
+	defaultChecked?: boolean;
+	/** Called with the new state when the switch is toggled */
+	onCheckedChange?: (checked: boolean) => void;
+	/** Form field name; submits `value` while the switch is on */
+	name?: string;
+	/** Value submitted with the form while on; defaults to `"on"` */
+	value?: string;
+	/** Color of the track while on */
+	variant?: "default" | "destructive";
+	/** Switch size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the track and thumb; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

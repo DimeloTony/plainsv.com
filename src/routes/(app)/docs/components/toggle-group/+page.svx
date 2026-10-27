@@ -1,0 +1,181 @@
+---
+title: "Toggle Group"
+description: "A set of toggles with single or multiple selection, joined or spaced items, and keyboard support."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Toggle Group
+
+A set of two-state buttons that share one value, such as text styles or alignment in an editor. Compose it from `ToggleGroup` and `ToggleGroupItem`. Each item renders a `Toggle`, so install the `toggle` item too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ToggleGroup, ToggleGroupItem } from "#lib/components/ui/toggle-group/index.js";
+	import { BoldIcon, ItalicIcon, UnderlineIcon } from "@lucide/svelte";
+
+	let styles: string[] = $state(["bold"]);
+</script>
+
+<ToggleGroup type="multiple" variant="outline" bind:value={styles}>
+	<ToggleGroupItem value="bold" aria-label="Toggle bold"><BoldIcon /></ToggleGroupItem>
+	<ToggleGroupItem value="italic" aria-label="Toggle italic"><ItalicIcon /></ToggleGroupItem>
+	<ToggleGroupItem value="underline" aria-label="Toggle underline"><UnderlineIcon /></ToggleGroupItem>
+</ToggleGroup>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/toggle-group.json
+```
+
+## Single
+
+Set `type="single"` so only one item can be pressed, and bind `value` to a string. Pressing the pressed item again releases it and sets the value to an empty string. The group is announced as a radio group and each item as a radio. `single` is the default type.
+
+<Demo section="single" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ToggleGroup, ToggleGroupItem } from "#lib/components/ui/toggle-group/index.js";
+	import { AlignLeftIcon, AlignCenterIcon, AlignRightIcon } from "@lucide/svelte";
+
+	let alignment = $state("left");
+</script>
+
+<ToggleGroup type="single" variant="outline" bind:value={alignment}>
+	<ToggleGroupItem value="left" aria-label="Align left"><AlignLeftIcon /></ToggleGroupItem>
+	<ToggleGroupItem value="center" aria-label="Align center"><AlignCenterIcon /></ToggleGroupItem>
+	<ToggleGroupItem value="right" aria-label="Align right"><AlignRightIcon /></ToggleGroupItem>
+</ToggleGroup>
+```
+
+Set `type="multiple"` to let any number of items be pressed, and bind `value` to a `string[]`. Use `onValueChange` instead of `bind:value` to run code when the value changes. Its parameter is a `string`, or a `string[]` with `type="multiple"`, and TypeScript infers it even when `type` is omitted.
+
+```svelte title="+page.svelte"
+<ToggleGroup value={range} onValueChange={(value) => (range = value || "90d")}>...</ToggleGroup>
+```
+
+## Outline
+
+Set `variant` on `ToggleGroup` to `default` or `outline` to style every item. Joined outline items share one border between neighbors.
+
+<Demo section="outline" />
+
+```svelte title="+page.svelte"
+<ToggleGroup type="multiple">...</ToggleGroup>
+<ToggleGroup type="multiple" variant="outline">...</ToggleGroup>
+```
+
+## Spacing
+
+By default the items are joined into one control with square inner corners. Set `spacing` to `xs`, `sm`, `md`, or `lg` to space them apart, so each item keeps its own corners.
+
+<Demo section="spacing" />
+
+```svelte title="+page.svelte"
+<ToggleGroup type="multiple" variant="outline" spacing="xs">...</ToggleGroup>
+```
+
+## Vertical
+
+Set `orientation="vertical"` to stack the items. The up and down arrows move between them.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<ToggleGroup type="multiple" variant="outline" orientation="vertical">...</ToggleGroup>
+```
+
+## Keyboard
+
+One item is in the tab order: the last focused one, else the first pressed one. While none has been focused or pressed, every item is reachable. The arrow keys move focus along the orientation and wrap around at the ends, and Home and End jump to the first and last item. Space or Enter presses the focused item. Disabled items are skipped.
+
+## Disabled
+
+Set `disabled` on `ToggleGroup` to disable every item, or on a `ToggleGroupItem` to disable one.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<ToggleGroup type="multiple" disabled>...</ToggleGroup>
+<ToggleGroupItem value="italic" disabled>...</ToggleGroupItem>
+```
+
+## Sizes
+
+Set `size` on `ToggleGroup` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<ToggleGroup type="multiple" variant="outline" size="sm">...</ToggleGroup>
+```
+
+## Rounded
+
+Set `rounded` on `ToggleGroup` to `xs` through `4xl` or `pill` to override the radius from the size. A joined group rounds only its outer corners, and spaced items each use the radius.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<ToggleGroup type="multiple" variant="outline" rounded="pill">...</ToggleGroup>
+```
+
+## Overrides
+
+`ToggleGroupItem` takes its own `variant`, `size`, and `rounded`, which win over the group's for that item only. A joined group keeps the group radius on its outer corners, so an item's `rounded` shows when `spacing` is set.
+
+```svelte title="+page.svelte"
+<ToggleGroup spacing="sm">
+	<ToggleGroupItem value="bold">Bold</ToggleGroupItem>
+	<ToggleGroupItem value="italic" variant="outline" rounded="pill">Italic</ToggleGroupItem>
+</ToggleGroup>
+```
+
+## API
+
+`ToggleGroup` extends the native `div` attributes, and `ToggleGroupItem` extends the native `button` attributes. `ToggleGroup` is generic over `type`, so `value` and `onValueChange` take a `string` by default and a `string[]` with `type="multiple"`. Use `ToggleGroupProps<"multiple">` to type props for a multiple group.
+
+```ts title="index.ts"
+type ToggleGroupType = "single" | "multiple";
+
+type ToggleGroupValue<T extends ToggleGroupType> = T extends "multiple" ? string[] : string;
+
+interface Props<T extends ToggleGroupType = "single"> extends CompPropsWithChild<"div"> {
+	/** Selection type; `single` releases the pressed item when it is pressed again; defaults to `single` */
+	type?: T;
+	/** Value of the pressed item, empty while none is pressed, or the values of the pressed items when `type` is `multiple`; supports `bind:value` */
+	value?: ToggleGroupValue<T>;
+	/** Called with the new value, or values, when an item is pressed or released */
+	onValueChange?: (value: ToggleGroupValue<T>) => void;
+	/** Disables every item */
+	disabled?: boolean;
+	/** Direction of the items; the arrow keys follow it; defaults to `horizontal` */
+	orientation?: "horizontal" | "vertical";
+	/** `none` joins the items into one control with shared borders; a size spaces them apart; defaults to `none` */
+	spacing?: "none" | UiSize;
+	/** Style of every item */
+	variant?: "default" | "outline";
+	/** Size of every item on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the joined group, or of each item when spaced; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+
+interface ItemProps extends CompPropsWithChild<"button"> {
+	/** Value this item adds to the group while pressed */
+	value: string;
+	/** Style of this item; overrides the group's `variant` */
+	variant?: ToggleProps["variant"];
+	/** Size of this item; overrides the group's `size` */
+	size?: UiSize;
+	/** Corner radius of this item; overrides the group's `rounded`; joined groups keep the group radius on the outer corners, so it shows when the group is spaced */
+	rounded?: UiRounded;
+}
+```

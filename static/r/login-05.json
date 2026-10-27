@@ -1,0 +1,27 @@
+{
+    "name": "login-05",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/routes/(custom)/examples/login-05/+page.svelte",
+            "target": "src/routes/(blocks)/login-05/+page.svelte",
+            "content": "<script lang=\"ts\">\n\timport { PageMeta } from \"#lib/components/shared/index.js\";\n\timport LoginForm from \"./login-form.svelte\";\n</script>\n\n<PageMeta title=\"Login 05 example\" description=\"A simple email login with social logins.\" />\n\n<!-- Centered login form. -->\n<div class=\"loginPage not-typeset\">\n\t<div class=\"loginPageInner\">\n\t\t<LoginForm />\n\t</div>\n</div>\n\n<style>\n\t/* Full-height page that centers the form */\n\t.loginPage {\n\t\tdisplay: flex;\n\t\tflex-direction: column;\n\t\tjustify-content: center;\n\t\talign-items: center;\n\t\tgap: var(--spacing-xl);\n\t\tbackground-color: var(--background);\n\t\tpadding: var(--spacing-xl);\n\t\tmin-height: 100svh;\n\t}\n\n\t.loginPageInner {\n\t\twidth: 100%;\n\t\tmax-width: 24rem; /* 384px */\n\t}\n\n\t@media (min-width: 48rem) {\n\t\t.loginPage {\n\t\t\tpadding: calc(var(--spacing-xl) + var(--spacing-lg)); /* 40px */\n\t\t}\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/routes/(custom)/examples/login-05/login-form.svelte",
+            "target": "src/routes/(blocks)/login-05/login-form.svelte",
+            "content": "<script lang=\"ts\">\n\timport { Button } from \"#lib/components/ui/button/index.js\";\n\timport { Field, FieldGroup, FieldLabel, FieldDescription, FieldSeparator } from \"#lib/components/ui/field/index.js\";\n\timport { Input } from \"#lib/components/ui/input/index.js\";\n\timport { GalleryVerticalEndIcon } from \"@lucide/svelte\";\n\timport { IconBrandApple, IconBrandGoogle } from \"@tabler/icons-svelte\";\n\tconst { class: className, ...props }: CompProps<\"div\"> = $props();\n\n\t/** Keeps the demo form on the page instead of submitting it. */\n\tconst handleSubmit = (e: SubmitEvent) => {\n\t\te.preventDefault();\n\t};\n</script>\n\n<div class={[\"loginForm\", className]} {...props}>\n\t<form onsubmit={handleSubmit}>\n\t\t<FieldGroup>\n\t\t\t<!-- Brand, title, and sign up link. -->\n\t\t\t<div class=\"formHeading\">\n\t\t\t\t<a href=\"/\" class=\"brand\" aria-label=\"Acme Inc.\">\n\t\t\t\t\t<GalleryVerticalEndIcon />\n\t\t\t\t</a>\n\t\t\t\t<h1>Welcome to Acme Inc.</h1>\n\t\t\t\t<FieldDescription class=\"smallText\">Don't have an account? <a href=\"#sign-up\">Sign up</a></FieldDescription>\n\t\t\t</div>\n\n\t\t\t<!-- Email field. -->\n\t\t\t<Field>\n\t\t\t\t<FieldLabel for=\"email\">Email</FieldLabel>\n\t\t\t\t<Input id=\"email\" type=\"email\" placeholder=\"m@example.com\" required />\n\t\t\t</Field>\n\t\t\t<Field>\n\t\t\t\t<Button type=\"submit\">Login</Button>\n\t\t\t</Field>\n\n\t\t\t<!-- Social logins, side by side on wider screens. -->\n\t\t\t<FieldSeparator>Or</FieldSeparator>\n\t\t\t<Field class=\"socialRow\">\n\t\t\t\t<Button variant=\"outline\" type=\"button\"><IconBrandApple /> Continue with Apple</Button>\n\t\t\t\t<Button variant=\"outline\" type=\"button\"><IconBrandGoogle /> Continue with Google</Button>\n\t\t\t</Field>\n\t\t</FieldGroup>\n\t</form>\n\n\t<!-- Terms below the form. -->\n\t<FieldDescription class=\"termsText\">By clicking continue, you agree to our <a href=\"#terms\">Terms of Service</a> and <a href=\"#privacy\">Privacy Policy</a>.</FieldDescription>\n</div>\n\n<style>\n\t.loginForm {\n\t\tdisplay: flex;\n\t\tflex-direction: column;\n\t\tgap: var(--spacing-xl);\n\t}\n\n\t/* Centered brand, title, and sign up link */\n\t.formHeading {\n\t\tdisplay: flex;\n\t\tflex-direction: column;\n\t\talign-items: center;\n\t\tgap: var(--spacing-sm);\n\t\ttext-align: center;\n\t}\n\n\t.formHeading h1 {\n\t\tmargin: 0;\n\t\tfont-weight: 700;\n\t\tfont-size: 1.25rem; /* 20px */\n\t\tline-height: 1.75rem; /* 28px */\n\t}\n\n\t.brand {\n\t\tdisplay: flex;\n\t\tjustify-content: center;\n\t\talign-items: center;\n\t\tborder-radius: var(--radius-md);\n\t\twidth: var(--control-height-sm);\n\t\theight: var(--control-height-sm);\n\t\tcolor: inherit;\n\t}\n\n\t.brand :global(svg) {\n\t\twidth: 1.5rem; /* 24px */\n\t\theight: 1.5rem; /* 24px */\n\t}\n\n\t.loginForm :global(.smallText) {\n\t\tfont-size: var(--text-sm);\n\t}\n\n\t/* Social buttons stack on small screens */\n\t.loginForm :global(.field.socialRow) {\n\t\tgap: var(--spacing-lg);\n\t}\n\n\t.loginForm :global(.termsText) {\n\t\tpadding-inline: var(--spacing-xl);\n\t\tfont-size: var(--text-sm);\n\t\ttext-align: center;\n\t}\n\n\t/* Social buttons sit side by side once there is room */\n\t@media (min-width: 40rem) {\n\t\t.loginForm :global(.field.socialRow) {\n\t\t\tflex-direction: row;\n\t\t}\n\n\t\t.loginForm :global(.field.socialRow > *) {\n\t\t\tflex: 1;\n\t\t}\n\t}\n</style>\n"
+        }
+    ],
+    "itemDependencies": [
+        "/r/button.json",
+        "/r/field.json",
+        "/r/input.json"
+    ],
+    "devDependencies": [
+        "@lucide/svelte",
+        "@tabler/icons-svelte"
+    ],
+    "description": "A simple email login with social logins."
+}

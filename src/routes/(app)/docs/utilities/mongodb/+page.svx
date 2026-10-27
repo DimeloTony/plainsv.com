@@ -1,0 +1,123 @@
+---
+title: "MongoDB"
+description: "A typed MongoDB client with Zod collection schemas and generated create, find, update, and delete methods for each collection."
+---
+
+# MongoDB
+
+The MongoDB utility wraps the official `mongodb` driver in a small typed client. Each collection's shape is defined once with Zod in `schema.ts`, and a generator script writes typed methods for it, such as `db.findUserById` and `db.updateSession`, so queries and results are checked by TypeScript without an ORM. It lives in `src/lib/server/mongodb`, so SvelteKit keeps it out of the client bundle, and the code is copied into your project like every PlainSv item.
+
+## Installation
+
+Install the item, then set `MONGODB_URI` in `.env` to your connection string, including the database name. The client connects when the module is first imported.
+
+```pm
+npx remote0 add https://plainsv.com/r/mongodb.json
+```
+
+```bash title=".env"
+MONGODB_URI="mongodb://localhost:27017/my-app"
+```
+
+## Files
+
+The utility has three files, and only `schema.ts` needs editing by hand.
+
+- Define collections in `src/lib/server/mongodb/schema.ts`
+- Import `db`, `client`, `database`, and `ObjectId` from `src/lib/server/mongodb/index.ts`
+- Run `src/lib/server/mongodb/generate.ts` to rewrite the collection methods in `index.ts`
+
+## Define a collection
+
+Add a key to `dbCollectionsSchema` with a Zod object. The key is the collection name, and every document needs a string `_id`. `DbCollectionsSchema` infers the TypeScript type of each collection from these schemas.
+
+```ts title="src/lib/server/mongodb/schema.ts"
+export const dbCollectionsSchema = {
+	user: z.object({
+		_id: z.string(),
+		email: z.string(),
+		image: z.string(),
+		createdAt: z.date(),
+		updatedAt: z.date(),
+	}),
+};
+```
+
+## Generate methods
+
+Run the generator with Bun after you add, rename, or remove a collection. It replaces everything between the `//<COLLECTIONS>` and `//</COLLECTIONS>` comments in `index.ts`, so keep those comments in place. Format the file with Prettier afterwards.
+
+```bash title="Terminal"
+bun src/lib/server/mongodb/generate.ts
+```
+
+```pm
+npx prettier --write src/lib/server/mongodb/index.ts
+```
+
+Each collection gets these methods, named after the collection, such as `user`:
+
+- Create documents with `createUser` and `createUsers`
+- Find documents with `findUser`, `findUsers`, and `findUserById`
+- Update documents with `updateUser`, `updateUsers`, and `updateUserById`
+- Delete documents with `deleteUser`, `deleteUsers`, and `deleteUserById`
+- Run an aggregation pipeline with `userAggregate`
+
+Collections whose name starts with `app`, such as `appData`, only get `createAppData`, `findAppData`, and `updateAppData`, since they hold single config documents.
+
+## Query documents
+
+Call the generated methods from server code, such as a `+page.server.ts` load function, a `+server.ts` endpoint, or a function handler. Filters and updates are typed against the collection schema, and `create` methods fill in `_id` with a new `ObjectId` string when you leave it out.
+
+```ts title="src/routes/account/+page.server.ts"
+import { db } from "#lib/server/mongodb/index.js";
+
+export const load = async ({ locals }) => {
+	const user = await db.findUserById(locals.userData.id);
+	await db.updateUserById(locals.userData.id, { $set: { updatedAt: new Date() } });
+	return { email: user?.email };
+};
+```
+
+## Select fields
+
+Pass `return` in the options to load only some fields. The result type narrows to the fields you pick.
+
+```ts title="src/routes/account/+page.server.ts"
+const user = await db.findUserById(id, { return: { email: true } });
+```
+
+## Raw driver
+
+Use `database` for anything the generated methods do not cover, such as indexes, transactions, or change streams. It is the `Db` instance from the official driver, and `client` is the connected `MongoClient`.
+
+```ts title="src/lib/server/setup.ts"
+import { database } from "#lib/server/mongodb/index.js";
+
+await database.collection("user").createIndex({ email: 1 }, { unique: true });
+```
+
+## Auth
+
+The auth adapter in `src/lib/server/auth/db.mongodb.ts` stores users and sessions with this utility. It uses the `user` and `session` collections, so keep both in `schema.ts` when you use auth with MongoDB.
+
+## API
+
+```ts title="src/lib/server/mongodb/index.ts"
+/** Connected MongoDB client */
+const client: MongoClient;
+
+/** Default database from `MONGODB_URI` */
+const database: Db;
+
+/** Typed methods for every collection in `dbCollectionsSchema` */
+const db: { findUserById(id: string, options?: QueryOptions<"user">): Promise<DbCollectionsSchema["user"] | null> /* ... */ };
+```
+
+```ts title="src/lib/server/mongodb/schema.ts"
+/** Zod schema for every collection */
+const dbCollectionsSchema: Record<string, z.ZodType>;
+
+/** TypeScript type of every collection, inferred from the schemas */
+type DbCollectionsSchema = { [K in keyof typeof dbCollectionsSchema]: z.infer<(typeof dbCollectionsSchema)[K]> };
+```

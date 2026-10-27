@@ -1,0 +1,65 @@
+---
+title: "Aspect Ratio"
+description: "A box that keeps a width to height ratio as it resizes, with media that covers it."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Aspect Ratio
+
+Displays content within a desired ratio. The box fills the width of its container and sets its height from `ratio` with the CSS `aspect-ratio` property.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { AspectRatio } from "#lib/components/ui/aspect-ratio/index.js";
+</script>
+
+<AspectRatio ratio={16 / 9} rounded="lg">
+	<img src="/photo.jpg" alt="A city street at night" />
+</AspectRatio>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/aspect-ratio.json
+```
+
+## Ratios
+
+Set `ratio` to the width divided by the height, such as `16 / 9` or `4 / 3`. The default is `1`, a square. Images, videos, and iframes placed directly inside cover the box and crop to the ratio.
+
+<Demo section="ratios" />
+
+```svelte title="+page.svelte"
+<AspectRatio ratio={4 / 3}>
+	<div>Any content</div>
+</AspectRatio>
+```
+
+## Rounded
+
+The box is square-cornered by default. Set `rounded` to `xs` through `4xl` or `pill` to round it and clip the content to the corners. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe. The box has no padding or text of its own, so there is no `size` prop.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<AspectRatio ratio={1} rounded="lg">...</AspectRatio>
+```
+
+## API
+
+The `AspectRatio` props extend the native `div` attributes.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Width divided by height, such as `16 / 9`; defaults to `1` */
+	ratio?: number;
+	/** Corner radius; square when omitted. Clips the content to the corners. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

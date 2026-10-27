@@ -1,0 +1,122 @@
+---
+title: "Badge"
+description: "A small label for statuses and counts, with variants, sizes, rounded corners, and a link form."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Badge
+
+Displays a small label, such as a status, a tag, or a count. Renders a `span`, or an `a` when `href` is set.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Badge } from "#lib/components/ui/badge/index.js";
+</script>
+
+<Badge>Badge</Badge>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/badge.json
+```
+
+## Variants
+
+Set `variant` to `default`, `secondary`, `destructive`, `outline`, `ghost`, or `link`.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Badge>Default</Badge>
+<Badge variant="secondary">Secondary</Badge>
+<Badge variant="destructive">Destructive</Badge>
+<Badge variant="outline">Outline</Badge>
+<Badge variant="ghost">Ghost</Badge>
+<Badge variant="link">Link</Badge>
+```
+
+## Icons
+
+Place an icon before or after the label. Icons scale with the size.
+
+<Demo section="icons" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Badge } from "#lib/components/ui/badge/index.js";
+	import { BadgeCheckIcon } from "@lucide/svelte";
+</script>
+
+<Badge variant="secondary"><BadgeCheckIcon />Verified</Badge>
+```
+
+## Count
+
+Set `rounded="pill"` for a pill counter. Tabular digits keep the width steady as the number changes.
+
+<Demo section="count" />
+
+```svelte title="+page.svelte"
+<Badge rounded="pill" style="font-variant-numeric: tabular-nums">8</Badge>
+<Badge rounded="pill" variant="destructive" style="font-variant-numeric: tabular-nums">99</Badge>
+```
+
+## Link
+
+Set `href` to render an `a`. Link badges darken or fill on hover and show a focus ring.
+
+<Demo section="link" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Badge } from "#lib/components/ui/badge/index.js";
+	import { ArrowUpRightIcon } from "@lucide/svelte";
+</script>
+
+<Badge href="/docs/components">Components<ArrowUpRightIcon /></Badge>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, like the shadcn badge, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Badge size="xs">Size xs</Badge>
+<Badge size="lg">Size lg</Badge>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius from the size.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Badge rounded="pill">Rounded pill</Badge>
+```
+
+## API
+
+The `Badge` props extend the native `span` attributes, or the `a` attributes when `href` is set.
+
+```ts title="index.ts"
+interface BadgeBaseProps {
+	/** Visual style of the badge */
+	variant?: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link";
+	/** Padding, text, and icon size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+
+type Props = BadgeBaseProps & ((CompPropsWithChild<"span"> & { href?: undefined }) | (CompPropsWithChild<"a"> & { href: string }));
+```

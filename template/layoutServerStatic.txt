@@ -1,0 +1,12 @@
+import type { LayoutServerLoad } from "./$types";
+
+// When using the static adapter ? set to true : set to false to remove dark mode flash since we set dark class inside hook
+export const prerender = true;
+
+export const load: LayoutServerLoad = async (event) => {
+	const userData = event.locals.userData;
+	const isDarkMode = event.locals.isDarkMode;
+	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(event.request.headers.get("user-agent") || "");
+	event.depends("layout");
+	return { isMobile, isDarkMode, userData };
+};

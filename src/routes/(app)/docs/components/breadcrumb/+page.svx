@@ -1,0 +1,189 @@
+---
+title: "Breadcrumb"
+description: "A trail of links to the current page, with custom separators, collapsed items, and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Breadcrumb
+
+Shows the path to the current page as a trail of links. Compose it from `Breadcrumb`, `BreadcrumbList`, `BreadcrumbItem`, `BreadcrumbLink`, `BreadcrumbPage`, `BreadcrumbSeparator`, and `BreadcrumbEllipsis`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "#lib/components/ui/breadcrumb/index.js";
+</script>
+
+<Breadcrumb>
+	<BreadcrumbList>
+		<BreadcrumbItem><BreadcrumbLink href="/">Home</BreadcrumbLink></BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem><BreadcrumbLink href="/docs/components">Components</BreadcrumbLink></BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem><BreadcrumbPage>Breadcrumb</BreadcrumbPage></BreadcrumbItem>
+	</BreadcrumbList>
+</Breadcrumb>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/breadcrumb.json
+```
+
+## Anatomy
+
+`Breadcrumb` renders a `nav` with `aria-label="breadcrumb"` and sets the size of its parts. `BreadcrumbList` renders an `ol` that wraps onto more lines when it runs out of room. Each `BreadcrumbItem` renders an `li` that holds a `BreadcrumbLink`, a `BreadcrumbPage`, or a `BreadcrumbEllipsis`.
+
+`BreadcrumbLink` renders a plain `a`, so SvelteKit handles it as client-side navigation. `BreadcrumbPage` marks the last step with `aria-current="page"` and is not clickable. `BreadcrumbSeparator` renders an `li` that is hidden from screen readers, since the list already announces each step.
+
+## Separator
+
+Pass children to `BreadcrumbSeparator` to replace the default chevron, such as with another icon or text.
+
+<Demo section="separator" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { BreadcrumbSeparator } from "#lib/components/ui/breadcrumb/index.js";
+	import { SlashIcon } from "@lucide/svelte";
+</script>
+
+<BreadcrumbSeparator><SlashIcon /></BreadcrumbSeparator>
+```
+
+## Dropdown
+
+Place a `DropdownMenu` inside a `BreadcrumbItem` to let a step open a menu, such as of its sibling pages. Use the `trigger` snippet to render a bare button that matches the links.
+
+<Demo section="dropdown" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "#lib/components/ui/breadcrumb/index.js";
+	import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "#lib/components/ui/dropdown-menu/index.js";
+</script>
+
+<Breadcrumb>
+	<BreadcrumbList>
+		<BreadcrumbItem><BreadcrumbLink href="/">Home</BreadcrumbLink></BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem>
+			<DropdownMenu size="lg">
+				<DropdownMenuTrigger>
+					{#snippet trigger({ props })}
+						<button class="menuTrigger" {...props}>Components</button>
+					{/snippet}
+				</DropdownMenuTrigger>
+				<DropdownMenuContent>
+					<DropdownMenuItem>Documentation</DropdownMenuItem>
+					<DropdownMenuItem>Themes</DropdownMenuItem>
+					<DropdownMenuItem>GitHub</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem><BreadcrumbPage>Breadcrumb</BreadcrumbPage></BreadcrumbItem>
+	</BreadcrumbList>
+</Breadcrumb>
+```
+
+## Collapsed
+
+Use `BreadcrumbEllipsis` in place of the middle items when the trail is long.
+
+<Demo section="collapsed" />
+
+```svelte title="+page.svelte"
+<Breadcrumb>
+	<BreadcrumbList>
+		<BreadcrumbItem><BreadcrumbLink href="/">Home</BreadcrumbLink></BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem><BreadcrumbEllipsis /></BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem><BreadcrumbLink href="/docs/components">Components</BreadcrumbLink></BreadcrumbItem>
+		<BreadcrumbSeparator />
+		<BreadcrumbItem><BreadcrumbPage>Breadcrumb</BreadcrumbPage></BreadcrumbItem>
+	</BreadcrumbList>
+</Breadcrumb>
+```
+
+To list the collapsed items in a menu, as in the preview at the top of this page, wrap the ellipsis in a ghost icon `Button`. The ellipsis is hidden from screen readers, so give the button an `aria-label` such as `Show more pages`.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { BreadcrumbItem, BreadcrumbEllipsis } from "#lib/components/ui/breadcrumb/index.js";
+	import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "#lib/components/ui/dropdown-menu/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<BreadcrumbItem>
+	<DropdownMenu size="lg">
+		<DropdownMenuTrigger>
+			{#snippet trigger({ props })}
+				<Button variant="ghost" size="icon-sm" aria-label="Show more pages" {...props}><BreadcrumbEllipsis /></Button>
+			{/snippet}
+		</DropdownMenuTrigger>
+		<DropdownMenuContent>
+			<DropdownMenuItem>Documentation</DropdownMenuItem>
+			<DropdownMenuItem>Themes</DropdownMenuItem>
+			<DropdownMenuItem>GitHub</DropdownMenuItem>
+		</DropdownMenuContent>
+	</DropdownMenu>
+</BreadcrumbItem>
+```
+
+## Icons
+
+Place an icon before or after the text of a `BreadcrumbLink` or `BreadcrumbPage`. Icons scale with the size.
+
+<Demo section="icons" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { BreadcrumbLink } from "#lib/components/ui/breadcrumb/index.js";
+	import { HouseIcon } from "@lucide/svelte";
+</script>
+
+<BreadcrumbLink href="/"><HouseIcon />Home</BreadcrumbLink>
+```
+
+## Sizes
+
+Set `size` on `Breadcrumb` to `xs`, `sm`, `md`, or `lg`. The default is `md`, and the text, gap, and icons follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Breadcrumb size="sm">...</Breadcrumb>
+```
+
+## API
+
+Each part extends the native attributes of the element it renders: `nav`, `ol`, `li`, `a`, and `span`. Extra attributes pass through to each element.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"nav"> {
+	/** Text, gap, and icon size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+
+interface ListProps extends CompPropsWithChild<"ol"> {}
+
+interface ItemProps extends CompPropsWithChild<"li"> {}
+
+interface LinkProps extends CompPropsWithChild<"a"> {}
+
+interface PageProps extends CompPropsWithChild<"span"> {}
+
+interface SeparatorProps extends CompProps<"li"> {
+	/** Custom divider content in place of the chevron */
+	children?: Snippet;
+}
+
+interface EllipsisProps extends CompProps<"span"> {}
+```

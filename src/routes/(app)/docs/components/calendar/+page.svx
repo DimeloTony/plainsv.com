@@ -1,0 +1,220 @@
+---
+title: "Calendar"
+description: "A date picker grid with single, multiple, and range selection, several months, month and year dropdowns, and keyboard support."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Calendar
+
+A month grid for picking dates. It works with plain `Date` objects in local time and uses `Intl` for the month and weekday names, so it needs no date library.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Calendar } from "#lib/components/ui/calendar/index.js";
+
+	let date: Date | undefined = $state(new Date());
+</script>
+
+<Calendar bind:value={date} />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/calendar.json
+```
+
+## Anatomy
+
+`Calendar` renders a `div` that holds one `table` with `role="grid"` per shown month, labeled with the month and year. Each day is a `button` labeled with the full date, and today is marked with `aria-current="date"`. One pair of previous and next buttons sits over the captions, and moves every shown month together.
+
+## Range
+
+Set `mode="range"` to pick a start and an end date, and bind `value` to a `DateRange`. The first click starts the range, and the second click completes it in either direction, so picking an earlier day makes it the start. Clicking again after a complete range starts a new one. Set `numberOfMonths` to show several months side by side; they stack on screens narrower than `48rem`.
+
+<Demo section="range" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Calendar, type DateRange } from "#lib/components/ui/calendar/index.js";
+
+	let range: DateRange | undefined = $state();
+</script>
+
+<Calendar mode="range" bind:value={range} numberOfMonths={2} />
+```
+
+## Multiple
+
+Set `mode="multiple"` to pick any number of dates, and bind `value` to a `Date[]`. Clicking a selected date removes it.
+
+<Demo section="multiple" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Calendar } from "#lib/components/ui/calendar/index.js";
+
+	let dates: Date[] = $state([]);
+</script>
+
+<Calendar mode="multiple" bind:value={dates} />
+```
+
+Use `onValueChange` instead of `bind:value` to run code when the selection changes. Its parameter is a `Date`, a `Date[]` with `mode="multiple"`, or a `DateRange` with `mode="range"`, and TypeScript infers it even when `mode` is omitted.
+
+## Dropdown
+
+Set `captionLayout="dropdown"` to replace the caption with month and year selects, such as for a date of birth. Without `min` and `max`, the years run from 100 years ago to 10 years ahead.
+
+<Demo section="dropdown" />
+
+```svelte title="+page.svelte"
+<Calendar bind:value={birthday} captionLayout="dropdown" />
+```
+
+## Disabled dates
+
+Set `min` and `max` to limit the dates that can be picked. The navigation buttons, the dropdowns, and the keyboard stop at those months. Pass `isDateDisabled` to disable other dates, such as weekends.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Calendar } from "#lib/components/ui/calendar/index.js";
+
+	const today = new Date();
+	const inSixtyDays = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 60);
+
+	/** Whether the date falls on a Saturday or Sunday. */
+	const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+</script>
+
+<Calendar min={today} max={inSixtyDays} isDateDisabled={isWeekend} />
+```
+
+## Shown month
+
+The calendar starts on the month of the selected date, or today. Use `bind:month` to read or set the first shown month, or `onMonthChange` to run code when it changes. Set `fixedWeeks` to always show six weeks, so the height stays the same between months. Set `showOutsideDays={false}` to hide the days of the months around it.
+
+<Demo section="month" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Calendar } from "#lib/components/ui/calendar/index.js";
+
+	let month = $state(new Date(2026, 0, 1));
+</script>
+
+<Calendar bind:month fixedWeeks />
+```
+
+## Locale
+
+Set `locale` to a BCP 47 tag to change the month and weekday names, and `weekStartsOn` to change the first column, from `0` for Sunday to `6` for Saturday.
+
+<Demo section="week" />
+
+```svelte title="+page.svelte"
+<Calendar weekStartsOn={1} locale="de-DE" />
+```
+
+## In a card
+
+Set `variant="ghost"` to drop the border, such as inside a `Card` or a popover.
+
+<Demo section="card" />
+
+```svelte title="+page.svelte"
+<Card size="md">
+	<CardHeader>
+		<CardTitle>Book a meeting</CardTitle>
+		<CardDescription>Pick a day that works for you.</CardDescription>
+	</CardHeader>
+	<CardContent>
+		<Calendar variant="ghost" style="padding: 0" />
+	</CardContent>
+</Card>
+```
+
+## Keyboard
+
+Only one day is in the tab order: the last focused day, else the selected day, else today. The arrow keys move by a day or a week, Home and End move to the start and end of the week, and Page Up and Page Down move by a month, or a year with Shift. Moving past the shown months navigates to the next or previous month. Disabled days are skipped, and Enter or Space picks the focused day.
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`, with 32 pixel days like the shadcn calendar. The day size, padding, gaps, and corner radius follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Calendar size="sm" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to change the radius. It defaults to `lg`, so the days use 8 pixels like the shadcn calendar, instead of following `size`. The days use the radius one step smaller so the corners nest. `pill` turns the days into circles, and the calendar uses `--radius-3xl` instead of a pill.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Calendar rounded="3xl" mode="range" bind:value={range} />
+```
+
+## API
+
+The `Calendar` props extend the native `div` attributes. `Calendar` is generic over `mode`, so `value` and `onValueChange` take a `Date` by default, a `Date[]` with `mode="multiple"`, and a `DateRange` with `mode="range"`. Use `CalendarProps<"range">` to type props for a range calendar. Day buttons set `data-today`, `data-selected`, `data-outside`, and `data-range-middle`, and day cells set `data-range-start`, `data-range-middle`, and `data-range-end`, for custom styles.
+
+```ts title="index.ts"
+type CalendarMode = "single" | "multiple" | "range";
+
+type CalendarModeValue<M extends CalendarMode> = M extends "multiple" ? Date[] : M extends "range" ? DateRange : Date;
+
+interface Props<M extends CalendarMode = "single"> extends CompProps<"div"> {
+	/** Selection mode; `multiple` removes a selected date when it is clicked again; defaults to `single` */
+	mode?: M;
+	/** Selected date, dates, or range, following `mode`; supports `bind:value` */
+	value?: CalendarModeValue<M>;
+	/** Called with the new selection, following `mode` */
+	onValueChange?: (value: CalendarModeValue<M>) => void;
+	/** First month shown; defaults to the month of the selected date, or today. Supports `bind:month` */
+	month?: Date;
+	/** Called with the first shown month when it changes */
+	onMonthChange?: (month: Date) => void;
+	/** Number of months shown side by side; defaults to `1` */
+	numberOfMonths?: number;
+	/** First day of the week, from 0 for Sunday to 6 for Saturday; defaults to `0` */
+	weekStartsOn?: WeekStart;
+	/** Shows the days of the previous and next months in the first and last weeks; defaults to `true` */
+	showOutsideDays?: boolean;
+	/** Always shows six weeks, so the height does not change between months */
+	fixedWeeks?: boolean;
+	/** `label` shows the month and year as text; `dropdown` lets the user pick them from selects */
+	captionLayout?: "label" | "dropdown";
+	/** Earliest date that can be picked or shown */
+	min?: Date;
+	/** Latest date that can be picked or shown */
+	max?: Date;
+	/** Returns true for dates that cannot be picked, such as weekends */
+	isDateDisabled?: (date: Date) => boolean;
+	/** BCP 47 locale for the month and weekday names; defaults to the browser locale */
+	locale?: string;
+	/** `default` draws a border; `ghost` drops it, such as inside a popover or card */
+	variant?: "default" | "ghost";
+	/** Day size, padding, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the calendar, with days one step smaller; defaults to `lg`, like shadcn; `pill` turns the days into circles */
+	rounded?: UiRounded;
+}
+
+interface DateRange {
+	/** First day of the range */
+	from: Date | undefined;
+	/** Last day of the range */
+	to?: Date | undefined;
+}
+```

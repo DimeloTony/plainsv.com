@@ -1,0 +1,137 @@
+---
+title: "Table"
+description: "A responsive data table with a header, body, footer, rows, cells, a caption, and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Table
+
+A styled data table. Compose it from `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`, `TableCell`, and `TableCaption`, which render the matching native table elements.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from "#lib/components/ui/table/index.js";
+
+	const invoices = [
+		{ id: "INV001", status: "Paid", method: "Credit Card", amount: "$250.00" },
+		{ id: "INV002", status: "Pending", method: "PayPal", amount: "$150.00" },
+	];
+</script>
+
+<Table>
+	<TableCaption>A list of your recent invoices.</TableCaption>
+	<TableHeader>
+		<TableRow>
+			<TableHead>Invoice</TableHead>
+			<TableHead>Status</TableHead>
+			<TableHead>Method</TableHead>
+			<TableHead style="text-align: right">Amount</TableHead>
+		</TableRow>
+	</TableHeader>
+	<TableBody>
+		{#each invoices as invoice (invoice.id)}
+			<TableRow>
+				<TableCell>{invoice.id}</TableCell>
+				<TableCell>{invoice.status}</TableCell>
+				<TableCell>{invoice.method}</TableCell>
+				<TableCell style="text-align: right">{invoice.amount}</TableCell>
+			</TableRow>
+		{/each}
+	</TableBody>
+	<TableFooter>
+		<TableRow>
+			<TableCell colspan={3}>Total</TableCell>
+			<TableCell style="text-align: right">$400.00</TableCell>
+		</TableRow>
+	</TableFooter>
+</Table>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/table.json
+```
+
+## Anatomy
+
+`Table` renders a `div` that scrolls sideways when the table is wider than its container, with the `table` inside it. The `class` and other attributes go on the `table`. Header rows keep a bottom border, body rows are divided by borders, and the footer sits on a muted background. `TableCaption` renders a `caption` under the rows, which screen readers announce as the table's title.
+
+Cells do not wrap their text. Set `white-space` on a cell through `class` or `style` when a column holds long text.
+
+## Row selection
+
+Place a `Checkbox` in the first column, and set `data-state="selected"` on a `TableRow` to highlight it. Cells that hold a checkbox drop their end padding so the column stays narrow.
+
+<Demo section="selection" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "#lib/components/ui/table/index.js";
+	import { Checkbox } from "#lib/components/ui/checkbox/index.js";
+
+	let selectedIds: string[] = $state([]);
+</script>
+
+<Table>
+	<TableHeader>
+		<TableRow>
+			<TableHead>
+				<Checkbox aria-label="Select all invoices" checked={selectedIds.length === invoices.length} onCheckedChange={(checked) => (selectedIds = checked ? invoices.map((invoice) => invoice.id) : [])} />
+			</TableHead>
+			<TableHead>Invoice</TableHead>
+		</TableRow>
+	</TableHeader>
+	<TableBody>
+		{#each invoices as invoice (invoice.id)}
+			{@const isSelected = selectedIds.includes(invoice.id)}
+			<TableRow data-state={isSelected ? "selected" : undefined}>
+				<TableCell>
+					<Checkbox aria-label="Select {invoice.id}" checked={isSelected} onCheckedChange={(checked) => (selectedIds = checked ? [...selectedIds, invoice.id] : selectedIds.filter((id) => id !== invoice.id))} />
+				</TableCell>
+				<TableCell>{invoice.id}</TableCell>
+			</TableRow>
+		{/each}
+	</TableBody>
+</Table>
+```
+
+## Sizes
+
+Set `size` on `Table` to `xs`, `sm`, `md`, or `lg`. The default is `md`, with 40 pixel header rows and 8 pixel cell padding like the shadcn table. The header height, cell padding, and text size follow the size. The table has no box of its own, so there is no `rounded` prop.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Table size="sm">...</Table>
+```
+
+## API
+
+`Table` extends the native `table` attributes, and every other part extends the attributes of the element it renders: `thead`, `tbody`, `tfoot`, `tr`, `th`, `td`, and `caption`.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"table"> {
+	/** Row height, cell padding, and text size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+
+interface HeaderProps extends CompPropsWithChild<"thead"> {}
+
+interface BodyProps extends CompPropsWithChild<"tbody"> {}
+
+interface FooterProps extends CompPropsWithChild<"tfoot"> {}
+
+interface RowProps extends CompPropsWithChild<"tr"> {}
+
+interface HeadProps extends CompPropsWithChild<"th"> {}
+
+interface CellProps extends CompPropsWithChild<"td"> {}
+
+interface CaptionProps extends CompPropsWithChild<"caption"> {}
+```

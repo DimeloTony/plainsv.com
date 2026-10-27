@@ -1,0 +1,308 @@
+---
+title: "Chart"
+description: "Bar, line, area, pie, donut, radar, and radial charts drawn with SVG, with theme colors, a tooltip, a legend, and a data table."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Chart
+
+Draws bar, line, area, pie, donut, radar, and radial charts from an array of rows with plain SVG and no chart library. Pass the rows as `data`, name the field that labels each row with `index`, and list the series to plot in `config`. The chart sizes itself to its container, shows a tooltip on hover and keyboard focus, adds a legend for two or more series, and always includes a data table for screen readers. Series colors come from the `--chart-1` through `--chart-5` theme tokens, which are checked to stay apart for color-blind readers in light and dark mode.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Chart, type ChartConfig } from "#lib/components/ui/chart/index.js";
+
+	const data = [
+		{ month: "January", desktop: 186, mobile: 80 },
+		{ month: "February", desktop: 305, mobile: 200 },
+		{ month: "March", desktop: 237, mobile: 120 },
+	];
+	const config: ChartConfig<(typeof data)[number]> = {
+		desktop: { label: "Desktop" },
+		mobile: { label: "Mobile" },
+	};
+</script>
+
+<Chart {data} index="month" {config} label="Visitors per month" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/chart.json
+```
+
+## Data and Config
+
+Each row in `data` is one category or point in time. The `index` field labels the rows along the category axis, and each key in `config` names a numeric field to plot as a series. The config order sets the default colors, from `--chart-1` to `--chart-5`, so a series keeps its color when another one is hidden. A missing or non-numeric value leaves a gap.
+
+```ts title="+page.svelte"
+const config: ChartConfig<Row> = {
+	desktop: { label: "Desktop" },
+	mobile: { label: "Mobile", color: "var(--chart-3)" },
+};
+```
+
+## Stacked Bars
+
+Set `stacked` to stack the bars of each row. A 2px gap separates the segments, and only the outer end of each stack is rounded.
+
+<Demo section="stacked" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} stacked />
+```
+
+## Horizontal Bars
+
+Set `orientation` to `horizontal` to list the categories down the side, which suits long category names. Labels that do not fit end with an ellipsis, and the table keeps the full name.
+
+<Demo section="horizontal" />
+
+```svelte title="+page.svelte"
+<Chart data={browsers} index="browser" config={{ visitors: { label: "Visitors" } }} orientation="horizontal" />
+```
+
+## Line
+
+Set `type` to `line` to draw 2px lines with a crosshair that follows the pointer. Set `curve` to `monotone` for smooth lines that never overshoot the data, and set `dots` to mark every point.
+
+<Demo section="line" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} type="line" dots />
+<Chart {data} index="month" {config} type="line" curve="monotone" />
+```
+
+## Area
+
+Set `type` to `area` to draw lines over a soft wash of the series color. Add `stacked` to stack the areas, so their tops show the running total.
+
+<Demo section="area" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} type="area" curve="monotone" />
+<Chart {data} index="month" {config} type="area" curve="monotone" stacked />
+```
+
+## Area Gradient
+
+Add `gradient` to an area chart to fade each area from the series color at its top to a faint tint at its bottom, like the interactive area chart in shadcn's dashboard. Without it, every area is a flat wash.
+
+<Demo section="gradient" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} type="area" curve="monotone" gradient />
+<Chart {data} index="month" {config} type="area" curve="monotone" stacked gradient />
+```
+
+## Pie and Donut
+
+Set `type` to `pie` or `donut` to draw one slice per row, sized by the first series in `config`. Pies show the parts of a whole at a glance, so keep them to about six slices and use bars to compare close values. Rows with a missing, zero, or negative value get no slice, and the tooltip shows each slice's share of the visible total.
+
+<Demo section="pie" />
+
+```svelte title="+page.svelte"
+<Chart data={browsers} index="browser" config={{ visitors: { label: "Visitors" } }} type="pie" />
+```
+
+## Donut Center
+
+Pass a `center` snippet to fill the hole of a donut, such as with the total. It receives the `total` of the visible slices and the `formattedTotal` after `formatValue`.
+
+<Demo section="donut" />
+
+```svelte title="+page.svelte"
+<Chart data={browsers} index="browser" config={{ visitors: { label: "Visitors" } }} type="donut">
+	{#snippet center({ formattedTotal })}
+		<strong>{formattedTotal}</strong>
+		<span>Visitors</span>
+	{/snippet}
+</Chart>
+```
+
+## Radar
+
+Set `type` to `radar` to draw one spoke per row and one shape per series, which suits comparing a few series across the same measures. The grid rings mark round values from zero, the tooltip lists every series on the hovered spoke, and `dots` marks every point.
+
+<Demo section="radar" />
+
+```svelte title="+page.svelte"
+<Chart data={skills} index="skill" config={{ alice: { label: "Alice" }, bob: { label: "Bob" } }} type="radar" />
+```
+
+## Radial
+
+Set `type` to `radial` to draw one ring per row, with the first row outermost, sized by the first series in `config`. A full turn is the next round number above the largest value, and a track shows the rest of each ring. The `rounded` prop rounds the end of each ring.
+
+<Demo section="radial" />
+
+```svelte title="+page.svelte"
+<Chart data={browsers} index="browser" config={{ visitors: { label: "Visitors" } }} type="radial" rounded="pill" />
+```
+
+## Categories
+
+Pie, donut, and radial charts color each row instead of each series, from `--chart-1` to `--chart-5` in row order. Set `categories` to change a row's label or color, keyed by the row's `index` value. The legend lists the rows, and `hiddenSeries` holds the `index` values of the rows it hides.
+
+```svelte title="+page.svelte"
+<Chart data={browsers} index="browser" config={{ visitors: { label: "Visitors" } }} type="pie" categories={{ Chrome: { label: "Google Chrome", color: "var(--chart-3)" } }} />
+```
+
+## Colors
+
+Set `color` on a series to any CSS color, or set it on a row with `categories` in pie, donut, and radial charts. The first five series default to `--chart-1` through `--chart-5`, and any series after that defaults to `--muted-foreground`, so give it a color or fold small series into an "Other" series. Dots and the gaps between pie slices use `--chart-surface`, which defaults to `--background`, so set it to `var(--card)` inside a card.
+
+<Demo section="colors" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" config={{ desktop: { label: "Desktop", color: "var(--chart-3)" } }} />
+<Chart {data} index="month" {config} style="--chart-surface: var(--card)" />
+```
+
+## Formatting
+
+Set `formatValue` to format the values in the ticks, tooltip, and table, such as currency. Without it, ticks use compact numbers such as `1.2K`. Set `formatIndex` to format the category labels, such as shortening month names.
+
+<Demo section="format" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+</script>
+
+<Chart {data} index="month" {config} formatValue={(value) => currency.format(value)} formatIndex={(month) => String(month).slice(0, 3)} />
+```
+
+## Tooltip
+
+Pass a `tooltip` snippet to replace the tooltip content. It receives the row `index`, the category `label`, and one item per visible series with its `key`, `label`, `color`, `value`, and `formattedValue`.
+
+<Demo section="tooltip" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} stacked>
+	{#snippet tooltip({ label, items })}
+		<strong>{label}</strong>
+		<span>Total: {items.reduce((sum, item) => sum + item.value, 0)}</span>
+	{/snippet}
+</Chart>
+```
+
+## Legend
+
+The legend shows for two or more series, and a single series has none, since the chart's title names it. Set `legend` to force it on or off. Each legend button hides or shows its series; bind `hiddenSeries` to the hidden keys, or listen with `onHiddenSeriesChange`.
+
+<Demo section="legend" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let hiddenSeries: string[] = $state([]);
+</script>
+
+<Chart {data} index="month" {config} type="line" bind:hiddenSeries />
+```
+
+## Table
+
+Every chart renders a data table with all its values for screen readers. Set `table` to show it on screen too, so no value depends on hovering.
+
+<Demo section="table" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} table />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to scale the text and the plot height, from 8rem to 20rem. The default is `md`. Set `--chart-height` to give the plot any other height.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} size="sm" />
+<Chart {data} index="month" {config} style="--chart-height: 24rem" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to round the end of each bar or radial ring, while the starting end stays square. The default is `xs`, like shadcn, and the radius never passes half the bar's thickness, so `pill` gives a fully round end.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Chart {data} index="month" {config} rounded="pill" />
+```
+
+## Keyboard
+
+The plot is in the Tab order and is named by `label`, which defaults to "Chart". Focusing it shows the first row, and a screen reader announces each row as it changes.
+
+- Press `ArrowRight` or `ArrowDown` to move to the next row, slice, ring, or spoke
+- Press `ArrowLeft` or `ArrowUp` to move to the previous row
+- Press `Home` and `End` to move to the first and last row
+- Press `Escape` to hide the tooltip
+
+## API
+
+The `Chart` props extend the native `figure` attributes, and extra attributes pass through to the root. The type parameter follows `data`, so `index` and the `config` keys must be fields of the rows.
+
+```ts title="index.ts"
+interface Props<T extends object> extends CompProps<"figure"> {
+	/** Rows to plot, one per category or point in time */
+	data: T[];
+	/** Field that names each row, shown along the category axis */
+	index: keyof T & string;
+	/** Series to plot, keyed by the field that holds their values */
+	config: ChartConfig<T>;
+	/** Chart form; pie, donut, and radial charts draw one slice or ring per row from the first series; defaults to `bar` */
+	type?: "bar" | "line" | "area" | "pie" | "donut" | "radar" | "radial";
+	/** Labels and colors of the rows in pie, donut, and radial charts, keyed by each row's `index` value; colors default to `--chart-1` through `--chart-5` in row order */
+	categories?: Record<string, ChartSeries>;
+	/** Stacks the bars or areas of each row; lines never stack */
+	stacked?: boolean;
+	/** Direction of the bars; `horizontal` lists categories down the side; defaults to `vertical` */
+	orientation?: "vertical" | "horizontal";
+	/** Line shape; `monotone` curves through the points without overshooting them; defaults to `linear` */
+	curve?: "linear" | "monotone";
+	/** Draws a dot on every line and area point */
+	dots?: boolean;
+	/** Fades each area from the series color at its top to a faint tint at its bottom, like shadcn's interactive area chart, instead of a flat wash */
+	gradient?: boolean;
+	/** Shows the legend; on by default for two or more series, or two or more rows in pie, donut, and radial charts */
+	legend?: boolean;
+	/** Shows the data table under the chart; screen readers always get it */
+	table?: boolean;
+	/** Series keys hidden with the legend, or row `index` values in pie, donut, and radial charts; supports `bind:hiddenSeries` */
+	hiddenSeries?: string[];
+	/** Called with the hidden series keys when the legend hides or shows a series */
+	onHiddenSeriesChange?: (hiddenSeries: string[]) => void;
+	/** Formats values in ticks, the tooltip, and the table; ticks use compact numbers, such as 1.2K, when omitted */
+	formatValue?: (value: number) => string;
+	/** Formats the category labels from each row's `index` field */
+	formatIndex?: (value: unknown, index: number) => string;
+	/** Custom tooltip content for the hovered row */
+	tooltip?: Snippet<[TooltipSnippetProps]>;
+	/** Content in the hole of a donut chart, such as the total */
+	center?: Snippet<[CenterSnippetProps]>;
+	/** Accessible name of the plot, such as "Visitors per month"; defaults to "Chart" */
+	label?: string;
+	/** Axis and legend text, and the plot height unless `--chart-height` is set; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of each bar's end and each radial ring's end; the starting end stays square; defaults to `xs` like shadcn */
+	rounded?: UiRounded;
+}
+
+/** Label and color of one series */
+interface ChartSeries {
+	/** Name shown in the legend, tooltip, and table; defaults to the data key */
+	label?: string;
+	/** Any CSS color; defaults to `--chart-1` through `--chart-5` in config order, then `--muted-foreground` */
+	color?: string;
+}
+```

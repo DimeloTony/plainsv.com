@@ -1,0 +1,16 @@
+{
+    "name": "label",
+    "files": [
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/label/_.svelte",
+            "content": "<script lang=\"ts\">\n\timport type { Props } from \"./index.js\";\n\tconst { children, size = \"md\", class: className, ...props }: Props = $props();\n</script>\n\n<!-- Caption for a form control; link it with `for` or wrap the control. -->\n<label class={[\"label not-typeset\", className]} data-size={size} {...props}>\n\t{@render children()}\n</label>\n\n<style>\n\t/* Base label */\n\t.label {\n\t\tdisplay: flex;\n\t\talign-items: center;\n\t\tgap: var(--spacing-sm);\n\t\tcolor: var(--foreground);\n\t\tfont-weight: 500;\n\t\tline-height: 1;\n\t\tuser-select: none;\n\t}\n\n\t/* Default icon size */\n\t.label :global(svg) {\n\t\tflex-shrink: 0;\n\t\twidth: 1em;\n\t\theight: 1em;\n\t}\n\n\t/* =============== States =============== */\n\n\t/* Dims when it wraps a disabled control, follows one, or sits in a disabled group */\n\t.label:has(:global(:disabled)),\n\t:global(:disabled) ~ .label,\n\t:global([data-disabled=\"true\"]) .label {\n\t\topacity: 50%;\n\t\tcursor: not-allowed;\n\t}\n\n\t/* =============== Sizes =============== */\n\n\t/* Large, medium, and small */\n\t.label[data-size=\"lg\"],\n\t.label[data-size=\"md\"],\n\t.label[data-size=\"sm\"] {\n\t\tfont-size: var(--text-sm);\n\t}\n\n\t/* Extra small */\n\t.label[data-size=\"xs\"] {\n\t\tgap: var(--spacing-xs);\n\t\tfont-size: var(--text-xs);\n\t}\n</style>\n"
+        },
+        {
+            "type": "file",
+            "path": "src/lib/components/ui/label/index.ts",
+            "content": "export { default as Label } from \"./_.svelte\";\n\n/** Accessible caption for a form control */\nexport interface Props extends CompPropsWithChild<\"label\"> {\n\t/** Text size on the shared scale */\n\tsize?: UiSize;\n\t/** Classes merged onto the label */\n\tclass?: CompPropsWithChild<\"label\">[\"class\"];\n}\n\nexport type LabelProps = Props;\n"
+        }
+    ],
+    "description": "An accessible caption for a form control, with sizes, icons, and a dimmed disabled state."
+}

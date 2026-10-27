@@ -1,0 +1,157 @@
+---
+title: "Radio Group"
+description: "A set of options where only one can be checked, with keyboard support, form submission, and sizes."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Radio Group
+
+A set of options where only one can be checked at a time. Compose it from `RadioGroup` and `RadioGroupItem`, and link each item to a `Label` with `for` and a matching `id`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { RadioGroup, RadioGroupItem } from "#lib/components/ui/radio-group/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+</script>
+
+<RadioGroup defaultValue="comfortable">
+	<div>
+		<RadioGroupItem value="default" id="r1" />
+		<Label for="r1">Default</Label>
+	</div>
+	<div>
+		<RadioGroupItem value="comfortable" id="r2" />
+		<Label for="r2">Comfortable</Label>
+	</div>
+	<div>
+		<RadioGroupItem value="compact" id="r3" />
+		<Label for="r3">Compact</Label>
+	</div>
+</RadioGroup>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/radio-group.json
+```
+
+## Anatomy
+
+`RadioGroup` renders a `div` with `role="radiogroup"` and holds the checked value. Each `RadioGroupItem` renders a `button` with `role="radio"` that checks its `value`, and shows a dot while checked. Wrap an item and its label in any element to lay them out.
+
+## Controlled
+
+Use `bind:value` to read and set the checked item from your own code, or `onValueChange` to run code when it changes. Without either, set `defaultValue` to choose the starting item.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { RadioGroup, RadioGroupItem } from "#lib/components/ui/radio-group/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+
+	let plan = $state("monthly");
+</script>
+
+<RadioGroup bind:value={plan}>
+	<div><RadioGroupItem value="monthly" id="monthly" /><Label for="monthly">Monthly</Label></div>
+	<div><RadioGroupItem value="yearly" id="yearly" /><Label for="yearly">Yearly</Label></div>
+</RadioGroup>
+<p>Plan: {plan}</p>
+```
+
+## Horizontal
+
+Set `orientation="horizontal"` to place the items in a row that wraps.
+
+<Demo section="horizontal" />
+
+```svelte title="+page.svelte"
+<RadioGroup defaultValue="comfortable" orientation="horizontal">...</RadioGroup>
+```
+
+## Form
+
+Set `name` to submit the checked value with a form, like native radio buttons. Nothing is submitted while no item is checked.
+
+<Demo section="form" />
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<RadioGroup name="notify" defaultValue="mentions">
+		<div><RadioGroupItem value="all" id="all" /><Label for="all">All new messages</Label></div>
+		<div><RadioGroupItem value="mentions" id="mentions" /><Label for="mentions">Direct messages and mentions</Label></div>
+		<div><RadioGroupItem value="none" id="none" /><Label for="none">Nothing</Label></div>
+	</RadioGroup>
+	<Button type="submit">Submit</Button>
+</form>
+```
+
+## Keyboard
+
+Only the checked item is in the tab order, so Tab moves into and out of the group in one step. When no item is checked, every item is reachable. The arrow keys move to the previous or next enabled item and check it, and wrap around at the ends, like native radio buttons. Space checks the focused item.
+
+## Disabled
+
+Set `disabled` on a `RadioGroupItem` to dim it and skip it with the arrow keys, or on `RadioGroup` to disable every item. Set `aria-invalid="true"` on an item to show the invalid ring.
+
+<Demo section="disabled" />
+
+```svelte title="+page.svelte"
+<RadioGroupItem value="pro" id="pro" disabled />
+<RadioGroup disabled>...</RadioGroup>
+```
+
+## Sizes
+
+Set `size` on `RadioGroup` to `xs`, `sm`, `md`, or `lg`. The default is `md`, a 16 pixel circle like the shadcn radio group. The circle, the dot, and the gap between items follow the size. Items are always circles, so there is no `rounded` prop.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<RadioGroup defaultValue="comfortable" size="lg">...</RadioGroup>
+```
+
+## Overrides
+
+`RadioGroupItem` takes its own `size`, which wins over the group's for that item only.
+
+```svelte title="+page.svelte"
+<RadioGroupItem value="large" size="lg" />
+```
+
+## API
+
+`RadioGroup` extends the native `div` attributes, and `RadioGroupItem` extends the native `button` attributes. Items set `data-state` to `checked` or `unchecked` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Value of the checked item; supports `bind:value` */
+	value?: string;
+	/** Starting item when `value` is not set */
+	defaultValue?: string;
+	/** Called with the new value when an item is checked */
+	onValueChange?: (value: string) => void;
+	/** Form field name; submits the checked value */
+	name?: string;
+	/** Disables every item */
+	disabled?: boolean;
+	/** Direction the items are laid out in; the arrow keys work in both directions either way; defaults to `vertical` */
+	orientation?: "horizontal" | "vertical";
+	/** Circle, dot, and gap size on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+
+interface ItemProps extends CompProps<"button"> {
+	/** Value checked when this item is picked */
+	value: string;
+	/** Size of this item; overrides the group's `size` */
+	size?: UiSize;
+}
+```

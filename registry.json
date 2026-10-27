@@ -1,0 +1,1474 @@
+{
+	"$schema": "https://raw.githubusercontent.com/DimeloTony/remote0-cli/refs/heads/main/public/schema.json",
+	"name": "PlainSv",
+	"description": "Accessible Svelte 5 components, utilities, and Vite plugins written with runes, scoped styles, and native elements, using shadcn design tokens and as few packages as possible.",
+	"items": [
+		{
+			"name": "init-project",
+			"description": "The package.json, tsconfig, and global types that every init item writes first, before it installs any package.",
+			"files": [
+				{ "type": "file", "path": "template/packageJson.txt", "target": "package.json" },
+				{ "type": "file", "path": "tsconfig.json" },
+				{ "type": "file", "path": "src/app.d.ts" }
+			]
+		},
+		{
+			"name": "init-project-cloudflare",
+			"description": "The package.json, tsconfig, and global types for Cloudflare Workers, with Wrangler scripts and platform types, that init-cloudflare writes first.",
+			"files": [
+				{ "type": "file", "path": "template/packageJsonCloudflare.txt", "target": "package.json" },
+				{ "type": "file", "path": "template/tsconfigCloudflare.txt", "target": "tsconfig.json" },
+				{ "type": "file", "path": "template/appDtsCloudflare.txt", "target": "src/app.d.ts" }
+			]
+		},
+		{
+			"name": "init-base",
+			"description": "The shared PlainSv app shell with app.html, git, npm, Prettier, and VS Code settings, the app context, layout, home and about pages, and page meta, used by every init item.",
+			"files": [
+				{ "type": "file", "path": "src/app.html" },
+				{ "type": "file", "path": "template/gitignore.txt", "target": ".gitignore" },
+				{ "type": "file", "path": ".npmrc" },
+				{ "type": "file", "path": ".prettierrc" },
+				{ "type": "file", "path": ".vscode/extensions.json" },
+				{ "type": "file", "path": ".vscode/settings.json" },
+				{ "type": "file", "path": "template/robots.txt", "target": "static/robots.txt" },
+				{ "type": "file", "path": "src/hooks.server.ts" },
+				{ "type": "file", "path": "template/appContext.txt", "target": "src/lib/context/app.svelte.ts" },
+				{ "type": "file", "path": "template/appData.txt", "target": "src/lib/data/app.ts" },
+				{ "type": "file", "path": "template/sharedCompIndex.txt", "target": "src/lib/components/shared/index.ts" },
+				{ "type": "file", "path": "src/lib/components/shared/logo.svelte" },
+				{ "type": "file", "path": "template/pageMeta.txt", "target": "src/lib/components/shared/pageMeta.svelte" },
+				{ "type": "file", "path": "template/layout.txt", "target": "src/routes/+layout.svelte" },
+				{ "type": "file", "path": "template/home.txt", "target": "src/routes/+page.svelte" },
+				{ "type": "file", "path": "template/layoutAbout.txt", "target": "src/routes/(typeset)/+layout.svelte" },
+				{ "type": "file", "path": "template/homeAbout.txt", "target": "src/routes/(typeset)/about/+page.svx" },
+				{ "type": "file", "path": "static/manifest.json" },
+				{ "type": "file", "path": "static/images/apple-icon.png" },
+				{ "type": "file", "path": "static/images/favicon.svg" },
+				{ "type": "file", "path": "static/images/manifest-192.png" },
+				{ "type": "file", "path": "static/images/manifest-512.png" },
+				{ "type": "file", "path": "static/images/og.png" },
+				{ "type": "file", "content": "DOMAIN_URL=\"http://localhost:3000\"", "target": ".env" },
+				{ "type": "file", "content": "DOMAIN_URL=\"https://example.com\"", "target": ".env.production" },
+				{ "type": "file", "path": "PROJECT.CLAUDE.md", "target": "CLAUDE.md" }
+			]
+		},
+		{
+			"name": "init",
+			"description": "A starter SvelteKit app with the auto adapter, the PlainSv theme, app context, dark mode, layout, and page meta, that picks its deploy target at build time.",
+			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
+			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-auto"],
+			"files": [
+				{ "type": "file", "path": "template/viteConfig.txt", "target": "vite.config.ts" },
+				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" }
+			]
+		},
+		{
+			"name": "init-node",
+			"description": "A starter SvelteKit app on the Node adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on a Node server.",
+			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
+			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-node"],
+			"files": [
+				{ "type": "file", "path": "template/viteConfigNode.txt", "target": "vite.config.ts" },
+				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" }
+			]
+		},
+		{
+			"name": "init-bun",
+			"description": "A starter SvelteKit app on the Bun adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on a Bun server.",
+			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
+			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-bun"],
+			"files": [
+				{ "type": "file", "path": "template/viteConfigBun.txt", "target": "vite.config.ts" },
+				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" },
+				{ "type": "file", "path": "template/bunfig.txt", "target": "bunfig.toml" }
+			]
+		},
+		{
+			"name": "init-vercel",
+			"description": "A starter SvelteKit app on the Vercel adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on Vercel functions.",
+			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
+			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-vercel"],
+			"files": [
+				{ "type": "file", "path": "template/viteConfigVercel.txt", "target": "vite.config.ts" },
+				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" }
+			]
+		},
+		{
+			"name": "init-cloudflare",
+			"description": "A starter SvelteKit app on the Cloudflare adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on Cloudflare Workers.",
+			"itemDependencies": ["/r/init-project-cloudflare.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
+			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-cloudflare", "wrangler"],
+			"files": [
+				{ "type": "file", "path": "template/viteConfigCloudflare.txt", "target": "vite.config.ts" },
+				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" },
+				{ "type": "file", "path": "template/wrangler.txt", "target": "wrangler.jsonc" }
+			]
+		},
+		{
+			"name": "init-static",
+			"description": "A starter SvelteKit app on the static adapter with the PlainSv theme, app context, dark mode, layout, and page meta, prerendered at build time.",
+			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
+			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-static"],
+			"files": [
+				{ "type": "file", "path": "template/viteConfigStatic.txt", "target": "vite.config.ts" },
+				{ "type": "file", "path": "template/layoutServerStatic.txt", "target": "src/routes/+layout.server.ts" }
+			]
+		},
+		{
+			"name": "init-existing",
+			"description": "The PlainSv styles and global types for an existing SvelteKit project, so components can be added one at a time.",
+			"itemDependencies": ["/r/styles.json"],
+			"files": [{ "type": "file", "path": "src/app.d.ts" }]
+		},
+		{
+			"name": "styles",
+			"description": "The PlainSv theme tokens, resets, CSS utilities, and typeset styles that every component reads.",
+			"devDependencies": ["@fontsource-variable/geist"],
+			"files": [
+				{ "type": "file", "path": "src/styles/app.css" },
+				{ "type": "file", "path": "src/styles/theme.css" },
+				{ "type": "file", "path": "src/styles/typeset.css" },
+				{ "type": "file", "path": "src/styles/utils.css" }
+			]
+		},
+		{
+			"name": "button",
+			"description": "A button that triggers an action or renders as a link, with variants, sizes, and rounded corners.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/button/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/button/index.ts" }
+			]
+		},
+		{
+			"name": "code-block",
+			"description": "A syntax highlighted code block with a file label header and a copy button, powered by Shiki.",
+			"itemDependencies": ["/r/button.json"],
+			"dependencies": ["shiki", "@shikijs/langs", "@shikijs/themes"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/code-block/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/code-block/code.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/code-block/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/code-block/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/code-block/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/code-block/core.ts" }
+			]
+		},
+		{
+			"name": "image-viewer",
+			"description": "A full-screen image preview dialog with optional title editing and removal.",
+			"itemDependencies": ["/r/button.json", "/r/dialog.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/image-viewer/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/image-viewer/index.ts" }
+			]
+		},
+		{
+			"name": "alert",
+			"description": "A callout for important messages with an optional icon, a title, a description, and an action.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/alert/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert/action.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/alert/title.svelte" }
+			]
+		},
+		{
+			"name": "breadcrumb",
+			"description": "A trail of links to the current page, with custom separators, collapsed items, and sizes.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/ellipsis.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/link.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/list.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/page.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/breadcrumb/separator.svelte" }
+			]
+		},
+		{
+			"name": "calendar",
+			"description": "A date picker grid with single, multiple, and range selection, several months, month and year dropdowns, and keyboard support.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/calendar/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/calendar/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/calendar/utils.ts" }
+			]
+		},
+		{
+			"name": "card",
+			"description": "A container for grouped content with a header, title, description, action, content, and footer, that can render as a link.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/card/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/card/action.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/card/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/card/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/card/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/card/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/card/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/card/title.svelte" }
+			]
+		},
+		{
+			"name": "input",
+			"description": "A text field with sizes, rounded corners, file picking, and focus, invalid, and disabled states.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/input/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input/index.ts" }
+			]
+		},
+		{
+			"name": "input-otp",
+			"description": "A one-time code field with joined slots, separators, pattern filtering, paste support, and sizes.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/patterns.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-otp/slot.svelte" }
+			]
+		},
+		{
+			"name": "textarea",
+			"description": "A multi-line text field that grows with its content, with sizes, rounded corners, and focus, invalid, and disabled states.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/textarea/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/textarea/index.ts" }
+			]
+		},
+		{
+			"name": "label",
+			"description": "An accessible caption for a form control, with sizes, icons, and a dimmed disabled state.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/label/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/label/index.ts" }
+			]
+		},
+		{
+			"name": "dialog",
+			"description": "A modal window built on the native dialog element, with a trigger and a content panel.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/dialog/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dialog/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dialog/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/dialog/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/dialog/trigger.svelte" }
+			]
+		},
+		{
+			"name": "alert-dialog",
+			"description": "A modal that interrupts the user to confirm an important action, built on the native dialog element.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/action.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/cancel.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/title.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/alert-dialog/trigger.svelte" }
+			]
+		},
+		{
+			"name": "sheet",
+			"description": "A panel that slides in from an edge of the screen, built on the native dialog element.",
+			"itemDependencies": ["/r/button.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/sheet/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/close.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/title.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sheet/trigger.svelte" }
+			]
+		},
+		{
+			"name": "accordion",
+			"description": "A stack of headings that each reveal a section of content, with single or multiple open items, keyboard support, variants, sizes, and rounded corners.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/accordion/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/accordion/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/accordion/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/accordion/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/accordion/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/accordion/trigger.svelte" }
+			]
+		},
+		{
+			"name": "ai-action",
+			"description": "One step of an AI response with an icon, a shimmering status title, and details that expand below it.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/ai-action/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/ai-action/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/ai-action/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/ai-action/index.ts" }
+			]
+		},
+		{
+			"name": "message",
+			"description": "A chat message with an avatar, a content bubble, and actions, aligned by who sent it.",
+			"itemDependencies": ["/r/avatar.json", "/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/message/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/message/action.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/message/actions.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/message/avatar.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/message/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/message/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/message/index.ts" }
+			]
+		},
+		{
+			"name": "svdown",
+			"description": "Renders streamed Markdown from an AI response, with plan, thinking, and files blocks, code blocks, and safe links.",
+			"itemDependencies": ["/r/code-block.json", "/r/ai-action.json"],
+			"dependencies": ["marked"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/svdown/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/svdown/core.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/svdown/index.ts" }
+			]
+		},
+		{
+			"name": "questionnaire",
+			"description": "A multi-step questionnaire with single-choice, multiple-choice, freeform, and skippable questions.",
+			"itemDependencies": ["/r/button.json", "/r/input.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/actions.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/choice-description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/choice.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/choices.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/input.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/item-error.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/next.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/previous.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/progress.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/skip.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/submit.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/questionnaire/title.svelte" }
+			]
+		},
+		{
+			"name": "prompt-input",
+			"description": "A chat prompt box with an auto-growing textarea, attached images, a model picker, and a send button.",
+			"itemDependencies": ["/r/button.json", "/r/tooltip.json", "/r/select.json", "/r/image-viewer.json", "/r/toaster.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/actions.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/button.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/files-button.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/files.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/select.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/submit.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/prompt-input/textarea.svelte" }
+			]
+		},
+		{
+			"name": "collapsible",
+			"description": "A trigger that shows and hides a section of content, with a slide animation and a custom trigger snippet.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/collapsible/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/collapsible/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/collapsible/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/collapsible/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/collapsible/trigger.svelte" }
+			]
+		},
+		{
+			"name": "popover",
+			"description": "Rich content in a panel opened from a button, with a header, keyboard and focus support, sizes, and rounded corners.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/popover/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/title.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/popover/trigger.svelte" }
+			]
+		},
+		{
+			"name": "dropdown-menu",
+			"description": "A menu of actions opened from a button, with groups, checkbox and radio items, submenus, keyboard support, sizes, and rounded corners.",
+			"itemDependencies": ["/r/button.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/checkbox-item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/label.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/menu-item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/menu.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/radio-group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/radio-item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/shortcut.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/sub-content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/sub-trigger.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/sub.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/dropdown-menu/trigger.svelte" }
+			]
+		},
+		{
+			"name": "avatar",
+			"description": "An image of a user with a fallback for initials or an icon, with variants, sizes, and rounded corners.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/avatar/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/avatar/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/avatar/fallback.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/avatar/image.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/avatar/index.ts" }
+			]
+		},
+		{
+			"name": "progress",
+			"description": "A bar that shows how much of a task is complete, with an indeterminate state, variants, sizes, and rounded corners.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/progress/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/progress/index.ts" }
+			]
+		},
+		{
+			"name": "slider",
+			"description": "A draggable control for picking a value or a range, with keyboard support, variants, sizes, and rounded corners.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/slider/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/slider/index.ts" }
+			]
+		},
+		{
+			"name": "spinner",
+			"description": "A spinning indicator that shows something is loading, with variants and sizes.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/spinner/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/spinner/index.ts" }
+			]
+		},
+		{
+			"name": "switch",
+			"description": "An on and off toggle for a single setting, with variants, sizes, and rounded corners.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/switch/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/switch/index.ts" }
+			]
+		},
+		{
+			"name": "checkbox",
+			"description": "A box that toggles an option on or off, with a mixed state, variants, sizes, and rounded corners.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/checkbox/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/checkbox/index.ts" }
+			]
+		},
+		{
+			"name": "skeleton",
+			"description": "A pulsing placeholder that holds the shape of content while it loads, with rounded corners.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/skeleton/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/skeleton/index.ts" }
+			]
+		},
+		{
+			"name": "tabs",
+			"description": "Layered panels shown one at a time, with default, outline, ghost, and line variants, vertical orientation, and keyboard support.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/tabs/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/tabs/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/tabs/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/tabs/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/tabs/list.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/tabs/trigger.svelte" }
+			]
+		},
+		{
+			"name": "tooltip",
+			"description": "A short label that appears beside an element on hover or keyboard focus, with sides, variants, sizes, and rounded corners.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/tooltip/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/tooltip/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/tooltip/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/tooltip/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/tooltip/trigger.svelte" }
+			]
+		},
+		{
+			"name": "select",
+			"description": "A button that opens a list of options to pick one, with groups, keyboard support, form submission, variants, sizes, and rounded corners.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/select/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/select/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/select/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/label.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/trigger.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/select/value.svelte" }
+			]
+		},
+		{
+			"name": "command",
+			"description": "A searchable list of commands with groups, shortcuts, keyboard navigation, and a dialog for a command menu.",
+			"itemDependencies": ["/r/dialog.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/command/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/command/dialog.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/empty.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/command/input.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/list.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/command/shortcut.svelte" }
+			]
+		},
+		{
+			"name": "combobox",
+			"description": "A button that opens a searchable list to pick one option, built from the popover and command components.",
+			"itemDependencies": ["/r/button.json", "/r/popover.json", "/r/command.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/combobox/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/combobox/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/combobox/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/combobox/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/combobox/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/combobox/trigger.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/combobox/value.svelte" }
+			]
+		},
+		{
+			"name": "navigation-menu",
+			"description": "A row of site links whose items open panels of more links on hover, click, or the keyboard.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/link.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/list.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/navigation-menu/trigger.svelte" }
+			]
+		},
+		{
+			"name": "badge",
+			"description": "A small label for statuses and counts, with variants, sizes, rounded corners, and a link form.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/badge/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/badge/index.ts" }
+			]
+		},
+		{
+			"name": "separator",
+			"description": "A thin horizontal or vertical line that divides content, decorative by default.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/separator/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/separator/index.ts" }
+			]
+		},
+		{
+			"name": "kbd",
+			"description": "A keyboard key or shortcut label, with a group for key combinations and sizes.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/kbd/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/kbd/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/kbd/index.ts" }
+			]
+		},
+		{
+			"name": "radio-group",
+			"description": "A set of options where only one can be checked, with keyboard support, form submission, and sizes.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/radio-group/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/radio-group/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/radio-group/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/radio-group/item.svelte" }
+			]
+		},
+		{
+			"name": "toggle",
+			"description": "A two-state button that stays pressed until clicked again, with default and outline variants and sizes.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/toggle/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/toggle/index.ts" }
+			]
+		},
+		{
+			"name": "toggle-group",
+			"description": "A set of toggles with single or multiple selection, joined or spaced items, and keyboard support.",
+			"itemDependencies": ["/r/toggle.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/toggle-group/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/toggle-group/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/toggle-group/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/toggle-group/item.svelte" }
+			]
+		},
+		{
+			"name": "table",
+			"description": "A responsive data table with a header, body, footer, rows, cells, a caption, and sizes.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/table/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/body.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/caption.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/cell.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/head.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/table/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/table/row.svelte" }
+			]
+		},
+		{
+			"name": "aspect-ratio",
+			"description": "A box that keeps a width to height ratio as it resizes, with media that covers it.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/aspect-ratio/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/aspect-ratio/index.ts" }
+			]
+		},
+		{
+			"name": "fluid-orb",
+			"description": "An animated WebGL orb with a fluid surface, with theme colors, variants, sizes, and speed.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/fluid-orb/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/fluid-orb/index.ts" }
+			]
+		},
+		{
+			"name": "orbling",
+			"description": "An AI orb with a face that shows what an assistant is doing, such as thinking, reading, typing, working, and asking, drawn with CSS.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/orbling/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/orbling/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/orbling/moods.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/orbling/status.svelte" }
+			]
+		},
+		{
+			"name": "chart",
+			"description": "Bar, line, area, pie, donut, radar, and radial charts drawn with SVG, with theme colors, a tooltip, a legend, and a data table.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/chart/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/axes.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/bars.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/legend.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/lines.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/pie.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/radar.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/radial.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/table.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/tooltip.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/utils.ts" }
+			]
+		},
+		{
+			"name": "candlestick-chart",
+			"description": "A candlestick chart with trading sessions, a volume pane, VWAP, moving averages, Bollinger bands, price levels, live updates, zoom, and pan.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/axes.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/candles.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/crosshair.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/indicators.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/legend.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/levels.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/overlays.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/sessions.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/table.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/time.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/tooltip.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/volume.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/chart/utils.ts" }
+			]
+		},
+		{
+			"name": "file-tree",
+			"description": "A tree of files and folders built from paths, with file icons, selection, highlights, and keyboard navigation.",
+			"devDependencies": ["@lucide/svelte", "@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/file-tree/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/file-tree/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/file-tree/icon.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/file-tree/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/file-tree/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/file-tree/utils.ts" }
+			]
+		},
+		{
+			"name": "native-select",
+			"description": "A native select styled like the input, with a chevron, sizes, rounded corners, and states.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/native-select/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/native-select/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/native-select/opt-group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/native-select/option.svelte" }
+			]
+		},
+		{
+			"name": "empty",
+			"description": "An empty state with media, a title, a description, and actions, with an outline variant and sizes.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/empty/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/empty/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/empty/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/empty/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/empty/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/empty/media.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/empty/title.svelte" }
+			]
+		},
+		{
+			"name": "button-group",
+			"description": "A row or column of buttons, inputs, and selects joined into one control, with separators and text.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/button-group/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/button-group/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/button-group/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/button-group/text.svelte" }
+			]
+		},
+		{
+			"name": "input-group",
+			"description": "A bordered field that joins an input or textarea with icons, text, and buttons on any side.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/input-group/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-group/addon.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-group/button.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-group/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/input-group/input.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-group/text.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/input-group/textarea.svelte" }
+			]
+		},
+		{
+			"name": "field",
+			"description": "Form field layout with labels, descriptions, errors, fieldsets, separators, and responsive orientation.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/field/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/field-error.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/field/label.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/legend.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/field-set.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/field/title.svelte" }
+			]
+		},
+		{
+			"name": "item",
+			"description": "A flexible row with media, a title, a description, and actions, that can render as a link or a list.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/item/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/actions.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/item/media.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/item/title.svelte" }
+			]
+		},
+		{
+			"name": "pagination",
+			"description": "Page navigation with previous and next links, page links, ellipses, and a page range helper.",
+			"itemDependencies": ["/r/button.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/pagination/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/ellipsis.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/link.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/next.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/previous.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/pagination/utils.ts" }
+			]
+		},
+		{
+			"name": "scroll-area",
+			"description": "A scrolling box with thin themed scrollbars that can be dragged, shown on hover, and sized.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/scroll-area/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/scroll-area/index.ts" }
+			]
+		},
+		{
+			"name": "resizable",
+			"description": "Panels that share a row or column and resize by dragging or with the keyboard.",
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/resizable/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/resizable/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/resizable/handle.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/resizable/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/resizable/panel.svelte" }
+			]
+		},
+		{
+			"name": "hover-card",
+			"description": "A preview card that opens beside a link when the pointer rests on it or it gets keyboard focus.",
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/hover-card/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/hover-card/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/hover-card/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/hover-card/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/hover-card/trigger.svelte" }
+			]
+		},
+		{
+			"name": "drawer",
+			"description": "A panel that slides in from an edge and closes by dragging it back, built on the native dialog element.",
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/drawer/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/close.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/title.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/drawer/trigger.svelte" }
+			]
+		},
+		{
+			"name": "toaster",
+			"description": "Stacked toasts with types, promises, actions, and swipe to dismiss, built without dependencies.",
+			"devDependencies": ["@lucide/svelte"],
+			"itemDependencies": ["/r/button.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/toaster/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/toaster/toast.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/toaster/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/toaster/state.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/toaster/index.ts" }
+			]
+		},
+		{
+			"name": "carousel",
+			"description": "Slides that snap one at a time, with buttons, arrow keys, mouse dragging, looping, and several per view.",
+			"itemDependencies": ["/r/button.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/carousel/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/carousel/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/carousel/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/carousel/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/carousel/item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/carousel/next.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/carousel/previous.svelte" }
+			]
+		},
+		{
+			"name": "context-menu",
+			"description": "A menu that opens at the pointer on right-click, built on the dropdown menu parts.",
+			"itemDependencies": ["/r/dropdown-menu.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/context-menu/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/context-menu/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/context-menu/trigger.svelte" }
+			]
+		},
+		{
+			"name": "menubar",
+			"description": "A bar of menus like a desktop app, with keyboard navigation between menus, built on the dropdown menu parts.",
+			"itemDependencies": ["/r/dropdown-menu.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/menubar/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/menubar/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/menubar/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/menubar/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/menubar/menu.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/menubar/trigger.svelte" }
+			]
+		},
+		{
+			"name": "date-picker",
+			"description": "A button that opens a calendar in a popover to pick a date or a range, with form submission.",
+			"itemDependencies": ["/r/button.json", "/r/calendar.json", "/r/popover.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/date-picker/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/date-picker/index.ts" }
+			]
+		},
+		{
+			"name": "sidebar",
+			"description": "A collapsible app sidebar with groups, menus, sub menus, and icon mode, that becomes a drawer on mobile.",
+			"itemDependencies": ["/r/button.json", "/r/input.json", "/r/skeleton.json", "/r/tooltip.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/footer.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/group-action.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/group-content.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/group-label.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/group.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/input.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/inset.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-action.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-badge.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-button.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-skeleton.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-sub-button.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-sub-item.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu-sub.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/menu.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/provider.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/rail.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/separator.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/sidebar/trigger.svelte" }
+			]
+		},
+		{
+			"name": "data-table",
+			"description": "A data table with sorting, filtering, pagination, column visibility, and row selection, built on the table.",
+			"itemDependencies": ["/r/table.json", "/r/checkbox.json", "/r/button.json", "/r/native-select.json", "/r/dropdown-menu.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/data-table/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/data-table/column-header.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/data-table/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/data-table/pagination.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/data-table/state.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/data-table/view-options.svelte" }
+			]
+		},
+		{
+			"name": "form",
+			"description": "Form state checked by a zod schema, with fields that show their errors and wire up labels and aria attributes.",
+			"itemDependencies": ["/r/field.json"],
+			"dependencies": ["zod"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/form/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/form/control.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/form/ctx.svelte.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/form/description.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/form/errors.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/form/field.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/form/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/form/label.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/form/state.svelte.ts" }
+			]
+		},
+		{
+			"name": "package-command",
+			"description": "A command block with a tab for each package manager, built from one command, with a copy button and a synced, remembered choice.",
+			"itemDependencies": ["/r/button.json", "/r/tabs.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/lib/components/ui/package-command/_.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/package-command/core.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/package-command/index.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/package-command/state.svelte.ts" }
+			]
+		},
+		{
+			"name": "dashboard-01",
+			"description": "A dashboard with an inset sidebar, stat cards, an interactive chart, and a data table.",
+			"itemDependencies": ["/r/sidebar.json", "/r/card.json", "/r/chart.json", "/r/toggle-group.json", "/r/select.json", "/r/data-table.json", "/r/tabs.json", "/r/dropdown-menu.json", "/r/badge.json", "/r/button.json", "/r/input.json", "/r/label.json", "/r/toaster.json", "/r/avatar.json", "/r/separator.json", "/r/drawer.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/+page.svelte", "target": "src/routes/(blocks)/dashboard-01/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/app-sidebar.svelte", "target": "src/routes/(blocks)/dashboard-01/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/chart-area-interactive.svelte", "target": "src/routes/(blocks)/dashboard-01/chart-area-interactive.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/chart-data.ts", "target": "src/routes/(blocks)/dashboard-01/chart-data.ts" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/data-table.svelte", "target": "src/routes/(blocks)/dashboard-01/data-table.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/data.json", "target": "src/routes/(blocks)/dashboard-01/data.json" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/nav-documents.svelte", "target": "src/routes/(blocks)/dashboard-01/nav-documents.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/nav-main.svelte", "target": "src/routes/(blocks)/dashboard-01/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/nav-secondary.svelte", "target": "src/routes/(blocks)/dashboard-01/nav-secondary.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/nav-user.svelte", "target": "src/routes/(blocks)/dashboard-01/nav-user.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/section-cards.svelte", "target": "src/routes/(blocks)/dashboard-01/section-cards.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/site-header.svelte", "target": "src/routes/(blocks)/dashboard-01/site-header.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/table-cell-viewer.svelte", "target": "src/routes/(blocks)/dashboard-01/table-cell-viewer.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/dashboard-01/types.ts", "target": "src/routes/(blocks)/dashboard-01/types.ts" }
+			]
+		},
+		{
+			"name": "sidebar-01",
+			"description": "A simple sidebar with navigation grouped by section.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/label.json", "/r/dropdown-menu.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-01/+page.svelte", "target": "src/routes/(blocks)/sidebar-01/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-01/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-01/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-01/search-form.svelte", "target": "src/routes/(blocks)/sidebar-01/search-form.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-01/version-switcher.svelte", "target": "src/routes/(blocks)/sidebar-01/version-switcher.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-02",
+			"description": "A sidebar with collapsible sections.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json", "/r/label.json", "/r/dropdown-menu.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-02/+page.svelte", "target": "src/routes/(blocks)/sidebar-02/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-02/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-02/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-02/search-form.svelte", "target": "src/routes/(blocks)/sidebar-02/search-form.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-02/version-switcher.svelte", "target": "src/routes/(blocks)/sidebar-02/version-switcher.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-03",
+			"description": "A sidebar with submenus.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-03/+page.svelte", "target": "src/routes/(blocks)/sidebar-03/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-03/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-03/app-sidebar.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-04",
+			"description": "A floating sidebar with submenus.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-04/+page.svelte", "target": "src/routes/(blocks)/sidebar-04/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-04/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-04/app-sidebar.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-05",
+			"description": "A sidebar with collapsible submenus.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json", "/r/label.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-05/+page.svelte", "target": "src/routes/(blocks)/sidebar-05/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-05/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-05/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-05/search-form.svelte", "target": "src/routes/(blocks)/sidebar-05/search-form.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-06",
+			"description": "A sidebar with submenus as dropdowns.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/dropdown-menu.json", "/r/card.json", "/r/button.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-06/+page.svelte", "target": "src/routes/(blocks)/sidebar-06/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-06/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-06/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-06/nav-main.svelte", "target": "src/routes/(blocks)/sidebar-06/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-06/sidebar-opt-in-form.svelte", "target": "src/routes/(blocks)/sidebar-06/sidebar-opt-in-form.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-07",
+			"description": "A sidebar that collapses to icons.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json", "/r/dropdown-menu.json", "/r/avatar.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-07/+page.svelte", "target": "src/routes/(blocks)/sidebar-07/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-07/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-07/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-07/nav-main.svelte", "target": "src/routes/(blocks)/sidebar-07/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-07/nav-projects.svelte", "target": "src/routes/(blocks)/sidebar-07/nav-projects.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-07/nav-user.svelte", "target": "src/routes/(blocks)/sidebar-07/nav-user.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-07/team-switcher.svelte", "target": "src/routes/(blocks)/sidebar-07/team-switcher.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-08",
+			"description": "An inset sidebar with secondary navigation.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json", "/r/dropdown-menu.json", "/r/avatar.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-08/+page.svelte", "target": "src/routes/(blocks)/sidebar-08/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-08/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-08/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-08/nav-main.svelte", "target": "src/routes/(blocks)/sidebar-08/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-08/nav-projects.svelte", "target": "src/routes/(blocks)/sidebar-08/nav-projects.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-08/nav-secondary.svelte", "target": "src/routes/(blocks)/sidebar-08/nav-secondary.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-08/nav-user.svelte", "target": "src/routes/(blocks)/sidebar-08/nav-user.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-09",
+			"description": "Collapsible nested sidebars.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/label.json", "/r/switch.json", "/r/dropdown-menu.json", "/r/avatar.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-09/+page.svelte", "target": "src/routes/(blocks)/sidebar-09/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-09/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-09/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-09/nav-user.svelte", "target": "src/routes/(blocks)/sidebar-09/nav-user.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-10",
+			"description": "A sidebar in a popover.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/popover.json", "/r/button.json", "/r/dropdown-menu.json", "/r/collapsible.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/+page.svelte", "target": "src/routes/(blocks)/sidebar-10/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-10/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/nav-actions.svelte", "target": "src/routes/(blocks)/sidebar-10/nav-actions.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/nav-favorites.svelte", "target": "src/routes/(blocks)/sidebar-10/nav-favorites.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/nav-main.svelte", "target": "src/routes/(blocks)/sidebar-10/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/nav-secondary.svelte", "target": "src/routes/(blocks)/sidebar-10/nav-secondary.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/nav-workspaces.svelte", "target": "src/routes/(blocks)/sidebar-10/nav-workspaces.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-10/team-switcher.svelte", "target": "src/routes/(blocks)/sidebar-10/team-switcher.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-11",
+			"description": "A sidebar with a collapsible file tree.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-11/+page.svelte", "target": "src/routes/(blocks)/sidebar-11/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-11/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-11/app-sidebar.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-12",
+			"description": "A sidebar with a calendar.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json", "/r/calendar.json", "/r/dropdown-menu.json", "/r/avatar.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-12/+page.svelte", "target": "src/routes/(blocks)/sidebar-12/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-12/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-12/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-12/calendars.svelte", "target": "src/routes/(blocks)/sidebar-12/calendars.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-12/date-picker.svelte", "target": "src/routes/(blocks)/sidebar-12/date-picker.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-12/nav-user.svelte", "target": "src/routes/(blocks)/sidebar-12/nav-user.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-13",
+			"description": "A sidebar in a dialog.",
+			"itemDependencies": ["/r/dialog.json", "/r/sidebar.json", "/r/breadcrumb.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-13/+page.svelte", "target": "src/routes/(blocks)/sidebar-13/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-13/settings-dialog.svelte", "target": "src/routes/(blocks)/sidebar-13/settings-dialog.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-14",
+			"description": "A sidebar on the right.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-14/+page.svelte", "target": "src/routes/(blocks)/sidebar-14/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-14/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-14/app-sidebar.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-15",
+			"description": "A left and right sidebar.",
+			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/collapsible.json", "/r/calendar.json", "/r/dropdown-menu.json", "/r/avatar.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/+page.svelte", "target": "src/routes/(blocks)/sidebar-15/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/calendars.svelte", "target": "src/routes/(blocks)/sidebar-15/calendars.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/date-picker.svelte", "target": "src/routes/(blocks)/sidebar-15/date-picker.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/nav-favorites.svelte", "target": "src/routes/(blocks)/sidebar-15/nav-favorites.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/nav-main.svelte", "target": "src/routes/(blocks)/sidebar-15/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/nav-secondary.svelte", "target": "src/routes/(blocks)/sidebar-15/nav-secondary.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/nav-user.svelte", "target": "src/routes/(blocks)/sidebar-15/nav-user.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/nav-workspaces.svelte", "target": "src/routes/(blocks)/sidebar-15/nav-workspaces.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/sidebar-left.svelte", "target": "src/routes/(blocks)/sidebar-15/sidebar-left.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/sidebar-right.svelte", "target": "src/routes/(blocks)/sidebar-15/sidebar-right.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-15/team-switcher.svelte", "target": "src/routes/(blocks)/sidebar-15/team-switcher.svelte" }
+			]
+		},
+		{
+			"name": "sidebar-16",
+			"description": "A sidebar with a sticky site header.",
+			"itemDependencies": ["/r/sidebar.json", "/r/collapsible.json", "/r/dropdown-menu.json", "/r/avatar.json", "/r/label.json", "/r/breadcrumb.json", "/r/separator.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/+page.svelte", "target": "src/routes/(blocks)/sidebar-16/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/app-sidebar.svelte", "target": "src/routes/(blocks)/sidebar-16/app-sidebar.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/nav-main.svelte", "target": "src/routes/(blocks)/sidebar-16/nav-main.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/nav-projects.svelte", "target": "src/routes/(blocks)/sidebar-16/nav-projects.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/nav-secondary.svelte", "target": "src/routes/(blocks)/sidebar-16/nav-secondary.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/nav-user.svelte", "target": "src/routes/(blocks)/sidebar-16/nav-user.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/search-form.svelte", "target": "src/routes/(blocks)/sidebar-16/search-form.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/sidebar-16/site-header.svelte", "target": "src/routes/(blocks)/sidebar-16/site-header.svelte" }
+			]
+		},
+		{
+			"name": "login-01",
+			"description": "A simple login form in a card.",
+			"itemDependencies": ["/r/button.json", "/r/card.json", "/r/field.json", "/r/input.json"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-01/+page.svelte", "target": "src/routes/(blocks)/login-01/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-01/login-form.svelte", "target": "src/routes/(blocks)/login-01/login-form.svelte" }
+			]
+		},
+		{
+			"name": "login-02",
+			"description": "A two column login page with a cover image.",
+			"itemDependencies": ["/r/button.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@lucide/svelte", "@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-02/+page.svelte", "target": "src/routes/(blocks)/login-02/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-02/login-form.svelte", "target": "src/routes/(blocks)/login-02/login-form.svelte" }
+			]
+		},
+		{
+			"name": "login-03",
+			"description": "A login card with social logins on a muted background.",
+			"itemDependencies": ["/r/button.json", "/r/card.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@lucide/svelte", "@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-03/+page.svelte", "target": "src/routes/(blocks)/login-03/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-03/login-form.svelte", "target": "src/routes/(blocks)/login-03/login-form.svelte" }
+			]
+		},
+		{
+			"name": "login-04",
+			"description": "A login card split into a form and a cover image.",
+			"itemDependencies": ["/r/button.json", "/r/card.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-04/+page.svelte", "target": "src/routes/(blocks)/login-04/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-04/login-form.svelte", "target": "src/routes/(blocks)/login-04/login-form.svelte" }
+			]
+		},
+		{
+			"name": "login-05",
+			"description": "A simple email login with social logins.",
+			"itemDependencies": ["/r/button.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@lucide/svelte", "@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-05/+page.svelte", "target": "src/routes/(blocks)/login-05/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/login-05/login-form.svelte", "target": "src/routes/(blocks)/login-05/login-form.svelte" }
+			]
+		},
+		{
+			"name": "signup-01",
+			"description": "A simple sign up form in a card.",
+			"itemDependencies": ["/r/button.json", "/r/card.json", "/r/field.json", "/r/input.json"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-01/+page.svelte", "target": "src/routes/(blocks)/signup-01/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-01/signup-form.svelte", "target": "src/routes/(blocks)/signup-01/signup-form.svelte" }
+			]
+		},
+		{
+			"name": "signup-02",
+			"description": "A two column sign up page with a cover image.",
+			"itemDependencies": ["/r/button.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@lucide/svelte", "@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-02/+page.svelte", "target": "src/routes/(blocks)/signup-02/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-02/signup-form.svelte", "target": "src/routes/(blocks)/signup-02/signup-form.svelte" }
+			]
+		},
+		{
+			"name": "signup-03",
+			"description": "A sign up card on a muted background.",
+			"itemDependencies": ["/r/button.json", "/r/card.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@lucide/svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-03/+page.svelte", "target": "src/routes/(blocks)/signup-03/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-03/signup-form.svelte", "target": "src/routes/(blocks)/signup-03/signup-form.svelte" }
+			]
+		},
+		{
+			"name": "signup-04",
+			"description": "A sign up card split into a form and a cover image.",
+			"itemDependencies": ["/r/button.json", "/r/card.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-04/+page.svelte", "target": "src/routes/(blocks)/signup-04/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-04/signup-form.svelte", "target": "src/routes/(blocks)/signup-04/signup-form.svelte" }
+			]
+		},
+		{
+			"name": "signup-05",
+			"description": "A simple email sign up with social sign ups.",
+			"itemDependencies": ["/r/button.json", "/r/field.json", "/r/input.json"],
+			"devDependencies": ["@lucide/svelte", "@tabler/icons-svelte"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-05/+page.svelte", "target": "src/routes/(blocks)/signup-05/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/signup-05/signup-form.svelte", "target": "src/routes/(blocks)/signup-05/signup-form.svelte" }
+			]
+		},
+		{
+			"name": "functions",
+			"description": "Type-safe server functions with Zod validation, called from the client through one POST endpoint.",
+			"dependencies": ["zod"],
+			"files": [
+				{ "type": "file", "path": "src/lib/functions/index.ts" },
+				{ "type": "file", "path": "src/lib/functions/schemas.ts" },
+				{ "type": "file", "path": "src/lib/functions/server.ts" },
+				{ "type": "file", "path": "src/lib/functions/handlers/app.ts" },
+				{ "type": "file", "path": "src/lib/functions/handlers/demo.ts" },
+				{ "type": "file", "path": "src/routes/api/functions/+server.ts" }
+			]
+		},
+		{
+			"name": "auth-base",
+			"description": "Shared auth core with cookie sessions, the sign in hook, and sign in routes, used by every auth item.",
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/types.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/session.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/hook.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/signout/+server.ts" }
+			]
+		},
+		{
+			"name": "auth-google-sqlite",
+			"description": "Google sign in with cookie sessions, storing users and sessions in SQLite through the Drizzle utility.",
+			"itemDependencies": ["/r/auth-base.json", "/r/drizzle.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/providers/google.ts", "target": "src/lib/server/auth/provider.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/adapters/sqlite.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/google/+server.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/google/callback/+server.ts" }
+			]
+		},
+		{
+			"name": "auth-google-mongodb",
+			"description": "Google sign in with cookie sessions, storing users and sessions in MongoDB through the MongoDB utility.",
+			"itemDependencies": ["/r/auth-base.json", "/r/mongodb.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/providers/google.ts", "target": "src/lib/server/auth/provider.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/adapters/mongodb.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/google/+server.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/google/callback/+server.ts" }
+			]
+		},
+		{
+			"name": "auth-github-sqlite",
+			"description": "GitHub sign in with cookie sessions, storing users and sessions in SQLite through the Drizzle utility.",
+			"itemDependencies": ["/r/auth-base.json", "/r/drizzle.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/providers/github.ts", "target": "src/lib/server/auth/provider.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/adapters/sqlite.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/github/+server.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/github/callback/+server.ts" }
+			]
+		},
+		{
+			"name": "auth-github-mongodb",
+			"description": "GitHub sign in with cookie sessions, storing users and sessions in MongoDB through the MongoDB utility.",
+			"itemDependencies": ["/r/auth-base.json", "/r/mongodb.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/providers/github.ts", "target": "src/lib/server/auth/provider.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/adapters/mongodb.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/github/+server.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/github/callback/+server.ts" }
+			]
+		},
+		{
+			"name": "drizzle",
+			"description": "A Drizzle ORM client on Node's built-in node:sqlite, with a typed schema and drizzle-kit migrations.",
+			"dependencies": ["drizzle-orm@rc"],
+			"devDependencies": ["drizzle-kit@rc"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/drizzle/index.ts" },
+				{ "type": "file", "path": "src/lib/server/drizzle/schema.ts" },
+				{ "type": "file", "path": "src/lib/server/drizzle/config.ts" }
+			]
+		},
+		{
+			"name": "mongodb",
+			"description": "A typed MongoDB client with Zod collection schemas and generated create, find, update, and delete methods for each collection.",
+			"dependencies": ["mongodb", "zod"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/mongodb/index.ts" },
+				{ "type": "file", "path": "src/lib/server/mongodb/schema.ts" },
+				{ "type": "file", "path": "src/lib/server/mongodb/generate.ts" }
+			]
+		},
+		{
+			"name": "dev-plugin",
+			"description": "A Vite plugin that optimizes Lucide and Tabler icon imports, generates src/env.ts from .env, and replaces strings in route files during development.",
+			"itemDependencies": ["svx-plugin-simple.json"],
+			"devDependencies": ["magic-string"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/plugins/dev/index.ts" },
+				{ "type": "file", "path": "src/lib/server/plugins/dev/utils.ts" }
+			]
+		},
+		{
+			"name": "svx-plugin",
+			"description": "A Vite plugin that turns Markdown .svx pages into Svelte pages with page meta and code blocks.",
+			"itemDependencies": ["/r/code-block.json", "/r/package-command.json"],
+			"devDependencies": ["marked", "magic-string"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/plugins/svx/index.ts" },
+				{ "type": "file", "path": "src/lib/server/plugins/svx/utils.ts" }
+			]
+		},
+		{
+			"name": "svx-plugin-simple",
+			"description": "A Vite plugin that turns Markdown .svx pages into Svelte pages with page meta and plain code blocks.",
+			"devDependencies": ["marked"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/plugins/svx/simple.ts", "target": "src/lib/server/plugins/svx/index.ts" },
+				{ "type": "file", "path": "src/lib/server/plugins/svx/utils.ts" }
+			]
+		},
+		{
+			"name": "deploy",
+			"description": "Deploy a SvelteKit app on Ubuntu with Node.js, pm2, nginx, and Cloudflare, with a deploy script that sets up the domain and keeps the previous release for rollback",
+			"files": [
+				{ "type": "file", "path": "src/lib/server/deploy/index.ts" },
+				{ "type": "file", "path": "src/lib/server/deploy/utils.ts" }
+			]
+		}
+	]
+}

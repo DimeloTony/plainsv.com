@@ -1,0 +1,114 @@
+---
+title: "Avatar"
+description: "An image of a user with a fallback for initials or an icon, with variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Avatar
+
+Shows a user's image, and falls back to initials or an icon while the image loads or when it fails. Compose it from `Avatar`, `AvatarImage`, and `AvatarFallback`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Avatar, AvatarImage, AvatarFallback } from "#lib/components/ui/avatar/index.js";
+</script>
+
+<Avatar>
+	<AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+	<AvatarFallback>CN</AvatarFallback>
+</Avatar>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/avatar.json
+```
+
+## Anatomy
+
+`Avatar` sets the frame and tracks whether the image has loaded. `AvatarImage` stays hidden until it loads, then covers the frame. `AvatarFallback` shows until then, and stays when the image fails or there is no `AvatarImage`. Changing `src` shows the fallback again while the new image loads.
+
+## Fallback
+
+The fallback can hold initials or an icon. Icons scale with the avatar size.
+
+<Demo section="fallback" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Avatar, AvatarImage, AvatarFallback } from "#lib/components/ui/avatar/index.js";
+	import { UserIcon } from "@lucide/svelte";
+</script>
+
+<Avatar>
+	<AvatarImage src="/missing-avatar.png" alt="@missing" />
+	<AvatarFallback>CN</AvatarFallback>
+</Avatar>
+<Avatar>
+	<AvatarFallback><UserIcon /></AvatarFallback>
+</Avatar>
+```
+
+## Variants
+
+Set `variant` to `default`, `secondary`, or `outline`. The variant colors the fallback background, and `outline` adds a border that stays around the image.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Avatar variant="outline">
+	<AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+	<AvatarFallback>CN</AvatarFallback>
+</Avatar>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `sm`, a 32 pixel avatar like shadcn.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Avatar size="lg">
+	<AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+	<AvatarFallback>CN</AvatarFallback>
+</Avatar>
+```
+
+## Rounded
+
+Avatars are circles by default, since `rounded` defaults to `pill` like shadcn. Set `rounded` to `xs` through `4xl` for a rounded square instead.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Avatar rounded="pill">
+	<AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+	<AvatarFallback>CN</AvatarFallback>
+</Avatar>
+```
+
+## API
+
+`Avatar` and `AvatarFallback` extend the native `span` attributes, and `AvatarImage` extends the native `img` attributes. Extra attributes and event handlers pass through to each element, and `onload` and `onerror` still fire on the image.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"span"> {
+	/** Visual style of the background and border */
+	variant?: "default" | "secondary" | "outline";
+	/** Size on the shared scale; defaults to `sm`, a 32 pixel avatar like shadcn */
+	size?: UiSize;
+	/** Corner radius; defaults to `pill`, a circle like shadcn */
+	rounded?: UiRounded;
+}
+
+interface ImageProps extends CompProps<"img"> {}
+
+interface FallbackProps extends CompPropsWithChild<"span"> {}
+```

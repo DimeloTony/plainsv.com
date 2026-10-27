@@ -1,0 +1,138 @@
+---
+title: "Button Group"
+description: "A row or column of buttons, inputs, and selects joined into one control, with separators and text."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Button Group
+
+Joins related buttons into one control. Inner corners turn square and neighbors share a border. Inputs, selects, and other controls can join too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { ButtonGroup } from "#lib/components/ui/button-group/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+</script>
+
+<ButtonGroup aria-label="Message actions">
+	<Button variant="outline">Archive</Button>
+	<Button variant="outline">Report</Button>
+	<Button variant="outline">Snooze</Button>
+</ButtonGroup>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/button-group.json
+```
+
+## Accessibility
+
+`ButtonGroup` renders a `div` with `role="group"`. Give it an `aria-label` that names the set of actions. Each button keeps its own place in the tab order.
+
+## Vertical
+
+Set `orientation="vertical"` to stack the children.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<ButtonGroup orientation="vertical" aria-label="Zoom">
+	<Button variant="outline" size="icon-sm" aria-label="Zoom in"><PlusIcon /></Button>
+	<Button variant="outline" size="icon-sm" aria-label="Zoom out"><MinusIcon /></Button>
+</ButtonGroup>
+```
+
+## Nested
+
+Place groups inside a group to keep them apart with a gap, such as pagination arrows beside page numbers.
+
+<Demo section="nested" />
+
+```svelte title="+page.svelte"
+<ButtonGroup>
+	<ButtonGroup>...</ButtonGroup>
+	<ButtonGroup>...</ButtonGroup>
+</ButtonGroup>
+```
+
+## Separator
+
+Outline buttons share a visible border, but filled buttons do not. Place `ButtonGroupSeparator` between filled buttons that share a color, such as two `secondary` buttons.
+
+<Demo section="separator" />
+
+```svelte title="+page.svelte"
+<ButtonGroup>
+	<Button variant="secondary">Copy</Button>
+	<ButtonGroupSeparator />
+	<Button variant="secondary" size="icon-md" aria-label="Copy options"><CopyIcon /></Button>
+</ButtonGroup>
+```
+
+## With input
+
+An `Input` inside the group fills the room left by the buttons.
+
+<Demo section="input" />
+
+```svelte title="+page.svelte"
+<ButtonGroup>
+	<Input placeholder="Search..." />
+	<Button variant="outline" aria-label="Search"><SearchIcon /></Button>
+</ButtonGroup>
+```
+
+## Text
+
+Place `ButtonGroupText` to join static text, such as a prefix or a unit. Set its `size` to match the buttons.
+
+<Demo section="text" />
+
+```svelte title="+page.svelte"
+<ButtonGroup>
+	<ButtonGroupText>https://</ButtonGroupText>
+	<Input placeholder="example.com" />
+</ButtonGroup>
+```
+
+## Sizes
+
+The group has no size of its own, so set the same `size` on each part: `xs`, `sm`, `md`, or `lg`. `ButtonGroupText` defaults to `md`, like the buttons and inputs.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<ButtonGroup>
+	<ButtonGroupText size="sm">https://</ButtonGroupText>
+	<Input size="sm" placeholder="example.com" />
+	<Button variant="outline" size="sm">Go</Button>
+</ButtonGroup>
+```
+
+## API
+
+`ButtonGroup`, `ButtonGroupSeparator`, and `ButtonGroupText` extend the native `div` attributes. The group has no size of its own; size the buttons inside it instead.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** Direction the children are joined in; defaults to `horizontal` */
+	orientation?: "horizontal" | "vertical";
+}
+
+interface SeparatorProps extends CompProps<"div"> {
+	/** Matches the group direction; `vertical` for a horizontal group; defaults to `vertical` */
+	orientation?: "horizontal" | "vertical";
+}
+
+interface TextProps extends CompPropsWithChild<"div"> {
+	/** Height, padding, and text size on the shared scale; match it to the buttons; defaults to `md` */
+	size?: UiSize;
+}
+```

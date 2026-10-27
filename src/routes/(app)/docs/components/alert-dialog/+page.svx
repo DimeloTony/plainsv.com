@@ -1,0 +1,215 @@
+---
+title: "Alert Dialog"
+description: "A modal that interrupts the user to confirm an important action, built on the native dialog element."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Alert Dialog
+
+A modal that interrupts the user with important content and expects a response. Unlike `Dialog`, clicking the backdrop does not close it, so the user has to choose Cancel or the action. Built on the native `dialog` element with `showModal`, so it renders in the top layer above every ancestor.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "#lib/components/ui/alert-dialog/index.js";
+</script>
+
+<AlertDialog>
+	<AlertDialogTrigger>Show dialog</AlertDialogTrigger>
+	<AlertDialogContent>
+		<AlertDialogHeader>
+			<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+			<AlertDialogDescription>This action cannot be undone. This will permanently delete your account and remove your data from our servers.</AlertDialogDescription>
+		</AlertDialogHeader>
+		<AlertDialogFooter>
+			<AlertDialogCancel>Cancel</AlertDialogCancel>
+			<AlertDialogAction>Continue</AlertDialogAction>
+		</AlertDialogFooter>
+	</AlertDialogContent>
+</AlertDialog>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/alert-dialog.json
+```
+
+## Anatomy
+
+`AlertDialog` holds the open state and the style settings, and shares them with its parts. It renders no element of its own. `AlertDialogTrigger` opens it and renders an outline `Button` with its children as the label. `AlertDialogContent` renders the modal `dialog` element with `role="alertdialog"` while open, and its children inside the panel.
+
+`AlertDialogHeader` holds the `AlertDialogTitle`, an `h2` that names the dialog through `aria-labelledby`, and the `AlertDialogDescription`, a `p` that describes it through `aria-describedby`. `AlertDialogFooter` holds the buttons. `AlertDialogCancel` and `AlertDialogAction` render a `Button` that closes the dialog.
+
+## Focus and keyboard
+
+When the dialog opens, `AlertDialogCancel` takes focus, so pressing Enter right away never confirms the action. Tab moves between the buttons, and focus stays inside the dialog. Pressing Escape closes it like Cancel. When it closes, focus returns to the element that opened it.
+
+## Trigger
+
+To open the dialog from any other element, pass a `trigger` snippet to `AlertDialogTrigger`. It receives `props` with an `onclick` that opens the dialog and `aria-haspopup="dialog"`. Spread them onto the element. Set `variant="destructive"` on `AlertDialogAction` for actions that delete data.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "#lib/components/ui/alert-dialog/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { Trash2Icon } from "@lucide/svelte";
+</script>
+
+<AlertDialog>
+	<AlertDialogTrigger>
+		{#snippet trigger({ props })}
+			<Button variant="destructive" {...props}><Trash2Icon />Delete project</Button>
+		{/snippet}
+	</AlertDialogTrigger>
+	<AlertDialogContent>
+		<AlertDialogHeader>
+			<AlertDialogTitle>Delete this project?</AlertDialogTitle>
+			<AlertDialogDescription>The project and its deployments will be removed for everyone on your team.</AlertDialogDescription>
+		</AlertDialogHeader>
+		<AlertDialogFooter>
+			<AlertDialogCancel>Cancel</AlertDialogCancel>
+			<AlertDialogAction variant="destructive">Delete</AlertDialogAction>
+		</AlertDialogFooter>
+	</AlertDialogContent>
+</AlertDialog>
+```
+
+## Controlled
+
+Use `bind:open` to open or close the dialog from your own code, or `onOpenChange` to run code when it opens or closes. The binding updates in both directions, so Cancel, the action, and Escape set the variable back to `false`. A trigger is optional.
+
+A passed `onclick` on `AlertDialogAction` runs before the dialog closes. Call `e.preventDefault()` in it to keep the dialog open, such as while a request runs, and set `open` to `false` when it finishes.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "#lib/components/ui/alert-dialog/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+	import { Spinner } from "#lib/components/ui/spinner/index.js";
+
+	let open = $state(false);
+	let isDeleting = $state(false);
+
+	/** Keeps the dialog open while the account is deleted, then closes it. */
+	async function handleDelete(e: MouseEvent) {
+		e.preventDefault();
+		isDeleting = true;
+		await deleteAccount();
+		isDeleting = false;
+		open = false;
+	}
+</script>
+
+<Button variant="outline" onclick={() => (open = true)}>Delete account</Button>
+<AlertDialog bind:open>
+	<AlertDialogContent>
+		<AlertDialogHeader>
+			<AlertDialogTitle>Delete your account?</AlertDialogTitle>
+			<AlertDialogDescription>Your account will be deleted right away. This cannot be undone.</AlertDialogDescription>
+		</AlertDialogHeader>
+		<AlertDialogFooter>
+			<AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+			<AlertDialogAction variant="destructive" disabled={isDeleting} onclick={handleDelete}>
+				{#if isDeleting}<Spinner />{/if}
+				Delete account
+			</AlertDialogAction>
+		</AlertDialogFooter>
+	</AlertDialogContent>
+</AlertDialog>
+```
+
+## Sizes
+
+Set `size` on `AlertDialog` to `xs`, `sm`, `md`, or `lg`. The default is `md`. The panel's maximum width, padding, gap, and title size follow the size, and the buttons use the matching button size, with `md` buttons in the `lg` panel. The corner radius stays `lg` at every size unless `rounded` is set.
+
+On narrow screens the header centers its text and the footer stacks the buttons with the action on top. From `40rem` wide, the header aligns to the start and the buttons sit in a row at the end.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<AlertDialog size="sm">...</AlertDialog>
+```
+
+## Rounded
+
+Set `rounded` on `AlertDialog` to `xs` through `4xl` or `pill` to change the radius, which defaults to `lg` like the shadcn alert dialog. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<AlertDialog rounded="3xl">...</AlertDialog>
+```
+
+## Overrides
+
+The default `AlertDialogTrigger` button takes `size`, `rounded`, and `class` next to `variant`. `AlertDialogAction` and `AlertDialogCancel` already take `variant`, `size`, and `rounded`.
+
+```svelte title="+page.svelte"
+<AlertDialogTrigger variant="destructive" size="sm" rounded="pill">Delete</AlertDialogTrigger>
+```
+
+## API
+
+`AlertDialogContent` extends the native `div` attributes of the panel. `AlertDialogHeader`, `AlertDialogTitle`, `AlertDialogDescription`, and `AlertDialogFooter` extend the native attributes of the `header`, `h2`, `p`, and `footer` they render. `AlertDialogAction` and `AlertDialogCancel` extend the native `button` attributes and pass them to `Button`.
+
+```ts title="index.ts"
+type Props = CompPropsWithChildSimple<{
+	/** Whether the alert dialog is shown; supports `bind:open` */
+	open?: boolean;
+	/** Called when the alert dialog opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Padding, text, width, and radius of the panel on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the panel; defaults to `lg` at every size. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` to stay round and safe */
+	rounded?: UiRounded;
+}>;
+
+interface TriggerProps {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Style of the default trigger button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Custom trigger; spread `props` onto the element that opens the alert dialog */
+	trigger?: Snippet<[{ props: { "aria-haspopup": "dialog"; onclick: () => void } }]>;
+	/** Size of the default trigger button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default trigger button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {}
+
+interface HeaderProps extends CompPropsWithChild<"header"> {}
+
+interface TitleProps extends CompPropsWithChild<"h2"> {}
+
+interface DescriptionProps extends CompPropsWithChild<"p"> {}
+
+interface FooterProps extends CompPropsWithChild<"footer"> {}
+
+interface ActionProps extends CompPropsWithChild<"button"> {
+	/** Button style; defaults to `default`, or set `destructive` for actions that delete data */
+	variant?: ButtonProps["variant"];
+	/** Button size; follows the alert dialog size when omitted */
+	size?: ButtonProps["size"];
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+
+interface CancelProps extends CompPropsWithChild<"button"> {
+	/** Button style; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Button size; follows the alert dialog size when omitted */
+	size?: ButtonProps["size"];
+	/** Corner radius; follows `size` when omitted */
+	rounded?: UiRounded;
+}
+```

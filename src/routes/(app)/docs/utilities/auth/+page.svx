@@ -1,0 +1,224 @@
+---
+title: "Auth"
+description: "Google or GitHub sign in with cookie sessions, built on Node crypto and a small database adapter for MongoDB, SQLite, or any other database."
+---
+
+# Auth
+
+The auth utility signs users in with Google or GitHub and keeps them signed in with a session cookie. It talks to the provider with `fetch` and creates tokens with Node's `crypto`, so there is no auth library underneath. Auth reaches the provider through `src/lib/server/auth/provider.ts` and the database through `src/lib/server/auth/db.ts`, and each comes from its own registry item, so you can swap either one without touching the routes or the session code.
+
+## Installation
+
+Install the item for your provider and database. Each one installs its provider as `src/lib/server/auth/provider.ts` and its database adapter as `src/lib/server/auth/db.ts`, and pulls in `auth-base` with the routes, sessions, and hook.
+
+- Install `auth-google-sqlite` for Google sign in with SQLite through Drizzle
+- Install `auth-google-mongodb` for Google sign in with MongoDB
+- Install `auth-github-sqlite` for GitHub sign in with SQLite through Drizzle
+- Install `auth-github-mongodb` for GitHub sign in with MongoDB
+
+```pm
+npx remote0 add https://plainsv.com/r/auth-google-sqlite.json
+```
+
+The MongoDB items also install the MongoDB utility. The SQLite items install the Drizzle utility, so run this command once to create the `users` and `sessions` tables before the first sign in.
+
+```pm
+npx drizzle-kit push --config=src/lib/server/drizzle/config.ts
+```
+
+Then set your site URL and the provider's keys in `.env`.
+
+```bash title=".env"
+DOMAIN_URL="http://localhost:5173"
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+```
+
+```bash title=".env"
+DOMAIN_URL="http://localhost:5173"
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+```
+
+## Provider setup
+
+Create an OAuth app with your provider, and register its callback route on your `DOMAIN_URL` as the callback URL. Add a second app or URL for production, since providers only redirect to registered URLs.
+
+- Create a Google OAuth client in the Google Cloud console with the redirect URI `http://localhost:5173/api/auth/google/callback`
+- Create a GitHub OAuth app in your GitHub developer settings with the callback URL `http://localhost:5173/api/auth/github/callback`
+- Copy the client ID and secret into `.env`
+
+## Hook
+
+Export the auth hook from `src/hooks.server.ts`. On every request it reads the `session` cookie, loads the session and user into `event.locals.sessionData` and `event.locals.userData`, and adds the `dark` class to `<body>` from the theme cookie, so it replaces the default hook.
+
+```ts title="src/hooks.server.ts"
+export { handle } from "#lib/server/auth/hook.js";
+```
+
+## Sign in
+
+Link to `/api/auth/google` or `/api/auth/github`, matching the installed provider, to start sign in. Add `callbackURL` to send the user back to a page after the callback, which defaults to `/`.
+
+```svelte title="+page.svelte"
+<a href="/api/auth/google?callbackURL=/account">Sign in with Google</a>
+```
+
+The sign in route saves a random `state` and a PKCE verifier in short-lived cookies and redirects to the provider. The callback route checks them, exchanges the code for the user's verified email and avatar, calls `authDb.upsertUser`, and starts a session. Users without a verified email are turned away.
+
+## Read the user
+
+Read `locals.userData` in any server load function or endpoint. It holds the `id`, `email`, and `image` of the signed-in user, or `null` when no one is signed in.
+
+```ts title="src/routes/account/+page.server.ts"
+import { redirect } from "@sveltejs/kit";
+
+export const load = async ({ locals }) => {
+	// If no one is signed in: send them to sign in first.
+	if (!locals.userData) redirect(302, "/api/auth/google?callbackURL=/account");
+	return { email: locals.userData.email };
+};
+```
+
+## Sign out
+
+Link to `/api/auth/signout` to delete the session and its cookie and go back to `/`.
+
+```svelte title="+page.svelte"
+<a href="/api/auth/signout">Sign out</a>
+```
+
+## Sessions
+
+A session lasts 30 days. The cookie holds a random token, and the database stores only its SHA-256 hash as the session `id`, so a leaked database cannot be used to sign in. When a session has less than 15 days left, the hook moves its expiry 30 days from now, so active users stay signed in. Expired sessions, and sessions whose user was deleted, are removed on the next request. Auth cookies are `httpOnly`, and outside the dev server they are only sent over HTTPS.
+
+## Update
+
+Run the install command again to update auth. The CLI asks before it overwrites each file that already exists, and overwriting replaces your changes with the registry version. If you changed the callback endpoint, such as `src/routes/api/auth/google/callback/+server.ts`, skip that file when the CLI asks to overwrite it, or your changes are lost.
+
+- Skip `src/routes/api/auth/<provider>/callback/+server.ts` if you changed what happens after sign in
+- Skip `src/lib/server/auth/provider.ts` if you wrote a custom provider
+- Skip `src/lib/server/auth/db.ts` if you wrote a custom adapter
+
+```pm
+npx remote0 add https://plainsv.com/r/auth-google-sqlite.json
+```
+
+## Switch provider
+
+Install the item for the new provider with the same database to replace `src/lib/server/auth/provider.ts` and `src/lib/server/auth/db.ts`, then update `.env` and register the callback URL with the new provider. Users keep their accounts when the new provider returns the same email, since `upsertUser` matches users by email.
+
+```pm
+npx remote0 add https://plainsv.com/r/auth-github-sqlite.json
+```
+
+## Custom provider
+
+Write `src/lib/server/auth/provider.ts` yourself to sign in with another OAuth provider. Export an `authProvider` object matching `AuthProvider`, and the sign in and callback routes use it as they are.
+
+```ts title="src/lib/server/auth/provider.ts"
+import type { AuthProvider } from "#lib/server/auth/types.js";
+
+/** Example OAuth sign in */
+export const authProvider: AuthProvider = {
+	name: "example",
+	createAuthorizationURL(state, codeVerifier) {
+		const url = new URL("https://example.com/oauth/authorize");
+		url.searchParams.set("state", state);
+		return url;
+	},
+	async validateAuthorizationCode(code, codeVerifier) {
+		// Exchange the code, then return the token and the user's verified profile.
+		return { error: true, data: "Not implemented." };
+	},
+};
+```
+
+## Database adapters
+
+The database adapter in `src/lib/server/auth/db.ts` exports the `authDb` object the session code and the callback route use. Install the item for your provider with the other database to switch.
+
+- Pick a `-sqlite` item to store users and sessions in the `users` and `sessions` tables of the [Drizzle utility](/docs/utilities/drizzle), which uses Node's built-in `node:sqlite` and needs Node 22.13 or later and a server with a persistent disk
+- Pick a `-mongodb` item to store them in the `user` and `session` collections of the MongoDB utility
+
+```pm
+npx remote0 add https://plainsv.com/r/auth-google-mongodb.json
+```
+
+## Custom adapter
+
+Write `src/lib/server/auth/db.ts` yourself to use Postgres, Drizzle, Prisma, or any other database. Export an `authDb` object matching `AuthDb`, and TypeScript checks that no method is missing.
+
+```ts title="src/lib/server/auth/db.ts"
+import { sql } from "#lib/server/postgres.js";
+import type { AuthDb } from "#lib/server/auth/types.js";
+
+/** Postgres version of the auth database calls */
+export const authDb: AuthDb = {
+	async createSession(session) {
+		await sql`INSERT INTO sessions (id, user_id, expires_at) VALUES (${session.id}, ${session.userId}, ${session.expiresAt})`;
+	},
+	async findSession(id) {
+		const [row] = await sql`SELECT id, user_id, expires_at FROM sessions WHERE id = ${id}`;
+		return row ? { id: row.id, userId: row.user_id, expiresAt: row.expires_at } : null;
+	},
+	// updateSessionExpiry, deleteSession, findUser, and upsertUser follow the same pattern.
+};
+```
+
+## Files
+
+The auth code lives in `src/lib/server/auth`, and the routes live in `src/routes/api/auth`.
+
+- Find the shared types, including `AuthDb` and `AuthProvider`, in `types.ts`
+- Find the installed database adapter in `db.ts`
+- Find the installed provider in `provider.ts`
+- Find session cookies and validation in `session.ts`
+- Find the request hook in `hook.ts`
+- Find the sign in and `callback` endpoints for each provider in `src/routes/api/auth/google` and `src/routes/api/auth/github`
+- Find the shared `signout` endpoint in `src/routes/api/auth/signout`
+
+## API
+
+```ts title="src/lib/server/auth/types.ts"
+/** Database calls auth needs, so any database can back it */
+interface AuthDb {
+	createSession(session: AuthSession): Promise<void>;
+	findSession(id: string): Promise<AuthSession | null>;
+	updateSessionExpiry(id: string, expiresAt: Date): Promise<void>;
+	deleteSession(id: string): Promise<void>;
+	findUser(id: string): Promise<AuthUser | null>;
+	upsertUser(profile: AuthProfile): Promise<AuthUser>;
+}
+
+/** OAuth provider steps, so the sign in and callback routes work with any provider */
+interface AuthProvider {
+	name: string;
+	createAuthorizationURL(state: string, codeVerifier: string): URL;
+	validateAuthorizationCode(code: string, codeVerifier: string): Promise<AuthProviderResult>;
+}
+
+type AuthProviderResult = { error: true; data: string } | { error: false; data: { token: AuthProviderToken; user: AuthProfile & { id: string } } };
+
+interface AuthUser { id: string; email: string; image: string }
+interface AuthProfile { email: string; image: string }
+interface AuthSession { id: string; userId: string; expiresAt: Date }
+interface AuthProviderToken { value: string; scopes: string[]; expiresAt?: Date }
+```
+
+```ts title="src/lib/server/auth/session.ts"
+/** Creates a 30-day session for the user and sets its token as the `session` cookie */
+function createAndSetSession(event: RequestEvent, userId: string): Promise<AuthSession>;
+
+/** Returns the session and user for a `session` cookie token, refreshing sessions that expire within 15 days */
+function validateSessionToken(event: RequestEvent, token: string): Promise<SessionValidationResult>;
+
+/** Deletes the signed-in user's session and its cookie */
+function deleteSession(event: RequestEvent): Promise<void>;
+
+/** Creates a random URL-safe token, used for the OAuth state, the PKCE verifier, and session tokens */
+function generateToken(): string;
+
+/** Sets a cookie; `expires` wins over `maxAge`, and the default lifetime is 10 minutes */
+function setCookie(event: RequestEvent, name: string, value: string, options?: { maxAge?: number; expires?: Date }): void;
+```

@@ -1,0 +1,188 @@
+---
+title: "CSS Utilities"
+description: "Plain CSS shimmer and scroll-fade classes, ported from the shadcn Tailwind utilities."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# CSS Utilities
+
+Global classes that bring the shadcn `shimmer` and `scroll-fade` utilities to projects without Tailwind. Add a class to any element, and change the effect by setting CSS variables instead of Tailwind value classes.
+
+```svelte title="+page.svelte"
+<p class="shimmer">Generating response...</p>
+
+<ul class="scroll-fade">
+	<!-- Long list -->
+</ul>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/css-utils.json
+```
+
+## Setup
+
+The utilities live in `src/styles/utils.css`. Import the file once in your global stylesheet, after the theme tokens, so every page and component can use the classes.
+
+```css title="src/styles/app.css"
+@import "./theme.css";
+@import "./utils.css";
+```
+
+## Shimmer
+
+The `shimmer` class sweeps a highlight across text. The highlight is a lighter version of the text color, so the effect stands out most on muted text.
+
+<Demo section="shimmer" />
+
+```svelte title="+page.svelte"
+<p class="thinking shimmer">Generating response...</p>
+
+<style>
+	.thinking {
+		width: fit-content;
+		color: var(--muted-foreground);
+	}
+</style>
+```
+
+The sweep crosses the full width of the element in each cycle. Use it on an inline element, such as a `span`, or give a block element `width: fit-content`, so the highlight does not pause while it crosses empty space.
+
+### Shimmer variables
+
+Set these variables on the element, or on a parent, to change the effect. `--shimmer-color` sets the highlight color, `--shimmer-duration` sets the length of one sweep and defaults to `1.5s`, `--shimmer-spread` sets the highlight width and defaults to `calc(3ch + 40px)`, and `--shimmer-angle` tilts the highlight and defaults to `20deg`.
+
+<Demo section="shimmer-variables" />
+
+```svelte title="+page.svelte"
+<p class="shimmer" style="--shimmer-color: var(--destructive);">Custom color</p>
+<p class="shimmer" style="--shimmer-duration: 3s;">Slow sweep</p>
+<p class="shimmer" style="--shimmer-spread: 5rem;">Wide highlight</p>
+<p class="shimmer" style="--shimmer-angle: 60deg;">Steep highlight</p>
+```
+
+Mix the highlight color with `transparent` to soften it, the same way the Tailwind `shimmer-color-red-500/50` class does.
+
+```svelte title="+page.svelte"
+<p class="shimmer" style="--shimmer-color: color-mix(in oklch, var(--destructive) 50%, transparent);">Custom color at 50%</p>
+```
+
+### Shimmer modifiers
+
+Add `shimmer-once` to sweep a single time, `shimmer-reverse` to sweep in the other direction, and `shimmer-none` to turn the effect off while keeping the class, such as when loading finishes. In right-to-left layouts, the sweep reverses on its own so it still starts from the start edge.
+
+<Demo section="shimmer-modifiers" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let isLoading = $state(true);
+</script>
+
+<p class="shimmer shimmer-once">Sweeps once</p>
+<p class="shimmer shimmer-reverse">Sweeps the other way</p>
+<p class={["shimmer", !isLoading && "shimmer-none"]}>Loading results...</p>
+<p class="shimmer" dir="rtl">جارٍ إنشاء الرد...</p>
+```
+
+To replay `shimmer-once`, remount the element, such as with a `{#key}` block.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let replayCount = $state(0);
+</script>
+
+{#key replayCount}
+	<p class="shimmer shimmer-once">Sweeps once</p>
+{/key}
+<button onclick={() => replayCount++}>Replay</button>
+```
+
+## Scroll fade
+
+The `scroll-fade` classes fade the edges of a scroll container while there is more content to scroll to. Each fade grows as you scroll away from its edge, and disappears when you reach that edge.
+
+<Demo section="scroll-fade" />
+
+```svelte title="+page.svelte"
+<ul class="list scroll-fade">
+	<!-- Long list -->
+</ul>
+
+<ul class="row scroll-fade-x">
+	<!-- Wide row -->
+</ul>
+
+<style>
+	.list {
+		height: 12rem;
+		overflow-y: auto;
+	}
+
+	.row {
+		display: flex;
+		overflow-x: auto;
+	}
+</style>
+```
+
+### No JavaScript needed
+
+Add the class to the scroll container and leave it on. The fades come from CSS scroll-driven animations, so a container that does not overflow shows no fade, and each edge only fades once there is content past it. There is no need to measure `scrollHeight` or `scrollWidth`, or to watch the size with a `ResizeObserver`, to add or remove the class.
+
+This also works for a text field that grows up to a maximum height and then scrolls: the fades appear only once the text passes that height.
+
+```svelte title="+page.svelte"
+<textarea class="prompt scroll-fade-y"></textarea>
+
+<style>
+	.prompt {
+		max-height: 12rem;
+		overflow-y: auto;
+	}
+</style>
+```
+
+### Scroll fade edges
+
+Use `scroll-fade` or `scroll-fade-y` to fade the top and bottom, and `scroll-fade-x` to fade the start and end. Use `scroll-fade-t`, `scroll-fade-b`, `scroll-fade-l`, or `scroll-fade-r` to fade one physical edge, or `scroll-fade-s` and `scroll-fade-e` to fade the start or end edge, which flips in right-to-left layouts. Add `scroll-fade-none` to remove the fade.
+
+<Demo section="scroll-fade-edges" />
+
+```svelte title="+page.svelte"
+<div class="messages scroll-fade-t">
+	<!-- Chat messages pinned to the bottom -->
+</div>
+
+<ul class="row scroll-fade-e">
+	<!-- Fades the right edge, or the left edge in right-to-left layouts -->
+</ul>
+
+<ul class="list scroll-fade scroll-fade-none">
+	<!-- No fade -->
+</ul>
+```
+
+### Scroll fade variables
+
+`--scroll-fade-size` sets the size of every fade and defaults to `min(12%, 2.5rem)`. Set `--scroll-fade-t-size`, `--scroll-fade-b-size`, `--scroll-fade-s-size`, or `--scroll-fade-e-size` to size one edge. `--scroll-fade-reveal` sets how far you scroll before a fade reaches full size, and defaults to `6rem`.
+
+<Demo section="scroll-fade-variables" />
+
+```svelte title="+page.svelte"
+<style>
+	.list {
+		--scroll-fade-size: 4rem;
+		--scroll-fade-b-size: 2rem;
+		--scroll-fade-reveal: 3rem;
+	}
+</style>
+```
+
+## Browser support
+
+Scroll fades grow and shrink with CSS scroll-driven animations. In browsers without `animation-timeline` support, every fade stays visible at full size. Shimmer turns off and shows plain text when the user prefers reduced motion, and its brighter dark mode highlight follows the `.dark` class.

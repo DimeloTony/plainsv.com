@@ -1,0 +1,156 @@
+---
+title: "Checkbox"
+description: "A box that toggles an option on or off, with a mixed state, variants, sizes, and rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Checkbox
+
+Lets the user pick an option, often one of several, or accept terms before submitting a form. It renders a `button` with `role="checkbox"` and `aria-checked`, so Space and Enter toggle it. Link a `Label` with `for` and give the checkbox the same `id`, so clicking the label toggles it too.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Checkbox } from "#lib/components/ui/checkbox/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+</script>
+
+<Checkbox id="terms" />
+<Label for="terms">Accept terms and conditions</Label>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/checkbox.json
+```
+
+## Controlled
+
+Use `bind:checked` to read and set the state from your own code, or `onCheckedChange` to run code on each toggle. Without either, set `defaultChecked` to start the checkbox checked.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Checkbox } from "#lib/components/ui/checkbox/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+
+	let isAccepted = $state(false);
+</script>
+
+<Checkbox id="terms" bind:checked={isAccepted} />
+<Label for="terms">Accept terms and conditions</Label>
+<p>Terms are {isAccepted ? "accepted" : "not accepted"}.</p>
+```
+
+A passed `onclick` runs before the toggle. Call `e.preventDefault()` in it to keep the current state.
+
+## Indeterminate
+
+Set `indeterminate` to show a dash and announce the mixed state, such as for a parent checkbox while only some of its children are checked. The next toggle checks the box and clears `indeterminate`, like a native checkbox. Use `bind:indeterminate` to read that change.
+
+<Demo section="indeterminate" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Checkbox } from "#lib/components/ui/checkbox/index.js";
+	import { Label } from "#lib/components/ui/label/index.js";
+
+	const toppings = ["Cheese", "Mushrooms", "Olives"];
+	let selected = $state(["Cheese"]);
+	const allSelected = $derived(selected.length === toppings.length);
+	const someSelected = $derived(selected.length > 0 && !allSelected);
+</script>
+
+<Checkbox id="all" checked={allSelected} indeterminate={someSelected} onCheckedChange={(checked) => (selected = checked ? [...toppings] : [])} />
+<Label for="all">All toppings</Label>
+
+{#each toppings as topping (topping)}
+	<Checkbox id={topping} checked={selected.includes(topping)} onCheckedChange={(checked) => (selected = checked ? [...selected, topping] : selected.filter((item) => item !== topping))} />
+	<Label for={topping}>{topping}</Label>
+{/each}
+```
+
+## Forms
+
+Set `name` to submit the checkbox with a form. Like a native checkbox, it submits `value`, which defaults to `"on"`, only while checked.
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<Checkbox id="newsletter" name="newsletter" value="yes" />
+	<Label for="newsletter">Subscribe to the newsletter</Label>
+</form>
+```
+
+## Variants
+
+Set `variant` to `default` or `destructive` to change the box color while it is checked or mixed.
+
+<Demo section="variants" />
+
+```svelte title="+page.svelte"
+<Checkbox variant="destructive" defaultChecked />
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to change the box and icon. The default is `md`. Like shadcn, the box keeps a small corner radius at every size instead of following `--radius-<size>`, which would turn it into a circle.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Checkbox size="lg" />
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the box. Use `pill` for a round checkbox.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Checkbox rounded="pill" />
+```
+
+## States
+
+Set `disabled` to dim the checkbox and block toggling. Set `aria-invalid="true"` to show the invalid ring, such as for required terms that are still unchecked.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Checkbox disabled />
+<Checkbox aria-invalid="true" />
+```
+
+## API
+
+The `Checkbox` props extend the native `button` attributes, and extra attributes such as `id` pass through to the button. The root sets `data-state` to `checked`, `unchecked`, or `indeterminate` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompProps<"button"> {
+	/** Whether the checkbox is checked; supports `bind:checked` */
+	checked?: boolean;
+	/** Starting state when `checked` is not set; defaults to `false` */
+	defaultChecked?: boolean;
+	/** Shows the mixed state, such as for a partly selected group; cleared on the next toggle and supports `bind:indeterminate` */
+	indeterminate?: boolean;
+	/** Called with the new state when the checkbox is toggled */
+	onCheckedChange?: (checked: boolean) => void;
+	/** Form field name; submits `value` while the checkbox is checked */
+	name?: string;
+	/** Value submitted with the form while checked; defaults to `"on"` */
+	value?: string;
+	/** Color of the box while checked or mixed */
+	variant?: "default" | "destructive";
+	/** Box and icon size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the box; a small radius scaled to the box when omitted, like shadcn */
+	rounded?: UiRounded;
+}
+```

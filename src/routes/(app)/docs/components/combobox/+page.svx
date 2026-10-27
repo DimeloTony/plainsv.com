@@ -1,0 +1,244 @@
+---
+title: "Combobox"
+description: "A button that opens a searchable list to pick one option, built from the popover and command components."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Combobox
+
+Picks one option from a list that is too long to scan, by typing to filter it. The trigger is an outline `Button` that opens a `Popover`, and the popover holds a `Command` with a search input. Selecting an item sets the value, closes the popover, and returns focus to the trigger.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Combobox, ComboboxTrigger, ComboboxValue, ComboboxContent, ComboboxInput, ComboboxList, ComboboxEmpty, ComboboxGroup, ComboboxItem } from "#lib/components/ui/combobox/index.js";
+
+	const frameworks = [
+		{ value: "sveltekit", label: "SvelteKit" },
+		{ value: "next", label: "Next.js" },
+		{ value: "nuxt", label: "Nuxt" },
+	];
+</script>
+
+<Combobox>
+	<ComboboxTrigger class="trigger">
+		<ComboboxValue placeholder="Select framework..." />
+	</ComboboxTrigger>
+	<ComboboxContent>
+		<ComboboxInput placeholder="Search framework..." />
+		<ComboboxList>
+			<ComboboxEmpty>No framework found.</ComboboxEmpty>
+			<ComboboxGroup>
+				{#each frameworks as framework (framework.value)}
+					<ComboboxItem value={framework.value}>{framework.label}</ComboboxItem>
+				{/each}
+			</ComboboxGroup>
+		</ComboboxList>
+	</ComboboxContent>
+</Combobox>
+
+<style>
+	:global(.trigger) {
+		width: 12.5rem;
+	}
+</style>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/combobox.json
+```
+
+## Anatomy
+
+`Combobox` holds the value and renders a `Popover`. `ComboboxTrigger` renders the outline button with a chevron, and `ComboboxValue` inside it shows the selected item's text or the placeholder. Give the trigger a fixed width with a `class`, so it does not resize as the value changes.
+
+`ComboboxContent` opens a popover as wide as the trigger, with at least `12.5rem`, and holds a `Command` that starts on the selected item. `ComboboxItem` selects its `value` and shows a check mark while selected. `ComboboxInput`, `ComboboxList`, `ComboboxEmpty`, `ComboboxGroup`, and `ComboboxSeparator` are the `Command` parts, so they filter and navigate the same way.
+
+## Groups
+
+Use `ComboboxGroup` with a `heading` and `ComboboxSeparator` to organize long lists. Groups hide while none of their items match. Add `keywords` to an item to match words that are not shown, such as a timezone abbreviation.
+
+<Demo section="groups" />
+
+```svelte title="+page.svelte"
+<ComboboxList>
+	<ComboboxEmpty>No timezone found.</ComboboxEmpty>
+	<ComboboxGroup heading="Americas">
+		<ComboboxItem value="America/New_York" keywords={["est", "eastern"]}>New York</ComboboxItem>
+		<ComboboxItem value="America/Los_Angeles" keywords={["pst", "pacific"]}>Los Angeles</ComboboxItem>
+	</ComboboxGroup>
+	<ComboboxSeparator />
+	<ComboboxGroup heading="Europe">
+		<ComboboxItem value="Europe/London" keywords={["gmt"]}>London</ComboboxItem>
+	</ComboboxGroup>
+</ComboboxList>
+```
+
+## Trigger
+
+`ComboboxTrigger` renders an outline button with a chevron. To open the popover from any other element, pass a `trigger` snippet and put the `ComboboxValue` inside it. It receives the popover trigger's `props`, with the ARIA attributes, the handlers, and the attachment that places the popover, plus `disabled`. Spread them onto the element.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<ComboboxTrigger>
+	{#snippet trigger({ props })}
+		<Button variant="ghost" {...props}>
+			<ComboboxValue placeholder="Select framework..." />
+			<ChevronsUpDownIcon />
+		</Button>
+	{/snippet}
+</ComboboxTrigger>
+```
+
+## Controlled
+
+Use `bind:value` to read and set the selected value, or `onValueChange` to run code on each selection. Use `bind:open` or `onOpenChange` for the popover. Without either, set `defaultValue` to start with a selection.
+
+Items register their text when the list first opens, so `ComboboxValue` shows a starting value's raw `value` until then. Pass `label` to show the right text from the start.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let framework = $state("sveltekit");
+	const frameworkLabel = $derived(frameworks.find((item) => item.value === framework)?.label);
+</script>
+
+<Combobox bind:value={framework}>
+	<ComboboxTrigger class="trigger">
+		<ComboboxValue placeholder="Select framework..." label={frameworkLabel} />
+	</ComboboxTrigger>
+	<ComboboxContent>...</ComboboxContent>
+</Combobox>
+<p>Value: {framework || "none"}</p>
+```
+
+## Forms
+
+Set `name` to submit the value with a form through a hidden input.
+
+```svelte title="+page.svelte"
+<form method="POST">
+	<Combobox name="framework">...</Combobox>
+</form>
+```
+
+## Sizes
+
+Set `size` on `Combobox` to `xs`, `sm`, `md`, or `lg` to change the trigger, the input, and the items together. The default is `md`, and the corner radius follows the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Combobox size="lg">...</Combobox>
+```
+
+## Rounded
+
+Set `rounded` on `Combobox` to `xs` through `4xl` or `pill` to override the radius of the trigger, popover, and items.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Combobox rounded="3xl">...</Combobox>
+```
+
+## States
+
+Set `disabled` on `Combobox` to dim the trigger and block opening, or on `ComboboxItem` to block one option. The arrow keys skip disabled items.
+
+<Demo section="states" />
+
+```svelte title="+page.svelte"
+<Combobox disabled>...</Combobox>
+<ComboboxItem value="remix" disabled>Remix</ComboboxItem>
+```
+
+## Overrides
+
+`ComboboxTrigger` takes its own `variant`, `size`, and `rounded`, and `ComboboxContent` takes `size` and `rounded`. Each wins over the combobox's for that part only. `ComboboxItem` takes `rounded` to set that item's exact radius.
+
+```svelte title="+page.svelte"
+<Combobox>
+	<ComboboxTrigger variant="ghost" size="sm">
+		<ComboboxValue placeholder="Pick a framework" />
+	</ComboboxTrigger>
+	<ComboboxContent size="lg">
+		<ComboboxItem value="svelte" rounded="pill">Svelte</ComboboxItem>
+	</ComboboxContent>
+</Combobox>
+```
+
+## API
+
+`ComboboxTrigger` passes extra attributes to its `Button` and ignores them when a `trigger` snippet is given, `ComboboxValue` extends `span`, and `ComboboxContent` and `ComboboxItem` extend `div`. See the `Command` docs for the props of the shared parts. Selected items set `data-checked` for custom styles.
+
+```ts title="index.ts"
+interface ComboboxOptions {
+	/** Value of the selected item; supports `bind:value` */
+	value?: string;
+	/** Starting value when `value` is not set */
+	defaultValue?: string;
+	/** Called with the new value when an item is selected */
+	onValueChange?: (value: string) => void;
+	/** Whether the popover is shown; supports `bind:open` */
+	open?: boolean;
+	/** Called when the popover opens or closes */
+	onOpenChange?: (open: boolean) => void;
+	/** Dims the trigger and blocks opening */
+	disabled?: boolean;
+	/** Form field name; the value submits through a hidden input */
+	name?: string;
+	/** Trigger height, input height, and item size on the shared scale; defaults to `md` */
+	size?: UiSize;
+	/** Corner radius of the trigger, popover, and items; follows `size` when omitted. `pill` makes the panels pills too, which can clip their items, so use `3xl` or `4xl` for round panels */
+	rounded?: UiRounded;
+}
+
+interface TriggerProps extends Omit<CompProps<"button">, "children"> {
+	/** Content of the default trigger button, such as a `ComboboxValue` */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the popover */
+	trigger?: Snippet<[{ props: TriggerAttrs }]>;
+	/** Style of the default trigger button; defaults to `outline` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default trigger button; overrides the combobox's `size` */
+	size?: UiSize;
+	/** Corner radius of the default trigger button; overrides the combobox's `rounded` */
+	rounded?: UiRounded;
+}
+
+interface ValueProps extends CompProps<"span"> {
+	/** Text shown when no item is selected */
+	placeholder?: string;
+	/** Text for the selected value; needed for a starting value before the list has opened once */
+	label?: string;
+}
+
+interface ItemProps extends CompPropsWithChild<"div"> {
+	/** Value set on the combobox when this item is chosen */
+	value: string;
+	/** Text shown in `ComboboxValue`; defaults to the item's text */
+	label?: string;
+	/** Extra words that also match the item, such as synonyms */
+	keywords?: string[];
+	/** Blocks selecting the item; the arrow keys skip it */
+	disabled?: boolean;
+	/** Corner radius of this item with this exact value; overrides the list's item radius */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Item size of this popover; overrides the combobox's `size` */
+	size?: UiSize;
+	/** Corner radius of this popover, with items one step smaller; overrides the combobox's `rounded`. `pill` makes it a pill too, which can clip its items, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+}
+```

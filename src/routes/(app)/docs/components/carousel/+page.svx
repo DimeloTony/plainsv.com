@@ -1,0 +1,125 @@
+---
+title: "Carousel"
+description: "Slides that snap one at a time, with buttons, arrow keys, mouse dragging, looping, and several per view."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Carousel
+
+A row of slides that scroll and snap one at a time. It uses native CSS scroll snapping, so touch and trackpad scrolling feel native, and adds buttons, arrow keys, and mouse dragging. Compose it from `Carousel`, `CarouselContent`, `CarouselItem`, `CarouselPrevious`, and `CarouselNext`.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "#lib/components/ui/carousel/index.js";
+</script>
+
+<Carousel>
+	<CarouselContent>
+		<CarouselItem>...</CarouselItem>
+		<CarouselItem>...</CarouselItem>
+		<CarouselItem>...</CarouselItem>
+	</CarouselContent>
+	<CarouselPrevious />
+	<CarouselNext />
+</Carousel>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/carousel.json
+```
+
+## Anatomy
+
+`Carousel` renders a region announced as a carousel, and each `CarouselItem` a group announced as a slide. `CarouselContent` is the scrolling viewport. `CarouselPrevious` and `CarouselNext` render outline icon buttons outside the start and end edges, so leave room around the carousel; they are disabled at the ends unless `loop` is set.
+
+## Slides per view
+
+Set `perView` to show several slides at once; each slide takes its share of the width, minus the gaps. Set `loop` so the buttons and arrow keys wrap from the last slide to the first and back.
+
+<Demo section="perView" />
+
+```svelte title="+page.svelte"
+<Carousel perView={3} loop>...</Carousel>
+```
+
+## Vertical
+
+Set `orientation="vertical"` to scroll up and down. Give the carousel a height, since the slides fill it.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<Carousel orientation="vertical" perView={2} style="height: 18rem">...</Carousel>
+```
+
+## Controlled
+
+Use `bind:selectedIndex` to read the slide at the start of the view and to scroll to a slide by setting it, such as from a row of dots. Use `onSelectedIndexChange` to run code when the slide changes.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let selectedIndex = $state(0);
+</script>
+
+<Carousel bind:selectedIndex>...</Carousel>
+<button onclick={() => (selectedIndex = 2)}>Go to slide 3</button>
+```
+
+## Keyboard and mouse
+
+With focus inside the carousel, the left and right arrows move between slides, or up and down for a vertical carousel. A mouse can drag the slides; they snap to the nearest slide when released, and a drag never triggers a click on a link inside a slide.
+
+## Sizes
+
+Set `size` on `Carousel` to `xs`, `sm`, `md`, or `lg`. The default is `md`, with a 16 pixel gap between slides and small buttons. The gap and the buttons follow the size.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<Carousel size="sm" perView={2}>...</Carousel>
+<Carousel size="lg" perView={2}>...</Carousel>
+```
+
+## Overrides
+
+`CarouselPrevious` and `CarouselNext` take `size` next to `variant` and `rounded`, which wins over the size that follows the carousel. Square `icon-*` sizes keep the button round.
+
+```svelte title="+page.svelte"
+<CarouselPrevious size="icon-md" />
+<CarouselNext variant="secondary" size="icon-md" />
+```
+
+## API
+
+`Carousel`, `CarouselContent`, and `CarouselItem` extend the native `div` attributes. `CarouselPrevious` and `CarouselNext` take the `Button` props, with `variant="outline"` and `rounded="pill"` by default.
+
+```ts title="index.ts"
+interface Props extends CompPropsWithChild<"div"> {
+	/** `horizontal` scrolls sideways; `vertical` scrolls up and down and needs a height on the content; defaults to `horizontal` */
+	orientation?: "horizontal" | "vertical";
+	/** Number of slides shown at once; defaults to `1` */
+	perView?: number;
+	/** Wraps around from the last slide to the first and back */
+	loop?: boolean;
+	/** Index of the slide at the start of the view; supports `bind:selectedIndex`, and setting it scrolls there */
+	selectedIndex?: number;
+	/** Called with the index of the slide at the start of the view when it changes */
+	onSelectedIndexChange?: (index: number) => void;
+	/** Gap between slides and size of the buttons on the shared scale; defaults to `md` */
+	size?: UiSize;
+}
+
+type StepProps = Partial<Omit<Extract<ButtonProps, { href?: undefined }>, "size" | "href">> & {
+	/** Size of the button, including the square `icon-*` sizes; follows the carousel's `size` when omitted */
+	size?: ButtonProps["size"];
+};
+```

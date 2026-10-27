@@ -1,0 +1,84 @@
+---
+title: "Skeleton"
+description: "A pulsing placeholder that holds the shape of content while it loads, with rounded corners."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Skeleton
+
+Holds the place of content while it loads, so the layout does not jump when the content arrives. A skeleton has no size of its own. Set its width and height with `style`, or with a class that targets it.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Skeleton } from "#lib/components/ui/skeleton/index.js";
+</script>
+
+<div aria-busy="true" aria-label="Loading profile">
+	<Skeleton rounded="pill" style="width: 3rem; height: 3rem" />
+	<Skeleton style="width: 15.625rem; height: 1rem" />
+	<Skeleton style="width: 12.5rem; height: 1rem" />
+</div>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/skeleton.json
+```
+
+## Sizing
+
+Inline `style` is the recommended way to size a skeleton. To size skeletons with a class instead, see the other ways on the [styling page](/docs/styling).
+
+## Accessibility
+
+Each skeleton sets `aria-hidden="true"`, so screen readers skip the placeholders. Set `aria-busy="true"` and an `aria-label` on the element that holds them, and remove `aria-busy` when the content loads.
+
+## Card
+
+Combine skeletons to match the shape of the content they replace, such as a card with a title, a description, and an image.
+
+<Demo section="card" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Skeleton } from "#lib/components/ui/skeleton/index.js";
+	import { Card, CardHeader, CardContent } from "#lib/components/ui/card/index.js";
+</script>
+
+<Card aria-busy="true" aria-label="Loading post" style="width: 20rem">
+	<CardHeader>
+		<Skeleton style="width: 66%; height: 1rem" />
+		<Skeleton style="width: 50%; height: 1rem" />
+	</CardHeader>
+	<CardContent>
+		<Skeleton style="aspect-ratio: 16 / 9; width: 100%" />
+	</CardContent>
+</Card>
+```
+
+## Rounded
+
+Set `rounded` to `xs` through `4xl` or `pill` to override the default `md` radius. Use `pill` for avatars and pills.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Skeleton rounded="pill" style="width: 3rem; height: 3rem" />
+```
+
+## API
+
+The `Skeleton` props extend the native `div` attributes, and extra attributes pass through to the element. When the user prefers reduced motion, the pulse stops.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Corner radius; `md` when omitted */
+	rounded?: UiRounded;
+}
+```

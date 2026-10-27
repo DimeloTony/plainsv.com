@@ -1,0 +1,155 @@
+---
+title: "Functions"
+description: "Type-safe server functions with Zod validation, called from the client through one POST endpoint."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Functions
+
+Call server code from the client by name, with input and output types inferred from Zod schemas. Every call goes through one `POST /api/functions` endpoint, and Zod only runs on the server, so it never reaches the client bundle.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { useFunc } from "#lib/functions/index.js";
+
+	const response = await useFunc("userCreate", { email: "ada@example.com" });
+	// If the call failed: data holds the error message.
+	if (response.error) console.error(response.data);
+	else console.log(response.data);
+</script>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/functions.json
+```
+
+## Files
+
+The utility lives in `src/lib/functions`. The `schemas.ts` file defines each function's input and output, `handlers` holds the server code, `server.ts` exports the `POST` handler, and `index.ts` exports `useFunc` for the client.
+
+```ts title="src/routes/api/functions/+server.ts"
+export { POST } from "#lib/functions/server.js";
+```
+
+## Define a schema
+
+Add an entry to `functionsSchemas` with an `in` schema, an `out` schema, and `isPublic`. The key is the function name used by the client and the handler.
+
+```ts title="src/lib/functions/schemas.ts"
+export const functionsSchemas = {
+	userCreate: {
+		in: z.object({ email: z.email() }),
+		out: z.string(),
+		isPublic: true,
+	},
+};
+```
+
+## Write a handler
+
+Export a handler with the same name from any file in `src/lib/functions/handlers`. Every exported function in that folder is registered automatically. Type it with `FuncHandler` to get typed `inputData` and the full request `event`, and return an object with `error` and `data`.
+
+```ts title="src/lib/functions/handlers/demo.ts"
+import type { FuncHandler } from "../schemas";
+
+/** Create user */
+export const userCreate: FuncHandler<"userCreate"> = async ({ event, inputData }) => {
+	return { error: false, data: `User with email ${inputData.email} created.` };
+};
+```
+
+## Calling and validation
+
+`useFunc` takes the function name and its input, and resolves to a response with `error` and `data`. It never throws, and network errors resolve with `error: true`. The server validates the input against `in` and a successful output against `out`, and returns the Zod issues as an error message when either fails. Clear the email below to see a validation error.
+
+<Demo section="call" />
+
+```ts title="+page.svelte"
+const response = await useFunc("userCreate", { email }, false);
+```
+
+Pass `false` as the third argument to wait at least 300 milliseconds before resolving, so loading states do not flash on fast responses.
+
+## Private functions
+
+Set `isPublic: false` to only allow calls when `event.locals.userData` is set, such as after your auth hook signs a user in. Other calls get an error response.
+
+<Demo section="private" />
+
+```ts title="src/lib/functions/schemas.ts"
+userDeletePrivate: {
+	in: z.object({ email: z.email() }),
+	out: z.string(),
+	isPublic: false,
+},
+```
+
+## Form data
+
+Use a `z.custom` schema for `FormData` input, and pass a `FormData` object to `useFunc`. The request is sent as multipart form data instead of JSON.
+
+<Demo section="upload" />
+
+```ts title="src/lib/functions/schemas.ts"
+fileUpload: {
+	in: z.custom<FormData>((value) => value instanceof FormData),
+	out: z.object({ name: z.string(), size: z.number(), type: z.string() }),
+	isPublic: true,
+},
+```
+
+```ts title="+page.svelte"
+const formData = new FormData();
+formData.append("file", file);
+const response = await useFunc("fileUpload", formData);
+```
+
+## Streaming
+
+Return a `Response` with the `text/event-stream` content type to stream. On the client, `data` becomes an async generator that yields the payload of each `data:` event, parsing JSON strings. Stopping the loop early closes the connection.
+
+<Demo section="stream" />
+
+```ts title="src/lib/functions/handlers/demo.ts"
+/** Stream a reply one word at a time */
+export const textStream: FuncHandler<"textStream"> = async ({ inputData }) => {
+	const words = `You said "${inputData.prompt}".`.split(" ");
+	const encoder = new TextEncoder();
+	const stream = new ReadableStream({
+		async start(controller) {
+			for (const word of words) controller.enqueue(encoder.encode(`data: ${JSON.stringify(`${word} `)}\n\n`));
+			controller.close();
+		},
+	});
+	return new Response(stream, { headers: { "content-type": "text/event-stream" } });
+};
+```
+
+```ts title="+page.svelte"
+const response = await useFunc("textStream", { prompt });
+if (!response.error) for await (const word of response.data) text += word;
+```
+
+Any other `Response` returned from a handler is sent as it is, without output validation.
+
+## API
+
+```ts title="src/lib/functions/index.ts"
+/** Calls a server function by name and resolves to its typed response */
+function useFunc<K extends keyof FuncSchemas>(functionName: K, apiLoad: FuncSchemas[K]["in"], skipSleepTime?: boolean): Promise<FuncSchemas[K]["out"]>;
+```
+
+```ts title="src/lib/functions/schemas.ts"
+/** Function response type */
+type FuncResponse<K extends keyof FuncSchemas> = { error: true; data: string } | { error: false; data: z.infer<(typeof functionsSchemas)[K]["out"]> };
+
+/** Type helper to create function handlers */
+type FuncHandler<K extends keyof FuncSchemas> = (props: { event: RequestEvent; inputData: FuncSchemas[K]["in"] }) => FuncSchemas[K]["out"] | Promise<FuncSchemas[K]["out"]> | Response | Promise<Response>;
+```

@@ -1,0 +1,388 @@
+---
+title: "Candlestick Chart"
+description: "A candlestick chart with trading sessions, a volume pane, VWAP, moving averages, Bollinger bands, price levels, live updates, zoom, and pan."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Candlestick Chart
+
+Draws open, high, low, and close candles with plain SVG and no chart library, for stock, crypto, or any other prices over time. Shade pre-market and after hours in the exchange's time zone, mark earnings or news with highlights, and stream live prices that the chart follows. A volume pane sits under the price pane, and the chart computes VWAP, simple and exponential moving averages, and Bollinger bands from the candles. Drag to pan, hold Ctrl or ⌘ and scroll to zoom, and focus the chart to read each candle with the arrow keys. A crosshair tags the price and time on the axes, and a table of the visible candles is always there for screen readers.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { CandlestickChart, type CandlestickChartCandle } from "#lib/components/ui/candlestick-chart/index.js";
+
+	const data: CandlestickChartCandle[] = [
+		{ time: "2026-10-19T13:30:00Z", open: 182.1, high: 182.9, low: 181.8, close: 182.6, volume: 84_200 },
+		{ time: "2026-10-19T13:35:00Z", open: 182.6, high: 183.2, low: 182.4, close: 182.5, volume: 61_900 },
+	];
+	const sessions = [
+		{ start: "04:00", end: "09:30", label: "Pre-market" },
+		{ start: "16:00", end: "20:00", label: "After hours" },
+	];
+</script>
+
+<CandlestickChart {data} {sessions} timeZone="America/New_York" indicators={[{ type: "vwap", regularHours: true }, { type: "ema", period: 20 }]} label="AAPL, 5 minute candles" />
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/candlestick-chart.json
+```
+
+## Data
+
+Pass the candles in time order, oldest first. Each candle has a `time` as a `Date`, a timestamp in milliseconds, or a date string, plus `open`, `high`, `low`, `close`, and an optional `volume`. Candles sit side by side whatever their time gap, so nights and weekends leave no holes. The time axis picks its ticks by zoom level, from minutes to years.
+
+```ts title="+page.svelte"
+const candle: CandlestickChartCandle = { time: new Date(), open: 182.1, high: 182.9, low: 181.8, close: 182.6, volume: 84_200 };
+```
+
+## Sessions
+
+Set `sessions` to shade daily clock windows behind the candles, such as pre-market and after hours. Each session has a `start` and `end` as `HH:mm`, a `label` shown on the shading, in the tooltip, and in the table, and an optional `color`. A session that ends before it starts runs past midnight. Add `regularHours: true` to a VWAP to leave the sessions out of it, as most traders do.
+
+<Demo section="sessions" />
+
+```svelte title="+page.svelte"
+<CandlestickChart
+	{data}
+	sessions={[
+		{ start: "04:00", end: "09:30", label: "Pre-market" },
+		{ start: "16:00", end: "20:00", label: "After hours" },
+	]}
+	timeZone="America/New_York"
+	indicators={[{ type: "vwap", regularHours: true }]}
+/>
+```
+
+## Time Zone
+
+Set `timeZone` to an IANA name, such as `America/New_York` or `Asia/Tokyo`, so sessions match the exchange's clock wherever the viewer is. The time axis, tooltip, table, and VWAP day resets follow it too. Without it, the chart uses the viewer's own time zone.
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} {sessions} timeZone="America/New_York" />
+```
+
+## Highlights
+
+Set `highlights` to shade fixed time ranges, such as earnings releases or news. Each highlight has a `start` and an `end` that is not included, an optional `label`, and a `color` that defaults to `--chart-4`. A highlight draws over a session where they overlap.
+
+<Demo section="highlights" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} highlights={[{ start: "2026-07-23", end: "2026-07-24", label: "Earnings" }]} />
+```
+
+## Live Data
+
+Replace `data` with a new array as prices arrive, by updating the last candle or adding a new one. The chart shows the latest candles, and a zoomed chart that reaches the newest candle keeps following it as candles are added; pan back to stop following, and double-click to catch up. A dotted line and axis tag mark the latest close in its direction's color; set `lastPrice` to `false` to hide them.
+
+<Demo section="live" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let data: CandlestickChartCandle[] = $state(history);
+
+	/** Updates the last candle with a new trade price. */
+	function onTrade(price: number) {
+		const last = data[data.length - 1];
+		data = [...data.slice(0, -1), { ...last, close: price, high: Math.max(last.high, price), low: Math.min(last.low, price) }];
+	}
+</script>
+
+<CandlestickChart {data} />
+```
+
+## Price Levels
+
+Set `levels` to draw dashed lines at prices, such as support and resistance. A `support` level uses the rising color, a `resistance` level the falling color, and `color` sets any other. Each level gets a price tag on the axis, and a level outside the visible prices pins to the edge with an arrow, so it never stretches the chart.
+
+<Demo section="levels" />
+
+```svelte title="+page.svelte"
+<CandlestickChart
+	{data}
+	levels={[
+		{ price: 181.5, label: "Support", kind: "support" },
+		{ price: 186, label: "Resistance", kind: "resistance" },
+		{ price: 200, label: "Target" },
+	]}
+/>
+```
+
+## VWAP
+
+Add `{ type: "vwap" }` to `indicators` for the volume-weighted average price of `(high + low + close) / 3`. It restarts each day in the chart's time zone; set `reset` to `none` to run it across all the data. Set `bands` to draw standard deviation bands, such as `[1, 2]`, and `regularHours` to skip the sessions. The line breaks at each restart, and VWAP needs `volume` on the candles.
+
+<Demo section="vwap" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} indicators={[{ type: "vwap", bands: [1, 2] }]} />
+```
+
+## Moving Averages
+
+Add `{ type: "sma", period }` for a simple moving average of the closes, or `{ type: "ema", period }` for an exponential one that follows recent closes more closely. An average starts once its window is full.
+
+<Demo section="averages" />
+
+```svelte title="+page.svelte"
+<CandlestickChart
+	{data}
+	indicators={[
+		{ type: "ema", period: 20 },
+		{ type: "sma", period: 50 },
+	]}
+/>
+```
+
+## Bollinger Bands
+
+Add `{ type: "bollinger" }` for a 20 candle simple moving average with bands 2 standard deviations away. Set `period` and `deviations` to change them.
+
+<Demo section="bollinger" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} indicators={[{ type: "bollinger", period: 20, deviations: 2 }]} />
+```
+
+## Legend
+
+The legend above the plot lists the indicators, and each button hides or shows one. Indicators are named like "EMA 20" or "VWAP" unless `label` is set, and the label is the key in `hiddenIndicators`. Bind `hiddenIndicators`, or listen with `onHiddenIndicatorsChange`, and set `legend` to force the legend on or off.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let hiddenIndicators: string[] = $state(["VWAP"]);
+</script>
+
+<CandlestickChart {data} indicators={[{ type: "vwap" }]} bind:hiddenIndicators />
+```
+
+## Volume
+
+The volume pane shows when any candle has a `volume`, with bars in a lighter step of each candle's color. Set `volume` to `false` to hide it.
+
+<Demo section="volume" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} volume={false} />
+```
+
+## Zoom and Pan
+
+The chart shows the latest candles that fit, and a plain scroll still moves the page.
+
+- Drag the chart, or scroll sideways or with Shift held, to pan
+- Hold Ctrl or ⌘ and scroll, or pinch on a trackpad or touch screen, to zoom around the pointer
+- Double-click the chart to show the latest candles again
+
+Bind `range` to the visible candles as `[start, end)` indexes, which are fractional while panning, or listen with `onRangeChange`. Set it to choose what the chart shows first.
+
+<Demo section="zoom" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	let range: [number, number] | undefined = $state([0, 60]);
+</script>
+
+<CandlestickChart {data} bind:range />
+```
+
+## Variants
+
+Set `variant` to choose the price style. Volume, indicators, and the tooltip work the same in every style.
+
+- Use `solid` for filled candles, the default
+- Use `hollow` to leave rising bodies empty, which tells the directions apart without color
+- Use `ohlc` for bars with the open on the left and the close on the right
+- Use `line` for a line of the closes
+- Use `area` for a line of the closes over a soft wash
+
+<Demo section="variant" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} variant="ohlc" />
+```
+
+## Colors
+
+Rising candles use `--chart-3` and falling candles use `--destructive`. Set `--candlestick-chart-up` and `--candlestick-chart-down` on the chart or a parent to change them, and `--candlestick-chart-line` for the `line` and `area` styles, which default to `--chart-1`. Indicators default to `--chart-1`, `--chart-4`, and `--chart-5` in order, then `--muted-foreground`, and take any CSS color with `color`.
+
+<Demo section="colors" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} style="--candlestick-chart-up: var(--chart-1); --candlestick-chart-down: var(--chart-2)" />
+<CandlestickChart {data} variant="area" style="--candlestick-chart-line: var(--chart-5)" />
+```
+
+## Grid and Scale
+
+Set `grid` to `false` to hide the gridlines and keep the axis labels. Set `scale` to `log` so equal percent moves take equal space, which suits long ranges where the price grew a lot; the axis falls back to linear when a price on screen is zero or below.
+
+<Demo section="grid" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} grid={false} />
+<CandlestickChart {data} scale="log" variant="line" />
+```
+
+## Formatting
+
+Set `formatPrice` to format prices on the axis, tags, tooltip, and table. Set `formatVolume` for volumes, which are compact numbers such as `1.2M` by default. Set `formatTime` to format each candle's time in the tooltip, table, and announcements; axis ticks keep their own format by zoom level.
+
+<Demo section="format" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+</script>
+
+<CandlestickChart {data} formatPrice={(price) => currency.format(price)} />
+```
+
+## Tooltip
+
+Pass a `tooltip` snippet to replace the tooltip content. It receives the candle's `index`, the `candle`, its time as `label`, the `session` or highlight it falls in, the `change` and `changePercent` from the previous close, and the visible `indicators` values.
+
+<Demo section="tooltip" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data}>
+	{#snippet tooltip({ label, candle, changePercent })}
+		<strong>{label}</strong>
+		<span>Range: {(candle.high - candle.low).toFixed(2)}</span>
+		<span>{changePercent >= 0 ? "▲" : "▼"} {Math.abs(changePercent).toFixed(2)}%</span>
+	{/snippet}
+</CandlestickChart>
+```
+
+## Sizes
+
+Set `size` to `xs`, `sm`, `md`, or `lg` to scale the text and the plot height, from 14rem to 30rem. The default is `md`. Set `--candlestick-chart-height` to give the plot any other height. Candle bodies have no `rounded` prop, since rounding would blur where each candle opened and closed.
+
+<Demo section="sizes" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} size="lg" />
+<CandlestickChart {data} style="--candlestick-chart-height: 40rem" />
+```
+
+## Table
+
+Every chart renders a table of the visible candles for screen readers, and it follows zoom and pan. It adds a session column when the chart has sessions or highlights. Set `table` to show it on screen too.
+
+<Demo section="table" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} table />
+```
+
+## Keyboard
+
+The plot is in the Tab order and is named by `label`, which defaults to "Candlestick chart". Focusing it shows the latest visible candle, and a screen reader announces each candle as it changes.
+
+- Press `ArrowLeft` and `ArrowRight` to move between candles, panning to keep them on screen
+- Press `Home` and `End` to move to the first and last candle
+- Press `Shift` with the arrows to pan
+- Press `+` and `-` to zoom in and out
+- Press `Escape` to hide the crosshair
+
+## API
+
+The `CandlestickChart` props extend the native `figure` attributes, and extra attributes pass through to the root. The `getSma`, `getEma`, `getBollinger`, and `getVwap` functions are exported too, for using the same math elsewhere.
+
+```ts title="index.ts"
+interface Props extends CompProps<"figure"> {
+	/** Candles in time order, oldest first */
+	data: Candle[];
+	/** Horizontal price lines, such as support and resistance */
+	levels?: PriceLevel[];
+	/** Overlays computed from the candles: moving averages, Bollinger bands, and VWAP */
+	indicators?: Indicator[];
+	/** Daily clock windows shaded behind the candles, such as pre-market and after hours */
+	sessions?: TradingSession[];
+	/** Fixed time ranges shaded behind the candles, such as earnings */
+	highlights?: TimeHighlight[];
+	/** IANA time zone for sessions, day resets, the time axis, and the tooltip, such as `America/New_York`; the viewer's zone when omitted */
+	timeZone?: string;
+	/** Shows the volume pane; on when any candle has volume */
+	volume?: boolean;
+	/** Visible candles as `[start, end)` indexes, fractional while panning; the latest candles that fit when omitted; supports `bind:range` */
+	range?: [number, number];
+	/** Called with the visible range when the chart zooms or pans */
+	onRangeChange?: (range: [number, number]) => void;
+	/** Labels of the indicators hidden with the legend; supports `bind:hiddenIndicators` */
+	hiddenIndicators?: string[];
+	/** Called with the hidden indicator labels when the legend hides or shows one */
+	onHiddenIndicatorsChange?: (hiddenIndicators: string[]) => void;
+	/** Price style: `solid` and `hollow` candles, where `hollow` leaves rising bodies empty, `ohlc` bars, or a `line` or `area` of the closes; defaults to `solid` */
+	variant?: "solid" | "hollow" | "ohlc" | "line" | "area";
+	/** Price scale; `log` spaces equal percent moves equally, for long ranges; defaults to `linear` */
+	scale?: "linear" | "log";
+	/** Draws the gridlines; defaults to `true` */
+	grid?: boolean;
+	/** Marks the latest close with a dotted line and an axis tag, which follows live updates; defaults to `true` */
+	lastPrice?: boolean;
+	/** Axis and legend text, and the plot height unless `--candlestick-chart-height` is set; defaults to `md` */
+	size?: UiSize;
+	/** Formats prices on the axis, tags, tooltip, and table */
+	formatPrice?: (price: number) => string;
+	/** Formats a candle's time in the tooltip, table, and announcements; axis ticks pick their own format by zoom level */
+	formatTime?: (time: Date, index: number) => string;
+	/** Formats volumes in the tooltip and table; compact numbers, such as 1.2K, when omitted */
+	formatVolume?: (volume: number) => string;
+	/** Custom tooltip content for the hovered candle */
+	tooltip?: Snippet<[TooltipSnippetProps]>;
+	/** Shows the indicator legend; on when there are indicators */
+	legend?: boolean;
+	/** Shows the table of visible candles under the chart; screen readers always get it */
+	table?: boolean;
+	/** Accessible name of the plot, such as "AAPL, 5 minute candles"; defaults to "Candlestick chart" */
+	label?: string;
+}
+
+type Indicator =
+	| { type: "sma" | "ema"; period: number; label?: string; color?: string }
+	| { type: "bollinger"; period?: number; deviations?: number; label?: string; color?: string }
+	| { type: "vwap"; reset?: "day" | "none"; bands?: number[]; regularHours?: boolean; label?: string; color?: string };
+
+interface TradingSession {
+	/** Start time as `HH:mm` in `timeZone`, such as `04:00` */
+	start: string;
+	/** End time as `HH:mm` in `timeZone`, not included; an end before the start runs past midnight */
+	end: string;
+	/** Name on the shading and in the tooltip, such as "Pre-market" */
+	label: string;
+	/** Any CSS color for the shading; defaults to `--muted-foreground` */
+	color?: string;
+}
+
+interface TimeHighlight {
+	/** Start of the range, as a `Date`, a timestamp in milliseconds, or a date string */
+	start: Date | number | string;
+	/** End of the range, not included */
+	end: Date | number | string;
+	/** Name on the shading and in the tooltip */
+	label?: string;
+	/** Any CSS color for the shading; defaults to `--chart-4` */
+	color?: string;
+}
+
+interface PriceLevel {
+	/** Price of the line */
+	price: number;
+	/** Name drawn above the line, such as "Support" */
+	label?: string;
+	/** `support` uses the rising color, `resistance` the falling color, and `default` a neutral one */
+	kind?: "support" | "resistance" | "default";
+	/** Any CSS color; overrides the `kind` color */
+	color?: string;
+}
+```

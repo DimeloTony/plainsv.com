@@ -1,0 +1,164 @@
+---
+title: "Dialog"
+description: "A modal window built on the native dialog element, with a trigger and a content panel."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Dialog
+
+A window overlaid on the page with a blurred backdrop. Built on the native `dialog` element with `showModal`, so it renders in the top layer above every ancestor. Clicking the backdrop or pressing Escape closes it, and the panel scales out as the backdrop fades.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Dialog, DialogTrigger, DialogContent } from "#lib/components/ui/dialog/index.js";
+</script>
+
+<Dialog>
+	<DialogTrigger>Open dialog</DialogTrigger>
+	<DialogContent>
+		<p>Click the backdrop or press Escape to close.</p>
+	</DialogContent>
+</Dialog>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/dialog.json
+```
+
+## Anatomy
+
+`Dialog` holds the open state and renders the modal `dialog` element while open. `DialogTrigger` opens it and renders a `Button` with its children as the label. `DialogContent` registers its children with `Dialog`, which renders them inside the panel, and its `class` and other attributes go on the panel, such as a fixed width or `style="padding: 0"` for content that fills it edge to edge.
+
+## Trigger
+
+To open the dialog from any other element, pass a `trigger` snippet to `DialogTrigger`. It receives `props` with an `onclick` that opens the dialog. Spread them onto the element, such as a link styled button or a thumbnail.
+
+<Demo section="trigger" />
+
+```svelte title="+page.svelte"
+<Dialog>
+	<DialogTrigger>
+		{#snippet trigger({ props })}
+			<button type="button" {...props}>Open with a custom trigger</button>
+		{/snippet}
+	</DialogTrigger>
+	<DialogContent>
+		<p>The trigger snippet receives the props that open the dialog.</p>
+	</DialogContent>
+</Dialog>
+```
+
+## Controlled
+
+Use `bind:open` to open or close the dialog from your own code. The binding updates in both directions, so closing the dialog from the backdrop or Escape sets the variable back to `false`. A trigger is optional.
+
+<Demo section="controlled" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Dialog, DialogContent } from "#lib/components/ui/dialog/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let isOpen = $state(false);
+</script>
+
+<Button variant="outline" onclick={() => (isOpen = true)}>Open from outside</Button>
+
+<Dialog bind:open={isOpen}>
+	<DialogContent>
+		<p>This dialog has no trigger; a bound variable opens it.</p>
+		<Button onclick={() => (isOpen = false)}>Done</Button>
+	</DialogContent>
+</Dialog>
+```
+
+## Variant
+
+Set `variant` on `Dialog` to `default`, `secondary`, `outline`, or `ghost` to change the content panel. `ghost` drops the background and border, so content such as an image sits on the blurred backdrop.
+
+<Demo section="variant" />
+
+```svelte title="+page.svelte"
+<Dialog variant="ghost">
+	<DialogTrigger>Open</DialogTrigger>
+	<DialogContent>Ghost panel</DialogContent>
+</Dialog>
+```
+
+## Size
+
+Set `size` on `Dialog` to `xs`, `sm`, `md`, or `lg` to change the content panel's padding and radius. It defaults to `lg`, with 24 pixel padding and a 10 pixel radius like the shadcn dialog, and `xs` also shrinks the text.
+
+<Demo section="size" />
+
+```svelte title="+page.svelte"
+<Dialog size="lg">
+	<DialogTrigger>Open</DialogTrigger>
+	<DialogContent>Size lg</DialogContent>
+</Dialog>
+```
+
+## Rounded
+
+Set `rounded` on `Dialog` to `xs` through `4xl` or `pill` to override the radius, which follows `size` when omitted. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe.
+
+<Demo section="rounded" />
+
+```svelte title="+page.svelte"
+<Dialog rounded="lg">
+	<DialogTrigger>Open</DialogTrigger>
+	<DialogContent>Rounded lg</DialogContent>
+</Dialog>
+```
+
+## Overrides
+
+The default `DialogTrigger` button takes `variant`, `size`, `rounded`, and `class`, so you can restyle it without a `trigger` snippet.
+
+```svelte title="+page.svelte"
+<DialogTrigger variant="outline" size="sm" rounded="pill">Edit profile</DialogTrigger>
+```
+
+## API
+
+`Dialog` extends the native `dialog` attributes, and extra attributes pass through to the dialog.
+
+```ts title="index.ts"
+interface TriggerProps {
+	/** Label for the default trigger button */
+	children?: Snippet;
+	/** Custom trigger; spread `props` onto the element that opens the dialog */
+	trigger?: Snippet<[{ props: { onclick: () => void } }]>;
+	/** Style of the default trigger button; defaults to `default` */
+	variant?: ButtonProps["variant"];
+	/** Size of the default trigger button, including the square `icon-*` sizes; defaults to `md` */
+	size?: ButtonProps["size"];
+	/** Corner radius of the default trigger button; follows its size when omitted */
+	rounded?: UiRounded;
+}
+
+interface ContentProps extends CompPropsWithChild<"div"> {
+	/** Classes merged onto the panel */
+	class?: CompPropsWithChild<"div">["class"];
+}
+
+interface Props extends CompProps<"dialog"> {
+	/** Whether the dialog is shown; supports `bind:open` */
+	open?: boolean;
+	/** Visual style of the content panel */
+	variant?: "default" | "secondary" | "outline" | "ghost";
+	/** Padding, text, and radius of the content panel on the shared scale; defaults to `lg`, like shadcn */
+	size?: UiSize;
+	/** Corner radius of the content panel; follows `size` when omitted. `pill` is a true pill that can clip the content, so use `3xl` or `4xl` to stay round */
+	rounded?: UiRounded;
+	/** The `DialogTrigger` and `DialogContent` parts */
+	children: Snippet;
+}
+```

@@ -1,0 +1,14 @@
+<script lang="ts">
+	import "../../styles/typeset.css";
+	const { children } = $props();
+</script>
+
+<div class="layout maxWidth typeset typeset-docs">
+	{@render children()}
+</div>
+
+<style>
+	.layout {
+		padding-top: var(--spacing-lg);
+	}
+</style>

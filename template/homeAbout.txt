@@ -1,0 +1,21 @@
+---
+title: "About PlainSV"
+description: "Set up PlainSv in a SvelteKit project and copy in Svelte 5 components, utilities, and plugins that need few external packages."
+---
+
+<script lang="ts">
+	import { ArrowLeftIcon } from "@lucide/svelte";
+	import { Button } from "#lib/components/ui/button/index.ts";
+</script>
+
+# About PlainSv
+
+PlainSv is a collection of accessible Svelte 5 components that follow the shadcn design, written the Svelte way. Each component keeps its state in runes, its styles in a scoped `<style>` block, and builds on native elements such as `dialog` where the browser already does the work. There is no Tailwind, no PostCSS setup, and no headless UI library underneath.
+
+Start building by editing `src/routes/(typeset)/about/+page.svx`
+
+
+<Button variant="outline" rounded="pill" href="/" style="margin: 1rem 0;">
+	<ArrowLeftIcon />
+	Back home
+</Button>

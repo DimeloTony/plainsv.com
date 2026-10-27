@@ -1,0 +1,68 @@
+---
+title: "Separator"
+description: "A thin horizontal or vertical line that divides content, decorative by default."
+---
+
+<script lang="ts">
+	import Demo from "./demo.svelte";
+</script>
+
+# Separator
+
+Visually divides content with a one pixel line in the border color.
+
+<Demo />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Separator } from "#lib/components/ui/separator/index.js";
+</script>
+
+<div>
+	<strong>PlainSv</strong>
+	<p>Svelte components styled with theme tokens.</p>
+</div>
+<Separator />
+<nav>
+	<span>Docs</span>
+	<Separator orientation="vertical" />
+	<span>Components</span>
+</nav>
+```
+
+## Installation
+
+```pm
+npx remote0 add https://plainsv.com/r/separator.json
+```
+
+## Vertical
+
+Set `orientation="vertical"` to draw a line between items in a row. It stretches to the height of its flex container, so give the row a height or content to fill.
+
+<Demo section="vertical" />
+
+```svelte title="+page.svelte"
+<div style="display: flex; gap: 1rem; height: 1.25rem">
+	<span>Blog</span>
+	<Separator orientation="vertical" />
+	<span>Docs</span>
+</div>
+```
+
+## Accessibility
+
+By default, the separator is decorative and hidden from screen readers with `role="none"`. Set `decorative={false}` when it divides meaningful sections, so it is announced with `role="separator"` and, when vertical, `aria-orientation="vertical"`.
+
+## API
+
+The `Separator` props extend the native `div` attributes. It sets `data-orientation` for custom styles.
+
+```ts title="index.ts"
+interface Props extends CompProps<"div"> {
+	/** Direction of the line; `vertical` stretches to the height of a flex row; defaults to `horizontal` */
+	orientation?: "horizontal" | "vertical";
+	/** Hides the line from screen readers when it is only visual; set `false` to announce it as a separator; defaults to `true` */
+	decorative?: boolean;
+}
+```

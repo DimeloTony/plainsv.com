@@ -1,0 +1,3 @@
+# Run package scripts such as `vite build` with the Bun runtime, which adapter-bun requires
+[run]
+bun = true
