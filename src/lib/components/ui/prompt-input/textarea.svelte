@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 	import { useCompCtx } from "./ctx.svelte.js";
 	import type { TextareaProps } from "./index.js";
-	let { element = $bindable(), name = "text", placeholder = "Ask anything…", onkeydown, oninput, class: className, ...props }: TextareaProps = $props();
+	let { element = $bindable(), name = "text", compact = false, placeholder = "Ask anything…", onkeydown, oninput, class: className, ...props }: TextareaProps = $props();
 	const ctx = useCompCtx();
 
 	// Restore a saved draft when the prompt starts empty.
@@ -10,10 +10,11 @@
 		if (ctx.draftKey && !ctx.text) ctx.text = localStorage.getItem(ctx.draftKey) ?? "";
 	});
 
-	// Fit the height to the text whenever it or the size changes, such as typing, a restored draft, or a cleared prompt.
+	// Fit the height to the text whenever it, the size, or `compact` changes, such as typing, a restored draft, or a cleared prompt.
 	$effect(() => {
 		void ctx.text;
 		void ctx.size;
+		void compact;
 		resize();
 	});
 
@@ -45,7 +46,7 @@
 </script>
 
 <!-- Prompt text; read-only while sending, so it stays visible and selectable. The top and bottom fade while it scrolls, in CSS alone. -->
-<textarea bind:this={element} bind:value={ctx.text} class={["promptInputTextarea scroll-fade-y", className]} {name} {placeholder} rows="1" readonly={ctx.sending} onkeydown={handleKeydown} oninput={handleInput} {...props}></textarea>
+<textarea bind:this={element} bind:value={ctx.text} class={["promptInputTextarea scroll-fade-y", className]} {name} {placeholder} rows="1" data-compact={compact || undefined} readonly={ctx.sending} onkeydown={handleKeydown} oninput={handleInput} {...props}></textarea>
 
 <style>
 	/* Borderless field that grows with its text */
@@ -75,5 +76,13 @@
 	.promptInputTextarea[readonly] {
 		cursor: not-allowed;
 		color: var(--muted-foreground);
+	}
+
+	/* =============== Sizes =============== */
+
+	/* Compact: one 24px line that grows 24px at a time, whatever the box's size */
+	.promptInputTextarea[data-compact] {
+		min-height: var(--line-height-md); /* 1.5rem, 24px */
+		line-height: var(--line-height-md);
 	}
 </style>

@@ -157,6 +157,19 @@ Set `size` to `xs`, `sm`, `md`, or `lg` to change the padding, the text, the chi
 </PromptInput>
 ```
 
+## Compact
+
+Set `compact` on `PromptInputTextarea` to start the text field one line tall at 24 pixels and grow it by 24 pixels per line, whatever the `size` of the box. The text keeps the font size of the box's `size`.
+
+```svelte title="+page.svelte"
+<PromptInput>
+	<PromptInputTextarea compact />
+	<PromptInputActions>
+		<PromptInputSubmit />
+	</PromptInputActions>
+</PromptInput>
+```
+
 ## Rounded
 
 Set `rounded` to `xs` through `4xl` or `pill` to override the radius of the box. `pill` is a true pill and can clip tall content, so use `3xl` or `4xl` for round corners that stay safe. It defaults to `3xl`. The controls follow the box one radius step smaller, so `lg` gives them the medium radius, they read as pills when the box is `2xl` or rounder, and they stay pills when the box is `pill`. `PromptInputSelect`, `PromptInputButton`, `PromptInputFilesButton`, and `PromptInputSubmit` take their own `rounded`, which overrides the one they get from the box.

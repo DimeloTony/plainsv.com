@@ -65,6 +65,8 @@ export interface TextareaProps extends Omit<CompProps<"textarea">, "value"> {
 	element?: HTMLTextAreaElement;
 	/** Form field name of the text in a native submit; defaults to `text` */
 	name?: string;
+	/** Starts the field one line tall at 1.5rem (24px) and grows 24px per line, whatever the box's `size`; defaults to `false` */
+	compact?: boolean;
 	/** Classes merged onto the textarea */
 	class?: CompProps<"textarea">["class"];
 }
