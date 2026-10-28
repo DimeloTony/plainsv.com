@@ -19,12 +19,6 @@ Create an empty folder for your app. Replace `project-name` with the name of you
 mkdir project-name && cd project-name
 ```
 
-The `remote0` CLI picks the package manager from the lock file in the folder, and uses npm when there is none. To install with Bun, create an empty `bun.lock` before you add the `init` item.
-
-```bash title="Terminal"
-touch bun.lock
-```
-
 Then add the `init` item.
 
 ```pm
