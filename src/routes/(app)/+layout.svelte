@@ -38,8 +38,8 @@
 											<SearchIcon />
 										</Button>
 									</div>
-									<!-- Long lists, such as components, scroll sideways through columns; short lists scroll down. -->
-									<ul class={["mainNavLinks", navItem.links.length > 12 ? "mainNavLinksColumns scroll-fade-x" : "scroll-fade-y"]}>
+									<!-- Long lists, such as components, wrap into columns; every list scrolls down. -->
+									<ul class={["mainNavLinks scroll-fade-y", navItem.links.length > 12 && "mainNavLinksColumns"]}>
 										{#each navItem.links as link (link.href)}
 											<li>
 												<NavigationMenuLink rounded="lg" href={link.href} active={link.href === app.currentPathname}>
@@ -153,18 +153,16 @@
 		overflow-y: auto;
 		list-style: none;
 	}
-	/* Long lists, such as components, fill columns down to a fixed height and overflow sideways */
+	/* Long lists, such as components, wrap into three columns and scroll down */
 	.mainNavLinksColumns {
-		display: block;
 		column-gap: var(--spacing-xs);
-		columns: 3;
-		column-fill: auto;
-		height: 24rem;
-		overflow-x: auto;
-		overflow-y: hidden;
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-content: flex-start;
 	}
 	.mainNavLinksColumns li {
-		break-inside: avoid;
+		flex: 0 0 calc((100% - var(--spacing-xs) * 2) / 3);
+		min-width: 0;
 	}
 	.mainNavLinkTitle {
 		font-weight: 500;
