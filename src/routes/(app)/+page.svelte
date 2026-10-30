@@ -39,7 +39,7 @@
 			<Button size="lg" rounded="xl" href="/docs">Get started</Button>
 			<Button size="lg" rounded="xl" variant="outline" href="/examples">See examples</Button>
 		</div>
-		<PackageCommand class="catalogCommand" command="remote0 add https://plainsv.com/r/button.json" />
+		<PackageCommand class="catalogCommand" command="remote0 add https://plainsv.com/r/init.json" />
 	</header>
 
 	<!-- Bento grid; each tile is a live component and a link to its docs. -->
