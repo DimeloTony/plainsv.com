@@ -1,8 +1,8 @@
 import { page } from "$app/state";
+import { browser } from "$app/env";
 import { MediaQuery } from "svelte/reactivity";
 import { setContext, getContext, untrack } from "svelte";
 import { toast } from "#lib/components/ui/toaster/index.js";
-import { useFunc } from "#lib/functions/index.js";
 
 class UseAppCtx {
 	userData: App.Locals["userData"] | null = $state(null);
@@ -19,35 +19,28 @@ class UseAppCtx {
 			// @ts-ignore
 			if (this[key] !== undefined) this[key] = data;
 		}
+
+		// If running on browser: read local cookie and set dark mode variable
+		if (browser) window.cookieStore.get("theme").then((cookie) => (this.isDarkMode = cookie?.value === "dark"));
+
 		// Set isMounted after 1 second
-		$effect(() => {
-			setTimeout(() => untrack(() => (this.isMounted = true)), 1000);
-		});
-		// Add and remove dark class to body whenever `isDarkMode` changes
-		$effect(() => {
-			document.body.classList.toggle("dark", this.isDarkMode);
-		});
+		$effect(() => void setTimeout(() => untrack(() => (this.isMounted = true)), 1000));
+
+		// Toggle dark class when isDarkMode changes
+		$effect.pre(() => void document.body.classList.toggle("dark", this.isDarkMode));
 	}
 
 	/** Toggle between dark and light mode */
 	async toggleDarkMode() {
-		try {
-			const response = await useFunc("toggleDarkMode", null);
-			// If the server rejects the change: show its error message.
-			if (response.error) return void toast.error(response.data);
-			// If the theme is saved: update the app context and confirm the selected mode.
-			this.isDarkMode = response.data.isDarkMode;
-			toast.success(response.data.isDarkMode ? "Dark mode enabled." : "Light mode enabled.");
-		} catch {
-			// If the request fails: show an error instead of confirming the theme change.
-			toast.error("Something went wrong updating the theme.");
-		}
+		this.isDarkMode = !this.isDarkMode;
+		await window.cookieStore.set("theme", this.isDarkMode ? "dark" : "light");
+		toast.success(this.isDarkMode ? "Dark mode enabled." : "Light mode enabled.");
 	}
 }
 
 export const CONTEXT_ID = "app-context";
 
-export type AppCtxProps = Pick<InstanceType<typeof UseAppCtx>, "isDarkMode" | "isMobile" | "userData">;
+export type AppCtxProps = Partial<Pick<InstanceType<typeof UseAppCtx>, "isDarkMode" | "isMobile" | "userData">>;
 
 export const setAppCtx = (props: AppCtxProps) => setContext(CONTEXT_ID, new UseAppCtx(props));
 
