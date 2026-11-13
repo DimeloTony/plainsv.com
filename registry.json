@@ -1051,6 +1051,15 @@
 			]
 		},
 		{
+			"name": "trading-01",
+			"description": "A full-screen trading chart with options walls, floor pivots, bot buy and sell markers, swing points, sentiment, and news.",
+			"itemDependencies": ["/r/candlestick-chart.json", "/r/badge.json"],
+			"files": [
+				{ "type": "file", "path": "src/routes/(custom)/examples/trading-01/+page.svelte", "target": "src/routes/(blocks)/trading-01/+page.svelte" },
+				{ "type": "file", "path": "src/routes/(custom)/examples/trading-01/data.ts", "target": "src/routes/(blocks)/trading-01/data.ts" }
+			]
+		},
+		{
 			"name": "sidebar-01",
 			"description": "A simple sidebar with navigation grouped by section.",
 			"itemDependencies": ["/r/sidebar.json", "/r/breadcrumb.json", "/r/separator.json", "/r/label.json", "/r/dropdown-menu.json"],

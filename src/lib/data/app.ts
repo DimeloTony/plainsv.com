@@ -26,6 +26,7 @@ export const pageLinks = [
 /** Full-screen example pages built from the registry components */
 export const exampleLinks = [
 	{ href: "/examples/dashboard-01", label: "Dashboard 01", description: "A dashboard with an inset sidebar, stat cards, an interactive chart, and a data table." },
+	{ href: "/examples/trading-01", label: "Trading 01", description: "A full-screen trading chart with options walls, floor pivots, bot buy and sell markers, swing points, sentiment, and news." },
 	{ href: "/examples/sidebar-01", label: "Sidebar 01", description: "A simple sidebar with navigation grouped by section." },
 	{ href: "/examples/sidebar-02", label: "Sidebar 02", description: "A sidebar with collapsible sections." },
 	{ href: "/examples/sidebar-03", label: "Sidebar 03", description: "A sidebar with submenus." },
