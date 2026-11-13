@@ -46,11 +46,38 @@
 		color: currentColor;
 	}
 
+	.spinner[data-variant="primary"] {
+		color: var(--primary);
+	}
+
+	/* Quieter spinner for secondary loading states, such as placeholder text */
+	.spinner[data-variant="muted"] {
+		color: var(--muted-foreground);
+	}
+
 	.spinner[data-variant="destructive"] {
 		color: var(--destructive);
 	}
 
 	/* =============== Sizes =============== */
+
+	/* 3x large */
+	.spinner[data-size="3xl"] {
+		width: 2.5rem; /* 40px */
+		height: 2.5rem; /* 40px */
+	}
+
+	/* 2x large */
+	.spinner[data-size="2xl"] {
+		width: 2rem; /* 32px */
+		height: 2rem; /* 32px */
+	}
+
+	/* Extra large */
+	.spinner[data-size="xl"] {
+		width: 1.5rem; /* 24px */
+		height: 1.5rem; /* 24px */
+	}
 
 	/* Large */
 	.spinner[data-size="lg"] {

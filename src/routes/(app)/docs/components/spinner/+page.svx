@@ -53,22 +53,25 @@ Place a spinner before the label of a disabled button while an action runs. The 
 
 ## Variants
 
-Set `variant` to `default` or `destructive`. To use another color, set `color` on the spinner or its parent.
+Set `variant` to `default`, `primary`, `muted`, or `destructive`. The `default` variant follows the surrounding text color, and `muted` uses the muted foreground color for quieter loading states. To use another color, set `color` on the spinner or its parent.
 
 <Demo section="variants" />
 
 ```svelte title="+page.svelte"
+<Spinner variant="primary" />
+<Spinner variant="muted" />
 <Spinner variant="destructive" />
 ```
 
 ## Sizes
 
-Set `size` to `xs`, `sm`, `md`, or `lg`. The default is `md`.
+Set `size` to `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, or `3xl`. The default is `md`. Use `xl` and larger for page and panel loaders.
 
 <Demo section="sizes" />
 
 ```svelte title="+page.svelte"
 <Spinner size="lg" />
+<Spinner size="3xl" />
 ```
 
 ## API
@@ -77,9 +80,9 @@ The `Spinner` props extend the native `span` attributes, and extra attributes pa
 
 ```ts title="index.ts"
 interface Props extends CompProps<"span"> {
-	/** Color of the spinner; `default` follows the surrounding text color */
-	variant?: "default" | "destructive";
-	/** Spinner size on the shared scale; defaults to `md` */
-	size?: UiSize;
+	/** Color of the spinner; `default` follows the surrounding text color and `muted` uses the muted foreground */
+	variant?: "default" | "primary" | "muted" | "destructive";
+	/** Spinner size on the shared scale plus `xl`, `2xl`, and `3xl` for page and panel loaders; defaults to `md` */
+	size?: UiSize | "xl" | "2xl" | "3xl";
 }
 ```

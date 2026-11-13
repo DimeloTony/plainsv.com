@@ -3,8 +3,8 @@
 	import { Button } from "#lib/components/ui/button/index.js";
 
 	const { section = "preview" }: Props = $props();
-	const variants: SpinnerProps["variant"][] = ["default", "destructive"];
-	const sizes: UiSize[] = ["xs", "sm", "md", "lg"];
+	const variants: SpinnerProps["variant"][] = ["default", "primary", "muted", "destructive"];
+	const sizes: SpinnerProps["size"][] = ["xs", "sm", "md", "lg", "xl", "2xl", "3xl"];
 
 	/** Live preview for one section of the spinner docs */
 	interface Props {
