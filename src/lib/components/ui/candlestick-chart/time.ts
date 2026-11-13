@@ -104,13 +104,18 @@ export function isInWindow(minuteOfDay: number, start: number, end: number) {
 	return start <= end ? minuteOfDay >= start && minuteOfDay < end : minuteOfDay >= start || minuteOfDay < end;
 }
 
-/** Whether candles are less than a day apart, judged by the median gap so weekends do not count. */
-export function isIntraday(times: number[]) {
+/** Median gap between candles in milliseconds, so nights and weekends do not stretch it; 0 with fewer than 2 candles. */
+export function getMedianGap(times: number[]) {
 	const gaps = times
 		.slice(1)
 		.map((time, index) => time - times[index])
 		.toSorted((a, b) => a - b);
-	return gaps.length > 0 && gaps[Math.floor(gaps.length / 2)] < DAY_MS;
+	return gaps[Math.floor(gaps.length / 2)] ?? 0;
+}
+
+/** Whether candles are less than a day apart, judged by the median gap so weekends do not count. */
+export function isIntraday(times: number[]) {
+	return times.length > 1 && getMedianGap(times) < DAY_MS;
 }
 
 /** Formats a candle time in full for the tooltip, table, and announcements. */

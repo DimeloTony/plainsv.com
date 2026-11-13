@@ -5,6 +5,7 @@
 	import Volume from "./volume.svelte";
 	import Overlays from "./overlays.svelte";
 	import Levels from "./levels.svelte";
+	import Markers from "./markers.svelte";
 	import Crosshair from "./crosshair.svelte";
 	import Tooltip from "./tooltip.svelte";
 	import Legend from "./legend.svelte";
@@ -14,7 +15,7 @@
 	import type { Attachment } from "svelte/attachments";
 	import type { Props } from "./index.js";
 	import type { CompCtxProps } from "./ctx.svelte.js";
-	let { data, levels = [], indicators = [], sessions = [], highlights = [], timeZone = "", volume, range = $bindable(), onRangeChange, hiddenIndicators = $bindable([]), onHiddenIndicatorsChange, variant = "solid", scale = "linear", grid = true, lastPrice = true, size = "md", formatPrice, formatTime, formatVolume, tooltip, legend, table = false, label = "Candlestick chart", class: className, ...props }: Props = $props();
+	let { data, levels = [], indicators = [], markers = [], marker, sessions = [], highlights = [], timeZone = "", volume, range = $bindable(), onRangeChange, hiddenIndicators = $bindable([]), onHiddenIndicatorsChange, hiddenGroups = $bindable([]), onHiddenGroupsChange, variant = "solid", scale = "linear", grid = true, lastPrice = true, size = "md", formatPrice, formatTime, formatVolume, tooltip, legend, legendPosition = "top", table = false, label = "Candlestick chart", class: className, ...props }: Props = $props();
 	// Pixels a pointer must move before a press becomes a drag, so clicks still click.
 	const DRAG_THRESHOLD = 3;
 	// Zoom speed for the wheel and the keyboard.
@@ -24,16 +25,17 @@
 	const KEY_PAN_SHARE = 0.1;
 	const clipId = $props.id();
 	const showVolume = $derived(volume ?? data.some((candle) => typeof candle.volume === "number"));
-	const contextData: Omit<CompCtxProps, "range" | "hidden"> = $derived({ data, levels, indicators, sessions, highlights, timeZone, scale, grid, lastPrice, showVolume, variant, formatPrice, formatTime, formatVolume, tooltip, onRangeChange, onHiddenIndicatorsChange });
-	const ctx = setCompCtx({ ...contextData, range: range ?? null, hidden: hiddenIndicators });
-	const showLegend = $derived(legend ?? indicators.length > 0);
+	const contextData: Omit<CompCtxProps, "range" | "hidden" | "hiddenGroups"> = $derived({ data, levels, indicators, markers, marker, sessions, highlights, timeZone, scale, grid, lastPrice, showVolume, variant, formatPrice, formatTime, formatVolume, tooltip, onRangeChange, onHiddenIndicatorsChange, onHiddenGroupsChange });
+	const ctx = setCompCtx({ ...contextData, range: range ?? null, hidden: hiddenIndicators, hiddenGroups });
+	const showLegend = $derived(legend ?? (indicators.length > 0 || ctx.groups.length > 0));
 	// Read out the focused candle while the keyboard drives the tooltip; pointer hovers stay quiet.
 	const announcement = $derived.by(() => {
 		const candle = data[ctx.activeIndex];
 		// If no candle is active or the pointer drives the tooltip: say nothing.
 		if (!candle || ctx.pointer) return "";
 		const { changePercent } = ctx.getChange(ctx.activeIndex);
-		return `${ctx.formatCandleTime(ctx.activeIndex)}: open ${ctx.formatPriceValue(candle.open)}, high ${ctx.formatPriceValue(candle.high)}, low ${ctx.formatPriceValue(candle.low)}, close ${ctx.formatPriceValue(candle.close)}, ${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%`;
+		const markerNames = ctx.getMarkers(ctx.activeIndex).map((item) => item.name);
+		return `${ctx.formatCandleTime(ctx.activeIndex)}: open ${ctx.formatPriceValue(candle.open)}, high ${ctx.formatPriceValue(candle.high)}, low ${ctx.formatPriceValue(candle.low)}, close ${ctx.formatPriceValue(candle.close)}, ${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%${markerNames.length ? `, ${markerNames.join(", ")}` : ""}`;
 	});
 	let probe: HTMLSpanElement | undefined = $state();
 	// Pointers pressed on the plot, and where the drag or pinch started.
@@ -56,6 +58,12 @@
 	});
 	$effect.pre(() => {
 		hiddenIndicators = ctx.hidden;
+	});
+	$effect.pre(() => {
+		ctx.hiddenGroups = hiddenGroups;
+	});
+	$effect.pre(() => {
+		hiddenGroups = ctx.hiddenGroups;
 	});
 
 	// Follow live data: when candles arrive while the view reaches the newest one, slide the view with them.
@@ -195,9 +203,9 @@
 	};
 </script>
 
-<!-- Candlestick chart: the indicator legend, the plot, and the table of visible candles. -->
+<!-- Candlestick chart: the legend, the plot, and the table of visible candles; an overlay legend floats inside the plot. -->
 <figure class={["candlestickChart not-typeset", className]} data-variant={variant} data-size={size} {...props}>
-	{#if showLegend}
+	{#if showLegend && legendPosition === "top"}
 		<Legend />
 	{/if}
 
@@ -209,11 +217,11 @@
 			<svg class="candlestickChartSvg" width={ctx.width} height={ctx.height} viewBox="0 0 {ctx.width} {ctx.height}" aria-hidden="true">
 				<defs>
 					<clipPath id={clipId}>
-						<rect x={ctx.marginLeft} y={ctx.marginTop} width={ctx.plotWidth} height={ctx.panesHeight} />
+						<rect x={ctx.marginLeft} y={0} width={ctx.plotWidth} height={ctx.plotBottom} />
 					</clipPath>
 				</defs>
 				<Axes />
-				<!-- Marks clip to the panes, so candles at the edges stop at the axis. -->
+				<!-- Marks clip to the panes and the space above them, so candles at the edges stop at the axis and shading reaches the top. -->
 				<g clip-path="url(#{clipId})">
 					<Sessions />
 					{#if showVolume}
@@ -225,6 +233,12 @@
 				<Levels />
 				<Crosshair />
 			</svg>
+			{#if ctx.placedMarkers.length}
+				<Markers />
+			{/if}
+		{/if}
+		{#if showLegend && legendPosition === "overlay"}
+			<Legend overlay />
 		{/if}
 		{#if ctx.activeIndex >= 0 && !ctx.isDragging}
 			<Tooltip />
@@ -238,12 +252,11 @@
 </figure>
 
 <style>
-	/* Base chart; the plot takes the full width */
+	/* Base chart; the plot takes the full width and sits right under the legend, so session shading meets it */
 	.candlestickChart {
 		display: flex;
 		position: relative;
 		flex-direction: column;
-		gap: var(--spacing-sm);
 		margin: 0;
 		min-width: 0;
 		color: var(--foreground);

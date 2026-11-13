@@ -1,9 +1,9 @@
 import { setContext, getContext } from "svelte";
 import { getNiceTicks } from "#lib/components/ui/chart/utils.js";
 import { getBollinger, getEma, getSma, getVwap } from "./indicators.js";
-import { formatFullTime, getTimeTicks, getZonedTime, isInWindow, isIntraday, parseClock, toTimestamp } from "./time.js";
+import { formatFullTime, getMedianGap, getTimeTicks, getZonedTime, isInWindow, isIntraday, parseClock, toTimestamp } from "./time.js";
 import type { IndicatorSeries } from "./indicators.js";
-import type { Candle, Indicator, IndicatorValue, PriceLevel, Props, TimeHighlight, TradingSession } from "./index.js";
+import type { Candle, CandleMarker, Indicator, IndicatorValue, PriceLevel, Props, TimeHighlight, TradingSession } from "./index.js";
 
 const CONTEXT_ID = "candlestick-chart-context";
 // Space in pixels between the plot and its labels, and around a tag's text.
@@ -11,6 +11,8 @@ const TICK_PADDING = 8;
 const TAG_PADDING = 5;
 // Fewest candles a zoom shows, so candles never grow past readable.
 const MIN_VISIBLE = 10;
+// Share of the view that can be empty space past the latest candle, so panning can look ahead of the last candle.
+const MAX_FUTURE_SHARE = 0.8;
 // Candle spacing in pixels of the default view.
 const DEFAULT_SPACING = 8;
 // Space between the price and volume panes, and the volume pane's share of the height.
@@ -28,6 +30,10 @@ const FALLBACK_COLOR = "var(--muted-foreground)";
 // Rising and falling colors; users override them with `--candlestick-chart-up` and `--candlestick-chart-down`.
 export const UP_COLOR = "var(--candlestick-chart-up, var(--chart-3))";
 export const DOWN_COLOR = "var(--candlestick-chart-down, var(--destructive))";
+// Marker shape size as a share of the axis text, the space between a marker and its candle or the marker stacked next to it, and the color of markers without a kind.
+const MARKER_SHARE = 0.9;
+export const MARKER_GAP = 4;
+const MARKER_COLOR = "var(--chart-1)";
 const priceFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const compactFormat = new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 });
 
@@ -38,6 +44,10 @@ class UseCompCtx {
 	levels: PriceLevel[] = $state([]);
 	/** Indicator settings */
 	indicators: Indicator[] = $state([]);
+	/** Marks pinned to candles */
+	markers: CandleMarker[] = $state([]);
+	/** Custom marker content */
+	marker?: Props["marker"] = $state();
 	/** Daily clock windows shaded behind the candles */
 	sessions: TradingSession[] = $state([]);
 	/** Fixed time ranges shaded behind the candles */
@@ -56,6 +66,8 @@ class UseCompCtx {
 	range: [number, number] | null = $state(null);
 	/** Labels of the indicators hidden with the legend */
 	hidden: string[] = $state([]);
+	/** Names of the level and marker groups hidden with the legend */
+	hiddenGroups: string[] = $state([]);
 	/** Body style */
 	variant: NonNullable<Props["variant"]> = $state("solid");
 	/** Custom price format */
@@ -70,6 +82,8 @@ class UseCompCtx {
 	onRangeChange?: Props["onRangeChange"];
 	/** Called with the hidden indicator labels */
 	onHiddenIndicatorsChange?: Props["onHiddenIndicatorsChange"];
+	/** Called with the hidden group names */
+	onHiddenGroupsChange?: Props["onHiddenGroupsChange"];
 	/** Plot width in pixels */
 	width = $state(0);
 	/** Plot height in pixels */
@@ -102,15 +116,28 @@ class UseCompCtx {
 	closes = $derived(this.data.map((candle) => candle.close));
 	/** Whether candles are less than a day apart */
 	intraday = $derived(isIntraday(this.times));
+	/** Typical time between candles, used to extend the time axis past the latest candle */
+	interval = $derived(getMedianGap(this.times));
 	/** Every indicator computed over all the candles */
 	series: IndicatorSeries[] = $derived(this.indicators.map((indicator, position) => this.buildSeries(indicator, position)));
 	/** Indicators still shown */
 	visibleSeries = $derived(this.series.filter((item) => !this.hidden.includes(item.label)));
+	/** Every level and marker group in the order it first appears, keyed in the legend by its first item's color; level groups get a line key and marker groups a dot */
+	groups = $derived.by(() => {
+		const result = new Map<string, { name: string; color: string; type: "level" | "marker" }>();
+		for (const level of this.levels) if (level.group && !result.has(level.group)) result.set(level.group, { name: level.group, color: this.levelColor(level), type: "level" });
+		for (const marker of this.markers) if (marker.group && !result.has(marker.group)) result.set(marker.group, { name: marker.group, color: this.markerColor(marker), type: "marker" });
+		return [...result.values()];
+	});
+	/** Levels outside the hidden groups */
+	shownLevels = $derived(this.levels.filter((level) => !level.group || !this.hiddenGroups.includes(level.group)));
+	/** Markers outside the hidden groups */
+	shownMarkers = $derived(this.markers.filter((marker) => !marker.group || !this.hiddenGroups.includes(marker.group)));
 	/** Pixels above the plot; leaves room for half of the top price label */
 	marginTop = $derived(Math.ceil(this.fontSize / 2) + 4);
 	/** Pixels left of the plot */
 	marginLeft = 0;
-	/** Pixels right of the plot for the price axis, sized for the widest price in the data so zooming never shifts it */
+	/** Pixels right of the plot for the price axis, sized for the widest price in the data and every level, so zooming and hiding groups never shift it */
 	marginRight = $derived(this.measureText([...this.data.flatMap((candle) => [candle.high, candle.low]), ...this.levels.map((level) => level.price), 0].map((price) => `▲ ${this.formatPriceValue(price)}`)) + TICK_PADDING * 2 + this.fontSize / 2);
 	/** Height of the time axis under the plot */
 	timeAxisHeight = $derived(Math.ceil(this.fontSize * 1.5) + TICK_PADDING);
@@ -150,13 +177,53 @@ class UseCompCtx {
 	visiblePrices = $derived(this.visibleIndexes.flatMap((index) => [this.data[index].low, this.data[index].high, ...this.visibleSeries.flatMap((item) => [item.line[index], ...item.bands.flatMap((band) => [band.upper[index], band.lower[index]])])]).filter(Number.isFinite));
 	/** Whether the price axis is logarithmic; it falls back to linear when a price on screen is zero or below */
 	isLog = $derived(this.scale === "log" && this.visiblePrices.every((price) => price > 0));
-	/** Lowest and highest price on screen, padded so wicks never touch the edges; levels do not stretch it */
+	/** Every marker on its candle, with its look and its distance from the candle when markers stack */
+	placedMarkers = $derived.by(() => {
+		const stacks = new Map<string, number>();
+		return this.shownMarkers.flatMap((marker, position) => {
+			const index = this.findCandle(marker.time);
+			// If the marker falls outside the candles: skip it.
+			if (index < 0) return [];
+			const kind = marker.kind ?? "default";
+			const side = marker.position ?? (marker.price !== undefined ? "price" : kind === "buy" ? "below" : "above");
+			const shape = marker.shape ?? (kind === "buy" ? "arrowUp" : kind === "sell" ? "arrowDown" : "circle");
+			const size = Math.round(this.fontSize * MARKER_SHARE * (marker.size ?? 1));
+			const height = size + (marker.text ? this.tagHeight + MARKER_GAP : 0);
+			// Markers on the same side of a candle stack outward in the order given; price markers sit at their price.
+			const key = `${index}:${side}`;
+			const offset = side === "price" ? 0 : (stacks.get(key) ?? 0);
+			if (side !== "price") stacks.set(key, offset + height + MARKER_GAP);
+			return [{ marker, position, index, side, shape, size, height, offset, color: this.markerColor(marker), name: this.markerName(marker) }];
+		});
+	});
+	/** Placed markers by candle index */
+	markersByIndex = $derived.by(() => {
+		const groups = new Map<number, typeof this.placedMarkers>();
+		for (const item of this.placedMarkers) groups.set(item.index, [...(groups.get(item.index) ?? []), item]);
+		return groups;
+	});
+	/** Pixels the stacked markers on screen need above the highs and below the lows */
+	markerRoom = $derived.by(() => {
+		const room = { above: 0, below: 0 };
+		const first = this.visibleIndexes[0] ?? 0;
+		const last = this.visibleIndexes.at(-1) ?? -1;
+		for (const item of this.placedMarkers) {
+			// If the marker sits at a price or on a candle off screen: it needs no room.
+			if (item.side === "price" || item.index < first || item.index > last) continue;
+			room[item.side] = Math.max(room[item.side], item.offset + item.height + MARKER_GAP);
+		}
+		return room;
+	});
+	/** Lowest and highest price on screen, padded so wicks never touch the edges and markers fit; levels do not stretch it */
 	priceDomain = $derived.by(() => {
 		const min = this.visiblePrices.length ? this.toScale(Math.min(...this.visiblePrices)) : 0;
 		const max = this.visiblePrices.length ? this.toScale(Math.max(...this.visiblePrices)) : 1;
 		// Pad in scale units, so a log axis pads by the same share at both ends.
 		const padding = (max - min) * 0.06 || Math.abs(max) * 0.01 || 1;
-		return [this.fromScale(min - padding), this.fromScale(max + padding)];
+		// Add the marker room in pixels, keeping at least 40% of the pane for the candles.
+		const inner = Math.max(this.priceHeight * 0.4, this.priceHeight - this.markerRoom.above - this.markerRoom.below);
+		const unitsPerPixel = (max - min + padding * 2) / (inner || 1);
+		return [this.fromScale(min - padding - this.markerRoom.below * unitsPerPixel), this.fromScale(max + padding + this.markerRoom.above * unitsPerPixel)];
 	});
 	/** Price ticks inside the domain: round numbers, spaced evenly in log units on a log axis and rounded to 2 significant digits */
 	priceTicks = $derived.by(() => {
@@ -190,12 +257,12 @@ class UseCompCtx {
 		const last = this.data.at(-1);
 		// The latest close joins the levels in its direction's color, so live updates show where price is now.
 		const lastLevel: PriceLevel[] = this.lastPrice && last ? [{ price: last.close, kind: last.close >= last.open ? "support" : "resistance" }] : [];
-		const tags = [...this.levels, ...lastLevel].map((level, position) => {
+		const tags = [...this.shownLevels, ...lastLevel].map((level, position) => {
 			// Levels off screen pin to the nearest edge with an arrow toward them.
 			const placement = level.price > max ? "above" : level.price < min ? "below" : "inside";
 			const lineY = placement === "above" ? this.marginTop + this.tagHeight / 2 : placement === "below" ? this.marginTop + this.priceHeight - this.tagHeight / 2 : this.priceToY(level.price);
 			const text = `${placement === "above" ? "▲ " : placement === "below" ? "▼ " : ""}${this.formatPriceValue(level.price)}`;
-			return { ...level, position, placement, lineY, tagY: lineY, text, color: this.levelColor(level), isLast: position >= this.levels.length };
+			return { ...level, position, placement, lineY, tagY: lineY, text, color: this.levelColor(level), isLast: position >= this.shownLevels.length };
 		});
 		// Walk the tags from top to bottom and push each one below the tag above it when they would overlap.
 		const sorted = tags.toSorted((a, b) => a.lineY - b.lineY);
@@ -211,7 +278,15 @@ class UseCompCtx {
 	timeTicks = $derived.by(() => {
 		const minGap = this.measureText([this.intraday ? "00:00" : "Sep 30"]) + TIME_LABEL_GAP;
 		let lastX = -Infinity;
-		return getTimeTicks(this.times, this.zoned, this.visibleIndexes, this.plotWidth, minGap, this.zone).filter(({ index }) => {
+		// Past the latest candle, the axis continues at the typical candle interval.
+		const last = this.times.length - 1;
+		const end = Math.max(last + 1, Math.ceil(this.view[1]));
+		const futureTimes = this.interval > 0 && last >= 0 ? Array.from({ length: end - last - 1 }, (_, offset) => this.times[last] + (offset + 1) * this.interval) : [];
+		const times = [...this.times, ...futureTimes];
+		const zoned = [...this.zoned, ...futureTimes.map((time) => getZonedTime(time, this.zone))];
+		const first = Math.max(0, Math.floor(this.view[0]));
+		const indexes = Array.from({ length: Math.max(0, Math.min(times.length, end) - first) }, (_, offset) => first + offset);
+		return getTimeTicks(times, zoned, indexes, this.plotWidth, minGap, this.zone).filter(({ index }) => {
 			const x = this.x(index);
 			// If the tick crowds the one before it: skip it.
 			if (x - lastX < minGap) return false;
@@ -309,6 +384,43 @@ class UseCompCtx {
 		return highlight?.label ?? this.sessions[this.candleSessions[index]]?.label;
 	}
 
+	/** Index of the candle whose period contains a time: the last one that starts at or before it, or -1 when none does. */
+	findCandle(time: Date | number | string) {
+		const target = toTimestamp(time);
+		const last = this.times.length - 1;
+		let low = 0;
+		let high = last;
+		let found = -1;
+		// Binary search, since candles are in time order.
+		while (low <= high) {
+			const middle = (low + high) >> 1;
+			if (this.times[middle] <= target) {
+				found = middle;
+				low = middle + 1;
+			} else high = middle - 1;
+		}
+		// If the time is past the last candle's period, such as a signal for a candle that has not opened: there is no candle.
+		if (found === last && last > 0 && target >= this.times[last] * 2 - this.times[last - 1]) return -1;
+		return found;
+	}
+
+	/** Color of a marker: its own, else rising for buys, falling for sells, and `--chart-1` otherwise. */
+	markerColor(marker: CandleMarker) {
+		if (marker.color) return marker.color;
+		if (marker.kind === "buy") return UP_COLOR;
+		return marker.kind === "sell" ? DOWN_COLOR : MARKER_COLOR;
+	}
+
+	/** Name of a marker for the tooltip, table, and announcements. */
+	markerName(marker: CandleMarker) {
+		return marker.label ?? marker.text ?? (marker.kind === "buy" ? "Buy" : marker.kind === "sell" ? "Sell" : "Marker");
+	}
+
+	/** Markers placed on a candle. */
+	getMarkers(index: number) {
+		return this.markersByIndex.get(index) ?? [];
+	}
+
 	/** Pixel position of a volume in the volume pane. */
 	volumeToY(volume: number) {
 		return this.volumeTop + (1 - volume / this.maxVolume) * this.volumeHeight;
@@ -334,21 +446,24 @@ class UseCompCtx {
 		return this.visibleSeries.map((item) => ({ label: item.label, color: item.color, value: item.line[index], formattedValue: this.formatPriceValue(item.line[index]) }));
 	}
 
-	/** Finds the candle under a pointer, or -1 outside the plot. */
+	/** Finds the candle under a pointer, or -1 outside the plot or past the latest candle. */
 	indexAt(x: number) {
 		// If the pointer is beside the plot, such as over the price axis: hover nothing.
 		if (x < this.marginLeft || x > this.marginLeft + this.plotWidth || !this.visibleIndexes.length) return -1;
 		const index = Math.floor(this.view[0] + (x - this.marginLeft) / (this.spacing || 1));
+		// If the pointer is in the empty space past the latest candle: hover nothing.
+		if (index >= this.data.length) return -1;
 		return Math.min(this.visibleIndexes.at(-1) ?? 0, Math.max(this.visibleIndexes[0], index));
 	}
 
-	/** Shows `count` candles from `start`, clamped to the data, and reports the range. */
+	/** Shows `count` candles from `start`, clamped to the data plus some empty space past the latest candle, and reports the range. */
 	setRange(start: number, count: number) {
 		const total = this.data.length;
 		// If there is no data: there is nothing to show.
 		if (!total) return;
 		const nextCount = Math.min(total, Math.max(Math.min(MIN_VISIBLE, total), count));
-		const nextStart = Math.min(total - nextCount, Math.max(0, start));
+		// The view can run past the latest candle into empty space, but always keeps some candles in it.
+		const nextStart = Math.min(total - nextCount * (1 - MAX_FUTURE_SHARE), Math.max(0, start));
 		this.range = [nextStart, nextStart + nextCount];
 		this.onRangeChange?.(this.range);
 	}
@@ -387,9 +502,15 @@ class UseCompCtx {
 		this.hidden = this.hidden.includes(label) ? this.hidden.filter((hiddenLabel) => hiddenLabel !== label) : [...this.hidden, label];
 		this.onHiddenIndicatorsChange?.(this.hidden);
 	}
+
+	/** Hides or shows a level and marker group and reports the change. */
+	toggleGroup(name: string) {
+		this.hiddenGroups = this.hiddenGroups.includes(name) ? this.hiddenGroups.filter((hiddenName) => hiddenName !== name) : [...this.hiddenGroups, name];
+		this.onHiddenGroupsChange?.(this.hiddenGroups);
+	}
 }
 
-export type CompCtxProps = Pick<InstanceType<typeof UseCompCtx>, "data" | "levels" | "indicators" | "sessions" | "highlights" | "timeZone" | "scale" | "grid" | "lastPrice" | "showVolume" | "range" | "hidden" | "variant" | "formatPrice" | "formatTime" | "formatVolume" | "tooltip" | "onRangeChange" | "onHiddenIndicatorsChange">;
+export type CompCtxProps = Pick<InstanceType<typeof UseCompCtx>, "data" | "levels" | "indicators" | "markers" | "marker" | "sessions" | "highlights" | "timeZone" | "scale" | "grid" | "lastPrice" | "showVolume" | "range" | "hidden" | "hiddenGroups" | "variant" | "formatPrice" | "formatTime" | "formatVolume" | "tooltip" | "onRangeChange" | "onHiddenIndicatorsChange" | "onHiddenGroupsChange">;
 
 export const setCompCtx = (props: CompCtxProps) => setContext(CONTEXT_ID, new UseCompCtx(props));
 

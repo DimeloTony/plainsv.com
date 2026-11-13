@@ -710,7 +710,7 @@
 		},
 		{
 			"name": "candlestick-chart",
-			"description": "A candlestick chart with trading sessions, a volume pane, VWAP, moving averages, Bollinger bands, price levels, live updates, zoom, and pan.",
+			"description": "A candlestick chart with trading sessions, a volume pane, VWAP, moving averages, Bollinger bands, price levels, markers, live updates, zoom, and pan.",
 			"files": [
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/_.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/axes.svelte" },
@@ -721,6 +721,7 @@
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/indicators.ts" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/legend.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/levels.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/markers.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/overlays.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/sessions.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/table.svelte" },

@@ -27,6 +27,46 @@ export interface PriceLevel {
 	kind?: "support" | "resistance" | "default";
 	/** Any CSS color; overrides the `kind` color */
 	color?: string;
+	/** Thickness: `1` is a thin line, and bigger values shade a band centered on the price that grows 6px per step, the same at any zoom; defaults to `1` */
+	size?: number;
+	/** Legend group, such as "Pivots"; the legend gets a button that hides or shows every level and marker in it */
+	group?: string;
+}
+
+/** Mark pinned to one candle, such as a bot's buy or sell signal or a sentiment bubble */
+export interface CandleMarker {
+	/** Time of the event; the marker sits on the candle whose period contains it */
+	time: Date | number | string;
+	/** `above` stacks over the high, `below` under the low, and `price` sits at `price`; defaults to `below` for `buy`, `price` when `price` is set, and `above` otherwise */
+	position?: "above" | "below" | "price";
+	/** Price the marker sits at with `position: "price"`, such as a fill price; the close when omitted */
+	price?: number;
+	/** Shape of the mark; defaults to `arrowUp` for `buy`, `arrowDown` for `sell`, and `circle` otherwise */
+	shape?: "arrowUp" | "arrowDown" | "circle" | "square";
+	/** Short text in a tag beside the shape, such as "BUY" */
+	text?: string;
+	/** `buy` uses the rising color, `sell` the falling color, and `default` `--chart-1` */
+	kind?: "buy" | "sell" | "default";
+	/** Any CSS color; overrides the `kind` color */
+	color?: string;
+	/** Scale of the shape, such as `1.5` for a bigger sentiment bubble; defaults to `1` */
+	size?: number;
+	/** Description in the tooltip, table, and announcements, such as "Bought 10 at 182.40"; defaults to `text`, then "Buy" or "Sell" */
+	label?: string;
+	/** Legend group, such as "Bot trades"; the legend gets a button that hides or shows every level and marker in it */
+	group?: string;
+}
+
+/** Values a custom `marker` snippet receives */
+export interface MarkerSnippetProps {
+	/** Marker being drawn */
+	marker: CandleMarker;
+	/** Index of its candle in `data` */
+	index: number;
+	/** Candle the marker sits on */
+	candle: Candle;
+	/** Marker color after `kind` and `color` */
+	color: string;
 }
 
 /** Daily clock window shaded behind the candles, such as pre-market or after hours */
@@ -39,6 +79,8 @@ export interface TradingSession {
 	label: string;
 	/** Any CSS color for the shading; defaults to `--muted-foreground` */
 	color?: string;
+	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
+	showLabel?: boolean;
 }
 
 /** Fixed time range shaded behind the candles, such as an earnings release */
@@ -51,6 +93,8 @@ export interface TimeHighlight {
 	label?: string;
 	/** Any CSS color for the shading; defaults to `--chart-4` */
 	color?: string;
+	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
+	showLabel?: boolean;
 }
 
 /** Simple or exponential moving average of the closes */
@@ -126,9 +170,11 @@ export interface TooltipSnippetProps {
 	changePercent: number;
 	/** Value of every visible indicator at this candle */
 	indicators: IndicatorValue[];
+	/** Markers on this candle */
+	markers: CandleMarker[];
 }
 
-/** Candlestick chart with sessions, a volume pane, indicators, price levels, live updates, zoom, and pan */
+/** Candlestick chart with sessions, a volume pane, indicators, price levels, markers, live updates, zoom, and pan */
 export interface Props extends CompProps<"figure"> {
 	/** Candles in time order, oldest first */
 	data: Candle[];
@@ -136,6 +182,10 @@ export interface Props extends CompProps<"figure"> {
 	levels?: PriceLevel[];
 	/** Overlays computed from the candles: moving averages, Bollinger bands, and VWAP */
 	indicators?: Indicator[];
+	/** Marks pinned to candles, such as a bot's buy and sell signals or sentiment bubbles */
+	markers?: CandleMarker[];
+	/** Custom content for every marker, in place of its shape and text */
+	marker?: Snippet<[MarkerSnippetProps]>;
 	/** Daily clock windows shaded behind the candles, such as pre-market and after hours */
 	sessions?: TradingSession[];
 	/** Fixed time ranges shaded behind the candles, such as earnings */
@@ -144,7 +194,7 @@ export interface Props extends CompProps<"figure"> {
 	timeZone?: string;
 	/** Shows the volume pane; on when any candle has volume */
 	volume?: boolean;
-	/** Visible candles as `[start, end)` indexes, fractional while panning; the latest candles that fit when omitted; supports `bind:range` */
+	/** Visible candles as `[start, end)` indexes, fractional while panning, where an `end` past the data is empty space after the latest candle; the latest candles that fit when omitted; supports `bind:range` */
 	range?: [number, number];
 	/** Called with the visible range when the chart zooms or pans */
 	onRangeChange?: (range: [number, number]) => void;
@@ -152,6 +202,10 @@ export interface Props extends CompProps<"figure"> {
 	hiddenIndicators?: string[];
 	/** Called with the hidden indicator labels when the legend hides or shows one */
 	onHiddenIndicatorsChange?: (hiddenIndicators: string[]) => void;
+	/** Names of the level and marker groups hidden with the legend; supports `bind:hiddenGroups` */
+	hiddenGroups?: string[];
+	/** Called with the hidden group names when the legend hides or shows a group */
+	onHiddenGroupsChange?: (hiddenGroups: string[]) => void;
 	/** Price style: `solid` and `hollow` candles, where `hollow` leaves rising bodies empty, `ohlc` bars, or a `line` or `area` of the closes; defaults to `solid` */
 	variant?: "solid" | "hollow" | "ohlc" | "line" | "area";
 	/** Price scale; `log` spaces equal percent moves equally, for long ranges; defaults to `linear` */
@@ -170,8 +224,10 @@ export interface Props extends CompProps<"figure"> {
 	formatVolume?: (volume: number) => string;
 	/** Custom tooltip content for the hovered candle */
 	tooltip?: Snippet<[TooltipSnippetProps]>;
-	/** Shows the indicator legend; on when there are indicators */
+	/** Shows the legend of indicators and groups; on when there are any */
 	legend?: boolean;
+	/** `top` puts the legend above the plot, and `overlay` floats it in the plot's top-left corner, taking no space; defaults to `top` */
+	legendPosition?: "top" | "overlay";
 	/** Shows the table of visible candles under the chart; screen readers always get it */
 	table?: boolean;
 	/** Accessible name of the plot, such as "AAPL, 5 minute candles"; defaults to "Candlestick chart" */
@@ -184,6 +240,8 @@ export type CandlestickChartProps = Props;
 export type CandlestickChartCandle = Candle;
 export type CandlestickChartPriceLevel = PriceLevel;
 export type CandlestickChartIndicator = Indicator;
+export type CandlestickChartMarker = CandleMarker;
+export type CandlestickChartMarkerSnippetProps = MarkerSnippetProps;
 export type CandlestickChartTradingSession = TradingSession;
 export type CandlestickChartTimeHighlight = TimeHighlight;
 export type CandlestickChartIndicatorValue = IndicatorValue;

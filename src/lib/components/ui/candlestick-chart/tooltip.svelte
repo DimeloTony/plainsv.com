@@ -10,6 +10,7 @@
 	const session = $derived(ctx.getSessionLabel(ctx.activeIndex));
 	const change = $derived(ctx.getChange(ctx.activeIndex));
 	const indicators = $derived(ctx.getIndicatorValues(ctx.activeIndex));
+	const markers = $derived(ctx.getMarkers(ctx.activeIndex));
 	const fields = $derived([
 		["Open", ctx.formatPriceValue(candle.open)],
 		["High", ctx.formatPriceValue(candle.high)],
@@ -25,7 +26,7 @@
 <!-- Readout of the active candle; screen readers get the live region instead. -->
 <div class="candlestickChartTooltip" aria-hidden="true" style:--candlestick-chart-tooltip-x="{left}px" style:--candlestick-chart-tooltip-y="{top}px" bind:offsetWidth={tooltipWidth} bind:offsetHeight={tooltipHeight}>
 	{#if ctx.tooltip}
-		{@render ctx.tooltip({ index: ctx.activeIndex, candle, label, session, ...change, indicators })}
+		{@render ctx.tooltip({ index: ctx.activeIndex, candle, label, session, ...change, indicators, markers: markers.map((item) => item.marker) })}
 	{:else}
 		<p class="candlestickChartTooltipLabel">{label}</p>
 		{#if session}
@@ -51,6 +52,19 @@
 						<span class="candlestickChartTooltipKey" style:--candlestick-chart-series-color={indicator.color}></span>
 						<span class="candlestickChartTooltipName">{indicator.label}</span>
 						<span class="candlestickChartTooltipValue">{indicator.formattedValue}</span>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		{#if markers.length}
+			<ul class="candlestickChartTooltipList">
+				{#each markers as item (item.position)}
+					<li class="candlestickChartTooltipItem">
+						<span class="candlestickChartTooltipKey" data-marker style:--candlestick-chart-series-color={item.color}></span>
+						<span class="candlestickChartTooltipName">{item.name}</span>
+						{#if item.marker.price !== undefined}
+							<span class="candlestickChartTooltipValue">{ctx.formatPriceValue(item.marker.price)}</span>
+						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -132,6 +146,12 @@
 		background-color: var(--candlestick-chart-series-color);
 		width: 0.75rem; /* 12px */
 		height: 2px;
+	}
+
+	/* Round dot for a marker, apart from the indicator lines */
+	.candlestickChartTooltipKey[data-marker] {
+		width: 0.5rem; /* 8px */
+		height: 0.5rem; /* 8px */
 	}
 
 	.candlestickChartTooltipName {

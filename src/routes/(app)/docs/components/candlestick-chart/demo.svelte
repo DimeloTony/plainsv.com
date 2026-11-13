@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { CandlestickChart, type CandlestickChartCandle, type CandlestickChartPriceLevel, type CandlestickChartProps, type CandlestickChartTradingSession } from "#lib/components/ui/candlestick-chart/index.js";
+	import { CandlestickChart, getEma, type CandlestickChartCandle, type CandlestickChartMarker, type CandlestickChartPriceLevel, type CandlestickChartProps, type CandlestickChartTradingSession } from "#lib/components/ui/candlestick-chart/index.js";
 	import { ToggleGroup, ToggleGroupItem } from "#lib/components/ui/toggle-group/index.js";
 	import { Button } from "#lib/components/ui/button/index.js";
+	import { NewspaperIcon } from "@lucide/svelte";
 
 	const { section = "preview" }: Props = $props();
 	// 5 minute candles from 04:00 to 20:00 New York time, covering pre-market, regular hours, and after hours.
@@ -25,6 +26,9 @@
 	const sessionRange: [number, number] = [intraday.length - CANDLES_PER_DAY - 24, intraday.length];
 	const earnings = [60, 125, 190].map((index) => ({ start: daily[index].time, end: daily[index + 1].time, label: "Earnings" }));
 	const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+	const signals = getCrossSignals(daily, 9, 21);
+	const sentiment = getSentiment(daily, 3);
+	const news: CandlestickChartMarker[] = [200, 214, 231, 247].map((index, position) => ({ time: daily[index].time, size: 1.8, label: ["Product launch", "Analyst upgrade", "Fed decision", "Supplier deal"][position] }));
 	let range: [number, number] | undefined = $state();
 	let variant: Variant = $state("solid");
 	let live: CandlestickChartCandle[] = $state([]);
@@ -139,6 +143,32 @@
 		];
 	}
 
+	/** Buy when the fast EMA crosses above the slow one, and sell when it crosses below, like a simple trading bot. */
+	function getCrossSignals(candles: CandlestickChartCandle[], fast: number, slow: number): CandlestickChartMarker[] {
+		const closes = candles.map((candle) => candle.close);
+		const fastLine = getEma(closes, fast);
+		const slowLine = getEma(closes, slow);
+		return candles.flatMap((candle, index): CandlestickChartMarker[] => {
+			const before = fastLine[index - 1] - slowLine[index - 1];
+			const now = fastLine[index] - slowLine[index];
+			// If an average has not started yet or the lines did not cross: there is no signal.
+			if (!Number.isFinite(before) || !Number.isFinite(now) || Math.sign(before) === Math.sign(now)) return [];
+			const isBuy = now > 0;
+			return [{ time: candle.time, kind: isBuy ? "buy" : "sell", text: isBuy ? "BUY" : "SELL", label: `${isBuy ? "Bought" : "Sold"} at ${currency.format(candle.close)}` }];
+		});
+	}
+
+	/** Places a sentiment bubble on every fifth candle, sized by how strong the score is and colored by its sign. */
+	function getSentiment(candles: CandlestickChartCandle[], seed: number): CandlestickChartMarker[] {
+		const random = createRandom(seed);
+		return candles.flatMap((candle, index): CandlestickChartMarker[] => {
+			const score = random() * 2 - 1;
+			// If this is not a fifth candle: leave it bare.
+			if (index % 5) return [];
+			return [{ time: candle.time, color: score >= 0 ? "var(--chart-3)" : "var(--destructive)", size: 1 + Math.abs(score) * 1.5, label: `Sentiment ${score >= 0 ? "+" : ""}${score.toFixed(2)}` }];
+		});
+	}
+
 	/** Whether a toggle value is a chart variant. */
 	function isVariant(value: string): value is Variant {
 		return VARIANTS.some((item) => item === value);
@@ -150,7 +180,7 @@
 	/** Live preview for one section of the candlestick chart docs */
 	interface Props {
 		/** Which group of examples to render */
-		section?: "preview" | "sessions" | "highlights" | "live" | "levels" | "vwap" | "averages" | "bollinger" | "volume" | "zoom" | "variant" | "colors" | "grid" | "format" | "tooltip" | "sizes" | "table";
+		section?: "preview" | "sessions" | "highlights" | "live" | "levels" | "vwap" | "averages" | "bollinger" | "volume" | "zoom" | "variant" | "colors" | "grid" | "format" | "tooltip" | "groups" | "markers" | "sentiment" | "markerSnippet" | "sizes" | "table";
 	}
 </script>
 
@@ -187,8 +217,8 @@
 			<CandlestickChart data={live} indicators={[{ type: "ema", period: 9 }, { type: "vwap" }]} formatPrice={(price) => currency.format(price)} label="Live sample feed, 1 minute candles" class="demoChart" />
 		</div>
 	{:else if section === "levels"}
-		<!-- Support and resistance, plus a level above the visible prices. -->
-		<CandlestickChart data={intraday} levels={[...levels, { price: 400, label: "Target" }]} lastPrice={false} volume={false} size="sm" class="demoChart" />
+		<!-- A thick support band, a thin resistance line, and a level above the visible prices. -->
+		<CandlestickChart data={intraday} levels={[{ ...levels[0], size: 4 }, levels[1], { price: 400, label: "Target" }]} lastPrice={false} volume={false} size="sm" class="demoChart" />
 	{:else if section === "vwap"}
 		<!-- VWAP with one and two deviation bands, restarting each day. -->
 		<CandlestickChart data={intraday} timeZone="America/New_York" indicators={[{ type: "vwap", bands: [1, 2] }]} range={[0, intraday.length]} class="demoChart" />
@@ -244,6 +274,42 @@
 				<span>{changePercent >= 0 ? "▲" : "▼"} {Math.abs(changePercent).toFixed(2)}%</span>
 			{/snippet}
 		</CandlestickChart>
+	{:else if section === "groups"}
+		<!-- Levels and markers toggled by group from an overlay legend. -->
+		<CandlestickChart
+			data={daily}
+			indicators={[
+				{ type: "ema", period: 9 },
+				{ type: "ema", period: 21 },
+			]}
+			levels={getLevels(daily).map((level) => ({ ...level, group: "Levels" }))}
+			markers={[...signals.map((signal) => ({ ...signal, group: "Bot trades" })), ...sentiment.map((bubble) => ({ ...bubble, group: "Sentiment" }))]}
+			legendPosition="overlay"
+			size="sm"
+			class="demoChart"
+		/>
+	{:else if section === "markers"}
+		<!-- Buy and sell signals from an EMA crossover. -->
+		<CandlestickChart
+			data={daily}
+			indicators={[
+				{ type: "ema", period: 9 },
+				{ type: "ema", period: 21 },
+			]}
+			markers={signals}
+			size="sm"
+			class="demoChart"
+		/>
+	{:else if section === "sentiment"}
+		<!-- Sentiment bubbles sized by score. -->
+		<CandlestickChart data={daily} markers={sentiment} volume={false} size="sm" class="demoChart" />
+	{:else if section === "markerSnippet"}
+		<!-- News markers drawn with a custom snippet. -->
+		<CandlestickChart data={daily} markers={news} volume={false} size="sm" class="demoChart">
+			{#snippet marker({ color })}
+				<span class="demoMarker" style:--demo-marker-color={color}><NewspaperIcon size={12} /></span>
+			{/snippet}
+		</CandlestickChart>
 	{:else if section === "sizes"}
 		<!-- Smallest and largest sizes. -->
 		<CandlestickChart data={daily} size="xs" class="demoHalf" />
@@ -291,6 +357,19 @@
 	.demoLiveChange {
 		flex: 1;
 		color: var(--muted-foreground);
+	}
+
+	/* Round badge for a custom marker, in the marker color */
+	.demoMarker {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		border: 1px solid var(--demo-marker-color);
+		border-radius: var(--radius-pill);
+		background-color: var(--popover);
+		width: 1.25rem; /* 20px */
+		height: 1.25rem; /* 20px */
+		color: var(--demo-marker-color);
 	}
 
 	.demo :global(.demoChart) {

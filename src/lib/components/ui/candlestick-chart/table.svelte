@@ -30,6 +30,9 @@
 				{#each ctx.visibleSeries as item (item.label)}
 					<th scope="col">{item.label}</th>
 				{/each}
+				{#if ctx.placedMarkers.length}
+					<th scope="col">Markers</th>
+				{/if}
 			</tr>
 		</thead>
 		<tbody>
@@ -50,6 +53,14 @@
 					{#each ctx.visibleSeries as item (item.label)}
 						<td>{ctx.formatPriceValue(item.line[index])}</td>
 					{/each}
+					{#if ctx.placedMarkers.length}
+						<td
+							>{ctx
+								.getMarkers(index)
+								.map((item) => item.name)
+								.join(", ") || "–"}</td
+						>
+					{/if}
 				</tr>
 			{/each}
 		</tbody>
@@ -71,6 +82,7 @@
 	.candlestickChartTableWrap[data-visible] {
 		position: static;
 		clip-path: none;
+		margin-top: var(--spacing-sm);
 		width: auto;
 		height: auto;
 		max-height: 16rem; /* 256px */

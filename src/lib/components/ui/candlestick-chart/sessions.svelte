@@ -7,7 +7,7 @@
 	const LABEL_OFFSET = 4;
 	// Runs of neighboring candles in the same highlight or session; a highlight wins over a session.
 	const bands = $derived.by(() => {
-		const runs: { key: string; first: number; last: number; label: string; color: string; kind: "session" | "highlight" }[] = [];
+		const runs: { key: string; first: number; last: number; label: string; color: string; kind: "session" | "highlight"; isLabeled: boolean }[] = [];
 		for (const index of ctx.visibleIndexes) {
 			const highlight = ctx.highlights[ctx.candleHighlights[index]];
 			const session = ctx.sessions[ctx.candleSessions[index]];
@@ -17,14 +17,14 @@
 			if (!key) continue;
 			// If the candle continues the band before it: extend that band.
 			if (previous && previous.key === key && previous.last === index - 1) previous.last = index;
-			else if (highlight) runs.push({ key, first: index, last: index, label: highlight.label ?? "", color: highlight.color ?? "var(--chart-4)", kind: "highlight" });
-			else if (session) runs.push({ key, first: index, last: index, label: session.label, color: session.color ?? "var(--muted-foreground)", kind: "session" });
+			else if (highlight) runs.push({ key, first: index, last: index, label: highlight.label ?? "", color: highlight.color ?? "var(--chart-4)", kind: "highlight", isLabeled: highlight.showLabel ?? true });
+			else if (session) runs.push({ key, first: index, last: index, label: session.label, color: session.color ?? "var(--muted-foreground)", kind: "session", isLabeled: session.showLabel ?? true });
 		}
 		return runs.map((run) => {
 			const x = ctx.x(run.first) - ctx.spacing / 2;
 			const width = (run.last - run.first + 1) * ctx.spacing;
-			// Only label a band wide enough to hold its label.
-			return { ...run, x, width, showLabel: !!run.label && width > ctx.measureText([run.label]) + LABEL_OFFSET * 2 };
+			// Only label a band that asks for it and is wide enough to hold its label.
+			return { ...run, x, width, showLabel: run.isLabeled && !!run.label && width > ctx.measureText([run.label]) + LABEL_OFFSET * 2 };
 		});
 	});
 </script>
@@ -33,7 +33,8 @@
 <g class="candlestickChartSessions">
 	{#each bands as band (`${band.key}-${band.first}`)}
 		<g style:--candlestick-chart-series-color={band.color} data-kind={band.kind}>
-			<rect class="candlestickChartSession" x={band.x} y={ctx.marginTop} width={band.width} height={ctx.panesHeight} />
+			<!-- Shading runs from the top of the plot, through the space above the price pane, to the bottom of the panes. -->
+			<rect class="candlestickChartSession" x={band.x} y={0} width={band.width} height={ctx.plotBottom} />
 			{#if band.showLabel}
 				<text class="candlestickChartSessionLabel" x={band.x + LABEL_OFFSET} y={ctx.marginTop + LABEL_OFFSET} dominant-baseline="hanging">{band.label}</text>
 			{/if}
