@@ -685,6 +685,7 @@
 				{ "type": "file", "path": "src/lib/components/ui/orbling/_.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/orbling/index.ts" },
 				{ "type": "file", "path": "src/lib/components/ui/orbling/moods.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/orbling/shapes.ts" },
 				{ "type": "file", "path": "src/lib/components/ui/orbling/status.svelte" }
 			]
 		},

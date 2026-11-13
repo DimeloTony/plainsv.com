@@ -2,8 +2,9 @@
 <script lang="ts">
 	import type { Attachment } from "svelte/attachments";
 	import { actAt, type Mood } from "./moods.js";
+	import { isPresetShape, shapeMask } from "./shapes.js";
 	import type { Props } from "./index.js";
-	const { mood = "idle", variant = "default", size = "md", label, class: className, ...props }: Props = $props();
+	const { mood = "idle", variant = "default", shape = "circle", size = "md", label, class: className, ...props }: Props = $props();
 	// Share of the remaining distance the eyes move toward the pointer each frame.
 	const GAZE_EASE = 0.3;
 	const gradientId = $props.id();
@@ -15,6 +16,7 @@
 
 	const currentStep = $derived(stepMood === mood ? step : 0);
 	const act = $derived(actAt(mood, currentStep));
+	const shapeImage = $derived(shapeMask(shape));
 
 	/** Moves to the next act each time the act's timer loops. */
 	function advance() {
@@ -82,7 +84,7 @@
 </script>
 
 <!-- Orb root; its font size sets the diameter, so every part scales in `em`. -->
-<span {@attach followPointer} class={["orbling not-typeset", className]} data-act={act} data-variant={variant} data-size={size} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} {...props}>
+<span {@attach followPointer} class={["orbling not-typeset", className]} data-act={act} data-variant={variant} data-shape={isPresetShape(shape) ? shape : "custom"} data-size={size} style:--orbling-shape={shapeImage} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} {...props}>
 	<!-- Hidden timer; each loop of its animation advances the mood to its next act. -->
 	{#key act}
 		<span class="clock" onanimationiteration={advance}></span>
@@ -164,6 +166,8 @@
 		--orbling-fall: cubic-bezier(0.6, 0, 0.8, 0.4);
 		/* Mask shapes; mask colors only set coverage, so black means fully shown */
 		--orbling-disc: radial-gradient(circle closest-side, black calc(100% - 1px), transparent 100%);
+		/* Outline of the ball, tint, and typing dots; the `shape` prop sets it inline */
+		--orbling-shape: var(--orbling-disc);
 		--orbling-gear: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cpath%20d%3D%27M39.23%2015.65%20L41.41%202.27%20L58.59%202.27%20L60.77%2015.65%20A36%2036%200%200%201%2074.37%2023.50%20L87.04%2018.70%20L95.63%2033.57%20L85.13%2042.15%20A36%2036%200%200%201%2085.13%2057.85%20L95.63%2066.43%20L87.04%2081.30%20L74.37%2076.50%20A36%2036%200%200%201%2060.77%2084.35%20L58.59%2097.73%20L41.41%2097.73%20L39.23%2084.35%20A36%2036%200%200%201%2025.63%2076.50%20L12.96%2081.30%20L4.37%2066.43%20L14.87%2057.85%20A36%2036%200%200%201%2014.87%2042.15%20L4.37%2033.57%20L12.96%2018.70%20L25.63%2023.50%20A36%2036%200%200%201%2039.23%2015.65%20Z%27%20fill%3D%27black%27%20stroke%3D%27black%27%20stroke-width%3D%273%27%20stroke-linejoin%3D%27round%27%2F%3E%3C%2Fsvg%3E");
 		--orbling-duration: 4s;
 		display: inline-block;
@@ -190,11 +194,21 @@
 	}
 
 	/* Larger than the ball so the gear mask has room around it */
+	/* The glow is a drop shadow so it follows the shape mask */
 	.orbMask {
 		position: absolute;
 		mask-position: center;
 		mask-repeat: no-repeat;
+		filter: drop-shadow(0 0 0.045em color-mix(in oklab, var(--orbling-accent) 60%, transparent));
 		inset: -12.5%;
+	}
+
+	/* Parts that take the orb outline */
+	.ball,
+	.shade,
+	.tint,
+	.dot {
+		mask: var(--orbling-shape) center / 100% 100% no-repeat;
 	}
 
 	.ball {
@@ -202,7 +216,6 @@
 		animation: orblingBreathe 5s ease-in-out infinite;
 		container-type: size;
 		inset: 10%;
-		box-shadow: 0 0 0.045em 0.0075em color-mix(in oklab, var(--orbling-accent) 60%, transparent);
 		border-radius: var(--radius-pill);
 		background: radial-gradient(circle at 34% 28%, var(--orbling-ground-light), var(--orbling-ball) 45%, var(--orbling-ground-dark) 100%);
 		isolation: isolate;
@@ -455,11 +468,14 @@
 	.orbling[data-act="gear"] .ball {
 		animation:
 			orblingBreathe 5s ease-in-out infinite,
-			orblingGearUnturn var(--orbling-duration) linear infinite both;
+			orblingGearUnturn var(--orbling-duration) linear infinite both,
+			orblingGearShape var(--orbling-duration) var(--orbling-ease) infinite both;
 	}
 
 	.orbling[data-act="gear"] .shade {
-		animation: orblingGearShade var(--orbling-duration) var(--orbling-ease) infinite both;
+		animation:
+			orblingGearShade var(--orbling-duration) var(--orbling-ease) infinite both,
+			orblingGearShape var(--orbling-duration) var(--orbling-ease) infinite both;
 	}
 
 	.orbling[data-act="gear"] .eyes {
@@ -632,6 +648,13 @@
 	/* Extra small */
 	.orbling[data-size="xs"] {
 		font-size: 1rem; /* 16px */
+	}
+
+	/* =============== Shapes =============== */
+
+	/* Square corners so the shape mask alone draws the outline; the circle keeps its round rim light */
+	.orbling:not([data-shape="circle"]) .ball {
+		border-radius: 0;
 	}
 
 	/* =============== Keyframes =============== */
@@ -1019,6 +1042,22 @@
 		94%,
 		100% {
 			rotate: -360deg;
+		}
+	}
+
+	/* Grows the shape mask past the gear so its teeth are never clipped */
+	@keyframes orblingGearShape {
+		0%,
+		6% {
+			mask-size: 100% 100%;
+		}
+		26%,
+		74% {
+			mask-size: 180% 180%;
+		}
+		94%,
+		100% {
+			mask-size: 100% 100%;
 		}
 	}
 

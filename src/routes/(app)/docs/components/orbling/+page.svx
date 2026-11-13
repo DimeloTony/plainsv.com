@@ -67,6 +67,28 @@ Set `size` to `xs`, `sm`, `md`, or `lg`, which sets a diameter of 16, 32, 72, or
 <Orbling size="sm" />
 ```
 
+## Shapes
+
+Set `shape` to `circle`, `squircle`, `hexagon`, `diamond`, `heart`, `star`, or `blob`. The default is `circle`, and every part that has an outline, such as the glow, the tint, and the typing dots, follows the shape.
+
+<Demo section="shapes" />
+
+```svelte title="+page.svelte"
+<Orbling shape="heart" />
+```
+
+Pass any SVG path to `shape` for a custom outline. Draw the path in a 100 by 100 box, since the orb stretches it to fill its diameter, and keep the middle open for the eyes.
+
+```svelte title="+page.svelte"
+<Orbling shape="M20 6 L80 6 Q94 6 94 20 L94 66 Q94 80 80 80 L44 80 L24 96 L26 80 L20 80 Q6 80 6 66 L6 20 Q6 6 20 6 Z" />
+```
+
+Set `--orbling-shape` to any CSS mask image, such as an SVG file or a gradient, for outlines a path cannot draw. The `working` mood morphs any shape into its turning gear and back.
+
+```svelte title="+page.svelte"
+<Orbling style="--orbling-shape: url(/shapes/cloud.svg)" />
+```
+
 ## Colors
 
 Set `--orbling-color` to change the base color. The orb keeps the lightness of its original palette and takes the hue and chroma of the color you set, so any theme token works.
@@ -79,7 +101,7 @@ Set `--orbling-color` to change the base color. The orb keeps the lightness of i
 
 ## Status
 
-Use `OrblingStatus` for a status line in a chat. It shows a 16 pixel orb beside the mood label, such as "Thinking…", uses `role="status"` so screen readers announce changes, and takes `mood`, `variant`, `size`, and a `label` that replaces the default text.
+Use `OrblingStatus` for a status line in a chat. It shows a 16 pixel orb beside the mood label, such as "Thinking…", uses `role="status"` so screen readers announce changes, and takes `mood`, `variant`, `shape`, `size`, and a `label` that replaces the default text.
 
 <Demo section="status" />
 
@@ -101,7 +123,7 @@ The orb is decorative by default, so screen readers skip it. Set `label` when th
 
 ## API
 
-The `Orbling` and `OrblingStatus` props extend the native `span` attributes, and extra attributes pass through to the root. The package also exports `MOODS`, which maps each mood to its label, and `MOOD_NAMES`, which lists every mood.
+The `Orbling` and `OrblingStatus` props extend the native `span` attributes, and extra attributes pass through to the root. The package also exports `MOODS`, which maps each mood to its label, and `MOOD_NAMES`, which lists every mood, plus `SHAPES`, which maps each preset to its SVG path, and `SHAPE_NAMES`, which lists every shape.
 
 ```ts title="index.ts"
 interface Props extends CompProps<"span"> {
@@ -109,6 +131,8 @@ interface Props extends CompProps<"span"> {
 	mood?: Mood;
 	/** Orb colors: `default` is blue from `--chart-1`, `secondary` is grey, and `destructive` is red; `--orbling-color` overrides the base color */
 	variant?: "default" | "secondary" | "destructive";
+	/** Orb outline: a preset such as `squircle` or `heart`, or a custom SVG path in a 100 by 100 box; defaults to `circle`, and `--orbling-shape` overrides it with any mask image */
+	shape?: OrblingShape | (string & {});
 	/** Orb diameter on the shared scale; defaults to `md` */
 	size?: UiSize;
 	/** Accessible name; without it screen readers skip the orb */
@@ -120,6 +144,8 @@ interface StatusProps extends CompProps<"span"> {
 	mood?: Mood;
 	/** Orb colors, as on `Orbling` */
 	variant?: "default" | "secondary" | "destructive";
+	/** Orb outline, as on `Orbling` */
+	shape?: OrblingShape | (string & {});
 	/** Label text and gap on the shared scale; defaults to `sm` */
 	size?: UiSize;
 	/** Status text; defaults to the mood label, such as "Thinking…" */

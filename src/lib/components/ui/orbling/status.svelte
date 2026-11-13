@@ -2,12 +2,12 @@
 	import Orbling from "./_.svelte";
 	import { MOODS } from "./moods.js";
 	import type { StatusProps } from "./index.js";
-	const { mood = "idle", variant = "default", size = "sm", label, class: className, ...props }: StatusProps = $props();
+	const { mood = "idle", variant = "default", shape = "circle", size = "sm", label, class: className, ...props }: StatusProps = $props();
 </script>
 
 <!-- Small orb with the mood label beside it, announced as a status. -->
 <span class={["orblingStatus not-typeset", className]} role="status" data-size={size} {...props}>
-	<Orbling {mood} {variant} size="xs" />
+	<Orbling {mood} {variant} {shape} size="xs" />
 	<span class="shimmer">{label ?? MOODS[mood].label}</span>
 </span>
 

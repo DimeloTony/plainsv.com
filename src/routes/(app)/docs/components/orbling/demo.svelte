@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from "#lib/components/ui/button/index.js";
-	import { Orbling, OrblingStatus, MOOD_NAMES, type Mood, type OrblingProps } from "#lib/components/ui/orbling/index.js";
+	import { Orbling, OrblingStatus, MOOD_NAMES, SHAPE_NAMES, type Mood, type OrblingProps } from "#lib/components/ui/orbling/index.js";
 
 	const { section = "preview" }: Props = $props();
 	const variants: OrblingProps["variant"][] = ["default", "secondary", "destructive"];
@@ -11,7 +11,7 @@
 	/** Live preview for one section of the orbling docs */
 	interface Props {
 		/** Which group of examples to render */
-		section?: "preview" | "moods" | "variants" | "sizes" | "colors" | "status";
+		section?: "preview" | "moods" | "variants" | "sizes" | "shapes" | "colors" | "status";
 	}
 </script>
 
@@ -44,6 +44,18 @@
 		{#each sizes as size (size)}
 			<Orbling {size} />
 		{/each}
+	{:else if section === "shapes"}
+		<!-- One orb per preset shape, then a custom path. -->
+		{#each SHAPE_NAMES as shape (shape)}
+			<figure class="mood">
+				<Orbling {shape} />
+				<figcaption>{shape}</figcaption>
+			</figure>
+		{/each}
+		<figure class="mood">
+			<Orbling shape="M20 6 L80 6 Q94 6 94 20 L94 66 Q94 80 80 80 L44 80 L24 96 L26 80 L20 80 Q6 80 6 66 L6 20 Q6 6 20 6 Z" />
+			<figcaption>custom</figcaption>
+		</figure>
 	{:else if section === "colors"}
 		<!-- Custom base colors from other theme tokens. -->
 		<Orbling style="--orbling-color: var(--chart-3)" />
