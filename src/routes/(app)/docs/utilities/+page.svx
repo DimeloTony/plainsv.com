@@ -31,7 +31,7 @@ const response = await useFunc("userCreate", { email: "ada@example.com" });
 
 ## Auth
 
-Google or GitHub sign in with 30-day cookie sessions, built on `fetch` and Node's `crypto`. Install one item per provider and database pair, such as `auth-google-sqlite` or `auth-github-mongodb`. Read more on the [auth page](/docs/utilities/auth).
+Google, GitHub, or Vercel sign in with 30-day cookie sessions, built on `fetch` and Node's `crypto`. Install one item per provider and database pair, such as `auth-google-sqlite` or `auth-github-mongodb`. Read more on the [auth page](/docs/utilities/auth).
 
 ```pm
 npx remote0 add https://plainsv.com/r/auth-google-sqlite.json
