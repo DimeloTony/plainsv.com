@@ -1,9 +1,28 @@
 <script lang="ts">
 	import { Button } from "#lib/components/ui/button/index.ts";
 	import { CopyIcon } from "@lucide/svelte";
+	import { IconBrandGithub } from "@tabler/icons-svelte";
+	import { IconBrandGoogle } from "@tabler/icons-svelte";
+	import { IconBrandVercel } from "@tabler/icons-svelte";
 </script>
 
 <div class="page">
+	<!-- Sign in links -->
+	<div class="buttons">
+		<Button href="/api/auth/google" variant="outline" data-sveltekit-reload>
+			<IconBrandGoogle />
+			Sign in with Google
+		</Button>
+		<Button href="/api/auth/github" variant="outline" data-sveltekit-reload>
+			<IconBrandGithub />
+			Sign in with GitHub
+		</Button>
+		<Button href="/api/auth/vercel" variant="outline" data-sveltekit-reload>
+			<IconBrandVercel />
+			Sign in with Vercel
+		</Button>
+	</div>
+
 	<div class="buttons">
 		<Button size="icon-xs" variant="outline">
 			<CopyIcon />

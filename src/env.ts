@@ -7,5 +7,7 @@ export const variables = defineEnvVars({
     GITHUB_CLIENT_SECRET: { },
     GITHUB_CLASSIC_TOKEN: { },
     GOOGLE_CLIENT_ID: { },
-    GOOGLE_CLIENT_SECRET: { }
+    GOOGLE_CLIENT_SECRET: { },
+    VERCEL_CLIENT_ID: { },
+    VERCEL_CLIENT_SECRET: { }
 });

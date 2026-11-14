@@ -1,11 +1,11 @@
 ---
 title: "Auth"
-description: "Google or GitHub sign in with cookie sessions, built on Node crypto and a small database adapter for MongoDB, SQLite, or any other database."
+description: "Google, GitHub, or Vercel sign in with cookie sessions, built on Node crypto and a small database adapter for MongoDB, SQLite, or any other database."
 ---
 
 # Auth
 
-The auth utility signs users in with Google or GitHub and keeps them signed in with a session cookie. It talks to the provider with `fetch` and creates tokens with Node's `crypto`, so there is no auth library underneath. Auth reaches the provider through `src/lib/server/auth/provider.ts` and the database through `src/lib/server/auth/db.ts`, and each comes from its own registry item, so you can swap either one without touching the routes or the session code.
+The auth utility signs users in with Google, GitHub, or Vercel and keeps them signed in with a session cookie. It talks to the provider with `fetch` and creates tokens with Node's `crypto`, so there is no auth library underneath. Auth reaches the provider through `src/lib/server/auth/provider.ts` and the database through `src/lib/server/auth/db.ts`, and each comes from its own registry item, so you can swap either one without touching the routes or the session code.
 
 ## Installation
 
@@ -15,6 +15,8 @@ Install the item for your provider and database. Each one installs its provider 
 - Install `auth-google-mongodb` for Google sign in with MongoDB
 - Install `auth-github-sqlite` for GitHub sign in with SQLite through Drizzle
 - Install `auth-github-mongodb` for GitHub sign in with MongoDB
+- Install `auth-vercel-sqlite` for Vercel sign in with SQLite through Drizzle
+- Install `auth-vercel-mongodb` for Vercel sign in with MongoDB
 
 ```pm
 npx remote0 add https://plainsv.com/r/auth-google-sqlite.json
@@ -40,12 +42,19 @@ GITHUB_CLIENT_ID=""
 GITHUB_CLIENT_SECRET=""
 ```
 
+```bash title=".env"
+DOMAIN_URL="http://localhost:5173"
+VERCEL_CLIENT_ID=""
+VERCEL_CLIENT_SECRET=""
+```
+
 ## Provider setup
 
 Create an OAuth app with your provider, and register its callback route on your `DOMAIN_URL` as the callback URL. Add a second app or URL for production, since providers only redirect to registered URLs.
 
 - Create a Google OAuth client in the Google Cloud console with the redirect URI `http://localhost:5173/api/auth/google/callback`
 - Create a GitHub OAuth app in your GitHub developer settings with the callback URL `http://localhost:5173/api/auth/github/callback`
+- Create a Vercel app under your team's Settings, Apps, add the authorization callback URL `http://localhost:5173/api/auth/vercel/callback`, enable the `openid`, `email`, and `profile` scopes under Permissions, and set its client authentication to `client_secret_post`
 - Copy the client ID and secret into `.env`
 
 ## Hook
@@ -58,7 +67,7 @@ export { handle } from "#lib/server/auth/hook.js";
 
 ## Sign in
 
-Link to `/api/auth/google` or `/api/auth/github`, matching the installed provider, to start sign in. Add `callbackURL` to send the user back to a page after the callback, which defaults to `/`.
+Link to `/api/auth/google`, `/api/auth/github`, or `/api/auth/vercel`, matching the installed provider, to start sign in. Add `callbackURL` to send the user back to a page after the callback, which defaults to `/`.
 
 ```svelte title="+page.svelte"
 <a href="/api/auth/google?callbackURL=/account">Sign in with Google</a>
@@ -175,7 +184,7 @@ The auth code lives in `src/lib/server/auth`, and the routes live in `src/routes
 - Find the installed provider in `provider.ts`
 - Find session cookies and validation in `session.ts`
 - Find the request hook in `hook.ts`
-- Find the sign in and `callback` endpoints for each provider in `src/routes/api/auth/google` and `src/routes/api/auth/github`
+- Find the sign in and `callback` endpoints for each provider in `src/routes/api/auth/google`, `src/routes/api/auth/github`, and `src/routes/api/auth/vercel`
 - Find the shared `signout` endpoint in `src/routes/api/auth/signout`
 
 ## API

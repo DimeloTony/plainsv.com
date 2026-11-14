@@ -1427,6 +1427,28 @@
 			]
 		},
 		{
+			"name": "auth-vercel-sqlite",
+			"description": "Vercel sign in with cookie sessions, storing users and sessions in SQLite through the Drizzle utility.",
+			"itemDependencies": ["/r/auth-base.json", "/r/drizzle.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/providers/vercel.ts", "target": "src/lib/server/auth/provider.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/adapters/sqlite.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/vercel/+server.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/vercel/callback/+server.ts" }
+			]
+		},
+		{
+			"name": "auth-vercel-mongodb",
+			"description": "Vercel sign in with cookie sessions, storing users and sessions in MongoDB through the MongoDB utility.",
+			"itemDependencies": ["/r/auth-base.json", "/r/mongodb.json"],
+			"files": [
+				{ "type": "file", "path": "src/lib/server/auth/providers/vercel.ts", "target": "src/lib/server/auth/provider.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/adapters/mongodb.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/vercel/+server.ts" },
+				{ "type": "file", "path": "src/routes/api/auth/vercel/callback/+server.ts" }
+			]
+		},
+		{
 			"name": "drizzle",
 			"description": "A Drizzle ORM client on Node's built-in node:sqlite, with a typed schema and drizzle-kit migrations.",
 			"dependencies": ["drizzle-orm@rc"],
