@@ -77,7 +77,7 @@ export interface TradingSession {
 	end: string;
 	/** Name on the shading and in the tooltip, such as "Pre-market" */
 	label: string;
-	/** Any CSS color for the shading; defaults to `--muted-foreground` */
+	/** Any CSS color for the shading; defaults to `--chart-1` for the first session and `--muted-foreground` for the second, then repeats */
 	color?: string;
 	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
 	showLabel?: boolean;
@@ -139,6 +139,42 @@ export interface VwapIndicator {
 	color?: string;
 }
 
+/** A trade on the chart, such as one a bot opened, with a profit zone out to its target and a risk zone out to its stop */
+export interface TradePosition {
+	/** Unique id, reported back when the target or stop changes */
+	id: string;
+	/** `long` profits when the price rises, and `short` when it falls */
+	side: "long" | "short";
+	/** Time of the entry; the zones start at the candle whose period contains it */
+	time: Date | number | string;
+	/** Filled entry price; it stays fixed */
+	entry: number;
+	/** Take-profit price; above `entry` for a long and below it for a short */
+	target?: number;
+	/** Stop-loss price; below `entry` for a long and above it for a short */
+	stop?: number;
+	/** Time the position closed; the zones end at that candle, lose their labels and axis tags, and can no longer be edited; open positions run to the right edge */
+	exitTime?: Date | number | string;
+	/** Name on the entry line, such as "Bot #2"; defaults to "Long" or "Short" */
+	label?: string;
+	/** Lets the target and stop be dragged and moved with the arrow keys, and shows the cancel button when `onPositionCancel` is set; defaults to `true` while the position is open */
+	editable?: boolean;
+}
+
+/** A target or stop change that `onPositionsChange` reports */
+export interface PositionChange {
+	/** `id` of the changed position */
+	id: string;
+	/** Line that moved */
+	field: "target" | "stop";
+	/** New price */
+	price: number;
+	/** Price before the change */
+	previous: number;
+	/** Changed position with the new price */
+	position: TradePosition;
+}
+
 /** Overlay computed from the candles */
 export type Indicator = MovingAverageIndicator | BollingerIndicator | VwapIndicator;
 
@@ -186,6 +222,16 @@ export interface Props extends CompProps<"figure"> {
 	markers?: CandleMarker[];
 	/** Custom content for every marker, in place of its shape and text */
 	marker?: Snippet<[MarkerSnippetProps]>;
+	/** Trades with profit and risk zones, such as a bot's open positions; drag a target or stop to move it; supports `bind:positions` */
+	positions?: TradePosition[];
+	/** Called once a dragged or nudged target or stop is let go, with every position and the change, so a bot can update its orders */
+	onPositionsChange?: (positions: TradePosition[], change: PositionChange) => void;
+	/** Called with a position when its cancel button is pressed; the button shows on open, editable positions only when this is set, and the chart keeps the position until `positions` drops it or sets its `exitTime` */
+	onPositionCancel?: (position: TradePosition) => void;
+	/** Turns the cancel button into a check mark on the first press, and runs `onPositionCancel` only when the check mark is pressed; defaults to `true` */
+	confirmCancel?: boolean;
+	/** Smallest price move for a dragged or nudged target or stop, which snaps to it; defaults to `0.01` */
+	priceStep?: number;
 	/** Daily clock windows shaded behind the candles, such as pre-market and after hours */
 	sessions?: TradingSession[];
 	/** Fixed time ranges shaded behind the candles, such as earnings */
@@ -228,6 +274,8 @@ export interface Props extends CompProps<"figure"> {
 	legend?: boolean;
 	/** `top` puts the legend above the plot, and `overlay` floats it in the plot's top-left corner, taking no space; defaults to `top` */
 	legendPosition?: "top" | "overlay";
+	/** `wrap` breaks the legend onto new lines when it runs out of room, and `scroll` keeps it on one row that scrolls sideways with faded edges, for small screens; defaults to `wrap` */
+	legendOverflow?: "wrap" | "scroll";
 	/** Shows the table of visible candles under the chart; screen readers always get it */
 	table?: boolean;
 	/** Accessible name of the plot, such as "AAPL, 5 minute candles"; defaults to "Candlestick chart" */
@@ -244,5 +292,7 @@ export type CandlestickChartMarker = CandleMarker;
 export type CandlestickChartMarkerSnippetProps = MarkerSnippetProps;
 export type CandlestickChartTradingSession = TradingSession;
 export type CandlestickChartTimeHighlight = TimeHighlight;
+export type CandlestickChartPosition = TradePosition;
+export type CandlestickChartPositionChange = PositionChange;
 export type CandlestickChartIndicatorValue = IndicatorValue;
 export type CandlestickChartTooltipSnippetProps = TooltipSnippetProps;

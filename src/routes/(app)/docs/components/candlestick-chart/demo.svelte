@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CandlestickChart, getEma, type CandlestickChartCandle, type CandlestickChartMarker, type CandlestickChartPriceLevel, type CandlestickChartProps, type CandlestickChartTradingSession } from "#lib/components/ui/candlestick-chart/index.js";
+	import { CandlestickChart, getEma, type CandlestickChartCandle, type CandlestickChartMarker, type CandlestickChartPosition, type CandlestickChartPositionChange, type CandlestickChartPriceLevel, type CandlestickChartProps, type CandlestickChartTradingSession } from "#lib/components/ui/candlestick-chart/index.js";
 	import { ToggleGroup, ToggleGroupItem } from "#lib/components/ui/toggle-group/index.js";
 	import { Button } from "#lib/components/ui/button/index.js";
 	import { NewspaperIcon } from "@lucide/svelte";
@@ -30,6 +30,9 @@
 	const sentiment = getSentiment(daily, 3);
 	const news: CandlestickChartMarker[] = [200, 214, 231, 247].map((index, position) => ({ time: daily[index].time, size: 1.8, label: ["Product launch", "Analyst upgrade", "Fed decision", "Supplier deal"][position] }));
 	let range: [number, number] | undefined = $state();
+	// An open long a bot is holding, and a short it already closed.
+	let positions: CandlestickChartPosition[] = $state(getPositions(daily));
+	let lastChange: CandlestickChartPositionChange | null = $state(null);
 	let variant: Variant = $state("solid");
 	let live: CandlestickChartCandle[] = $state([]);
 	let isPaused = $state(false);
@@ -169,6 +172,17 @@
 		});
 	}
 
+	/** Builds an open long near the end of the data and a closed short before it, with targets and stops a few percent away. */
+	function getPositions(candles: CandlestickChartCandle[]): CandlestickChartPosition[] {
+		const long = candles[candles.length - 30];
+		const short = candles[candles.length - 70];
+		const round = (price: number) => Math.round(price * 100) / 100;
+		return [
+			{ id: "bot-1", side: "long", time: long.time, entry: long.close, target: round(long.close * 1.06), stop: round(long.close * 0.97), label: "Bot #1" },
+			{ id: "bot-2", side: "short", time: short.time, entry: short.close, target: round(short.close * 0.95), stop: round(short.close * 1.03), exitTime: candles[candles.length - 50].time, label: "Bot #2" },
+		];
+	}
+
 	/** Whether a toggle value is a chart variant. */
 	function isVariant(value: string): value is Variant {
 		return VARIANTS.some((item) => item === value);
@@ -180,7 +194,7 @@
 	/** Live preview for one section of the candlestick chart docs */
 	interface Props {
 		/** Which group of examples to render */
-		section?: "preview" | "sessions" | "highlights" | "live" | "levels" | "vwap" | "averages" | "bollinger" | "volume" | "zoom" | "variant" | "colors" | "grid" | "format" | "tooltip" | "groups" | "markers" | "sentiment" | "markerSnippet" | "sizes" | "table";
+		section?: "preview" | "sessions" | "highlights" | "live" | "levels" | "vwap" | "averages" | "bollinger" | "volume" | "zoom" | "variant" | "colors" | "grid" | "format" | "tooltip" | "groups" | "markers" | "sentiment" | "markerSnippet" | "positions" | "legendScroll" | "sizes" | "table";
 	}
 </script>
 
@@ -310,6 +324,15 @@
 				<span class="demoMarker" style:--demo-marker-color={color}><NewspaperIcon size={12} /></span>
 			{/snippet}
 		</CandlestickChart>
+	{:else if section === "positions"}
+		<!-- Drag the open position's target or stop, and the change shows below once you let go; press × to cancel it. -->
+		<div class="demoColumn">
+			<CandlestickChart data={daily} bind:positions onPositionsChange={(_, change) => (lastChange = change)} onPositionCancel={(position) => (positions = positions.filter((item) => item.id !== position.id))} range={[daily.length - 90, daily.length]} volume={false} class="demoChart" />
+			<p>Last change: <code>{lastChange ? `${lastChange.id} ${lastChange.field} ${lastChange.previous} → ${lastChange.price}` : "drag a target or stop"}</code></p>
+		</div>
+	{:else if section === "legendScroll"}
+		<!-- A narrow chart with more indicators than fit, so the legend scrolls instead of wrapping. -->
+		<CandlestickChart data={daily} indicators={[{ type: "ema", period: 9 }, { type: "ema", period: 21 }, { type: "sma", period: 50 }, { type: "sma", period: 200 }, { type: "bollinger" }]} legendOverflow="scroll" volume={false} size="sm" class="demoNarrow" />
 	{:else if section === "sizes"}
 		<!-- Smallest and largest sizes. -->
 		<CandlestickChart data={daily} size="xs" class="demoHalf" />
@@ -378,5 +401,11 @@
 
 	.demo :global(.demoHalf) {
 		flex: 1 1 18rem; /* 288px */
+	}
+
+	/* Phone-width chart, so the scrolling legend overflows */
+	.demo :global(.demoNarrow) {
+		flex: 1 1 auto;
+		max-width: 20rem; /* 320px */
 	}
 </style>

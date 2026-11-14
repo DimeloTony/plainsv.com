@@ -1,4 +1,4 @@
-import type { CandlestickChartCandle, CandlestickChartMarker, CandlestickChartPriceLevel, CandlestickChartTradingSession } from "#lib/components/ui/candlestick-chart/index.js";
+import type { CandlestickChartCandle, CandlestickChartMarker, CandlestickChartPosition, CandlestickChartPriceLevel, CandlestickChartTradingSession } from "#lib/components/ui/candlestick-chart/index.js";
 
 // 5 minute candles from 04:00 to 20:00 New York time; regular hours run from slot 66 (09:30) to slot 144 (16:00).
 const CANDLES_PER_DAY = 192;
@@ -18,6 +18,9 @@ const SHARES = 100;
 const REJECTION_LOOKBACK = 12;
 const WICK_TO_BODY = 2;
 const WICK_SHARE = 0.55;
+// Reward the bot aims for per unit of risk, and the least risk it takes as a share of the entry, so a tiny wick never sets a stop at the entry.
+const REWARD_TO_RISK = 2;
+const MIN_RISK_SHARE = 0.002;
 // Candles on each side a swing high or low must beat.
 const SWING_WINDOW = 10;
 // Strike spacing and count of the sample option chain.
@@ -210,6 +213,26 @@ export function getTradeMarkers(list: Trade[]): CandlestickChartMarker[] {
 			{ time: trade.time, group: "Bot trades", kind: trade.side, position: "price", price: trade.price, shape: "square", size: 0.5, label: "Fill" },
 		];
 	});
+}
+
+/** Turns each round trip into a closed position and the bot's latest buy into an open one, with a stop under the entry candle's low and a target at twice the risk. */
+export function getPositions(list: Trade[]): CandlestickChartPosition[] {
+	const result: CandlestickChartPosition[] = [];
+	for (const [position, trade] of list.entries()) {
+		// If this is a sell: its buy already made the position.
+		if (trade.side !== "buy") continue;
+		const exit = list[position + 1];
+		const risk = Math.max(trade.price - candles[trade.index].low, trade.price * MIN_RISK_SHARE);
+		const round = (price: number) => Math.round(price * 100) / 100;
+		result.push({ id: `trade-${trade.index}`, side: "long", time: trade.time, entry: trade.price, stop: round(trade.price - risk), target: round(trade.price + risk * REWARD_TO_RISK), exitTime: exit?.time, label: `Bot #${result.length + 1}` });
+	}
+	// If the bot ended flat: open one more long on the latest candle, so there is always a position to edit.
+	if (!result.length || result.at(-1)?.exitTime !== undefined) {
+		const last = candles.length - 1;
+		const risk = Math.max(lastClose - candles[last].low, lastClose * MIN_RISK_SHARE * 2);
+		result.push({ id: "trade-live", side: "long", time: candles[last - 6].time, entry: lastClose, stop: Math.round((lastClose - risk) * 100) / 100, target: Math.round((lastClose + risk * REWARD_TO_RISK) * 100) / 100, label: `Bot #${result.length + 1}` });
+	}
+	return result;
 }
 
 /** Draws the walls and max pain from open interest, the walls sized by their open interest. */

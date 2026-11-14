@@ -5,6 +5,8 @@
 	const ctx = useCompCtx();
 	// Space in pixels between a band's edge and its label.
 	const LABEL_OFFSET = 4;
+	// Default session shading by position, so neighbors such as pre-market and after hours read apart; it avoids the rising, falling, and highlight colors.
+	const SESSION_COLORS = ["var(--chart-1)", "var(--muted-foreground)"];
 	// Runs of neighboring candles in the same highlight or session; a highlight wins over a session.
 	const bands = $derived.by(() => {
 		const runs: { key: string; first: number; last: number; label: string; color: string; kind: "session" | "highlight"; isLabeled: boolean }[] = [];
@@ -18,7 +20,7 @@
 			// If the candle continues the band before it: extend that band.
 			if (previous && previous.key === key && previous.last === index - 1) previous.last = index;
 			else if (highlight) runs.push({ key, first: index, last: index, label: highlight.label ?? "", color: highlight.color ?? "var(--chart-4)", kind: "highlight", isLabeled: highlight.showLabel ?? true });
-			else if (session) runs.push({ key, first: index, last: index, label: session.label, color: session.color ?? "var(--muted-foreground)", kind: "session", isLabeled: session.showLabel ?? true });
+			else if (session) runs.push({ key, first: index, last: index, label: session.label, color: session.color ?? SESSION_COLORS[ctx.candleSessions[index] % SESSION_COLORS.length], kind: "session", isLabeled: session.showLabel ?? true });
 		}
 		return runs.map((run) => {
 			const x = ctx.x(run.first) - ctx.spacing / 2;

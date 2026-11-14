@@ -23,7 +23,8 @@
 <g class="candlestickChartLevels">
 	{#each ctx.levelTags as level (level.position)}
 		<g style:--candlestick-chart-series-color={level.color}>
-			{#if level.placement === "inside"}
+			<!-- Position lines only borrow the tag; the positions part draws their lines across their zones. -->
+			{#if level.placement === "inside" && !level.isPosition}
 				{@const band = getBand(level.lineY, level.size)}
 				<!-- A level bigger than 1 shades a band around its line, so a stronger level reads heavier at any zoom. -->
 				{#if band.bottom > band.top}

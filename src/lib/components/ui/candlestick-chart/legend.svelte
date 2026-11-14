@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { useCompCtx } from "./ctx.svelte.js";
-	const { overlay = false }: Props = $props();
+	const { overlay = false, overflow = "wrap" }: Props = $props();
 	const ctx = useCompCtx();
 	// Space in pixels between the overlay legend and the plot's top-left corner.
 	const OVERLAY_INSET = 4;
@@ -12,13 +12,16 @@
 	interface Props {
 		/** Floats the legend inside the plot instead of above it */
 		overlay?: boolean;
+		/** `wrap` breaks onto new lines, and `scroll` keeps one row that scrolls sideways */
+		overflow?: "wrap" | "scroll";
 	}
 </script>
 
 <!-- Legend; each button hides or shows its indicator or group, which keeps its color either way. -->
+<!-- The fade class stays on, since its fades only show while a scrolling legend overflows. -->
 <!-- The overlay legend sits inside the plot, so it stops the plot's drag, zoom, and reset gestures from starting on it. -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<ul class="candlestickChartLegend" aria-label="Legend" data-overlay={overlay || undefined} style:--candlestick-chart-legend-top="{ctx.marginTop + OVERLAY_INSET}px" style:--candlestick-chart-legend-left="{ctx.marginLeft + OVERLAY_INSET}px" style:--candlestick-chart-legend-width="{Math.max(0, ctx.plotWidth - OVERLAY_INSET * 2)}px" onpointerdown={overlay ? stopPlotGesture : undefined} ondblclick={overlay ? stopPlotGesture : undefined} onkeydown={overlay ? stopPlotGesture : undefined}>
+<ul class="candlestickChartLegend scroll-fade-x" aria-label="Legend" data-overlay={overlay || undefined} data-overflow={overflow} style:--candlestick-chart-legend-top="{ctx.marginTop + OVERLAY_INSET}px" style:--candlestick-chart-legend-left="{ctx.marginLeft + OVERLAY_INSET}px" style:--candlestick-chart-legend-width="{Math.max(0, ctx.plotWidth - OVERLAY_INSET * 2)}px" onpointerdown={overlay ? stopPlotGesture : undefined} ondblclick={overlay ? stopPlotGesture : undefined} onkeydown={overlay ? stopPlotGesture : undefined}>
 	{#each ctx.series as item (item.label)}
 		{@const isShown = !ctx.hidden.includes(item.label)}
 		<li>
@@ -98,6 +101,33 @@
 		background-color: color-mix(in oklab, var(--background) 75%, transparent);
 		padding: calc(var(--spacing-xs) / 2);
 		max-width: var(--candlestick-chart-legend-width);
+	}
+
+	/* One row that scrolls sideways; the edge fades show there is more, so the scrollbar hides, and the padding keeps focus rings inside the scroll box */
+	.candlestickChartLegend[data-overflow="scroll"] {
+		flex-wrap: nowrap;
+		padding-top: var(--spacing-xs);
+		padding-inline: var(--spacing-xs);
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+	}
+
+	.candlestickChartLegend[data-overflow="scroll"]::-webkit-scrollbar {
+		display: none;
+	}
+
+	.candlestickChartLegend[data-overlay][data-overflow="scroll"] {
+		padding-bottom: var(--spacing-xs);
+	}
+
+	/* Buttons keep their width and stay on one line, so the row scrolls instead of squeezing them */
+	.candlestickChartLegend[data-overflow="scroll"] > li {
+		flex-shrink: 0;
+	}
+
+	.candlestickChartLegend[data-overflow="scroll"] .candlestickChartLegendButton {
+		white-space: nowrap;
 	}
 
 	/* Dashed key for a level group, matching the level lines */
