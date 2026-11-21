@@ -28,8 +28,6 @@
 	<meta name="robots" content={robots} />
 	<!-- Canonical -->
 	<link rel="canonical" href={canonicalUrl} />
-	<!-- LLMs -->
-	<link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs" />
 	<!-- Icons -->
 	<link rel="icon" href="/images/favicon.svg" type="image/svg+xml" />
 	<link rel="apple-touch-icon" href="/images/apple-icon.png" />

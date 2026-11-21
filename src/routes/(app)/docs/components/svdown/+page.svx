@@ -44,13 +44,7 @@ npx remote0 add https://plainsv.com/r/svdown.json
 
 Headings, paragraphs, emphasis, strikethrough, inline code, links, images, blockquotes, ordered, unordered, and task lists, tables, and dividers follow GitHub Flavored Markdown. Wide tables scroll sideways.
 
-Svdown does not style the Markdown itself. Each run of prose renders in a `typeset typeset-chat` wrapper, styled by `typeset.css`, which installs with this component. Import it once in your root layout. Change the fonts, line height, and spacing for chat responses in the `.typeset-chat` rule at the top of that file.
-
-```svelte title="+layout.svelte"
-<script lang="ts">
-	import "../styles/typeset.css";
-</script>
-```
+Svdown does not style the Markdown itself. Each run of prose renders in a `typeset typeset-chat` wrapper, styled by `src/styles/typeset.css`, which the `init` item installs and `app.css` imports, so it works on every page. Change the fonts, line height, and spacing for chat responses in the `.typeset-chat` rule at the top of that file.
 
 Code fences render with `CodeBlock`. Add a `path` after the language, such as `svelte path="src/App.svelte"`, to show it in the header. Add line numbers in braces, such as `ts {1,3-5}`, to highlight those lines. Languages without highlighting show as plain text.
 

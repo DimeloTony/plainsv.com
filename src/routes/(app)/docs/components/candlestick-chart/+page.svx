@@ -9,13 +9,13 @@ description: "A candlestick chart with trading sessions, a volume pane, VWAP, mo
 
 # Candlestick Chart
 
-Draws open, high, low, and close candles with plain SVG and no chart library, for stock, crypto, or any other prices over time. Shade pre-market and after hours in the exchange's time zone, mark earnings or news with highlights, pin buy and sell signals or sentiment bubbles to candles with markers, and stream live prices that the chart follows. A volume pane sits under the price pane, and the chart computes VWAP, simple and exponential moving averages, and Bollinger bands from the candles. Drag to pan, hold Ctrl or ⌘ and scroll to zoom, press and hold on a touch screen to read a candle, and focus the chart to read each candle with the arrow keys. A crosshair tags the price and time on the axes, and a table of the visible candles is always there for screen readers.
+Draws open, high, low, and close candles with plain SVG and no chart library, for stock, crypto, or any other prices over time. Shade pre-market and after hours in the exchange's time zone, mark earnings or news with highlights, pin buy and sell signals or sentiment bubbles to candles with markers, and stream live prices that the chart follows. A volume pane sits under the price pane, and the chart computes VWAP, simple and exponential moving averages, and Bollinger bands from the candles. Drag to pan, scroll to zoom, press and hold on a touch screen to read a candle, and focus the chart to read each candle with the arrow keys. A crosshair tags the price and time on the axes, and a table of the visible candles is always there for screen readers.
 
 <Demo />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
-	import { CandlestickChart, type CandlestickChartCandle } from "#lib/components/ui/candlestick-chart/index.js";
+	import { CandlestickChart, CandlestickChartLegend, CandlestickChartTooltip, type CandlestickChartCandle } from "#lib/components/ui/candlestick-chart/index.js";
 
 	const data: CandlestickChartCandle[] = [
 		{ time: "2026-10-19T13:30:00Z", open: 182.1, high: 182.9, low: 181.8, close: 182.6, volume: 84_200 },
@@ -27,7 +27,10 @@ Draws open, high, low, and close candles with plain SVG and no chart library, fo
 	];
 </script>
 
-<CandlestickChart {data} {sessions} timeZone="America/New_York" indicators={[{ type: "vwap", regularHours: true }, { type: "ema", period: 20 }]} label="AAPL, 5 minute candles" />
+<CandlestickChart {data} {sessions} timeZone="America/New_York" indicators={[{ type: "vwap", regularHours: true }, { type: "ema", period: 20 }]} label="AAPL, 5 minute candles">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Installation
@@ -48,7 +51,7 @@ const candle: CandlestickChartCandle = { time: new Date(), open: 182.1, high: 18
 
 Set `sessions` to shade daily clock windows behind the candles, such as pre-market and after hours. Each session has a `start` and `end` as `HH:mm`, a `label` shown on the shading, in the tooltip, and in the table, and an optional `color`. A session that ends before it starts runs past midnight. Sessions shade in `--chart-1` and `--muted-foreground` by their order, so pre-market and after hours look different; set `color` to change a session's shading, which is a soft wash of that color, and `showLabel` to `false` to hide its name on the chart while the tooltip and table keep it. Add `regularHours: true` to a VWAP to leave the sessions out of it, as most traders do.
 
-<Demo section="sessions" />
+<Demo name="sessions" />
 
 ```svelte title="+page.svelte"
 <CandlestickChart
@@ -58,8 +61,10 @@ Set `sessions` to shade daily clock windows behind the candles, such as pre-mark
 		{ start: "16:00", end: "20:00", label: "After hours", color: "var(--chart-5)", showLabel: false },
 	]}
 	timeZone="America/New_York"
-	indicators={[{ type: "vwap", regularHours: true }]}
-/>
+	indicators={[{ type: "vwap", regularHours: true }]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Time Zone
@@ -67,24 +72,30 @@ Set `sessions` to shade daily clock windows behind the candles, such as pre-mark
 Set `timeZone` to an IANA name, such as `America/New_York` or `Asia/Tokyo`, so sessions match the exchange's clock wherever the viewer is. The time axis, tooltip, table, and VWAP day resets follow it too. Without it, the chart uses the viewer's own time zone.
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} {sessions} timeZone="America/New_York" />
+<CandlestickChart {data} {sessions} timeZone="America/New_York">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Highlights
 
 Set `highlights` to shade fixed time ranges, such as earnings releases or news. Each highlight has a `start` and an `end` that is not included, an optional `label`, a `color` that defaults to `--chart-4`, and `showLabel` to hide the label on the chart. A highlight draws over a session where they overlap.
 
-<Demo section="highlights" />
+<Demo name="highlights" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} highlights={[{ start: "2026-07-23", end: "2026-07-24", label: "Earnings" }]} />
+<CandlestickChart {data} highlights={[{ start: "2026-07-23", end: "2026-07-24", label: "Earnings" }]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Live Data
 
 Replace `data` with a new array as prices arrive, by updating the last candle or adding a new one. The chart shows the latest candles, and a zoomed chart that reaches the newest candle keeps following it as candles are added; pan back to stop following, and double-click to catch up. A dotted line and axis tag mark the latest close in its direction's color; set `lastPrice` to `false` to hide them.
 
-<Demo section="live" />
+<Demo name="live" />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
@@ -97,32 +108,61 @@ Replace `data` with a new array as prices arrive, by updating the last candle or
 	}
 </script>
 
-<CandlestickChart {data} />
+<CandlestickChart {data}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Price Levels
 
-Set `levels` to draw dashed lines at prices, such as support and resistance. A `support` level uses the rising color, a `resistance` level the falling color, and `color` sets any other. Each level gets a price tag on the axis, and a level outside the visible prices pins to the edge with an arrow, so it never stretches the chart. Set `size` above `1` to shade a band around the line that grows 6px per step at any zoom, so stronger levels, such as large option walls, read heavier.
+Set `levels` to draw dashed lines at prices, such as support and resistance. A `support` level uses the rising color, a `resistance` level the falling color, and `color` sets any other. Each level gets a price tag on the axis, and a level outside the visible prices pins to the edge with an arrow, so it never stretches the chart. Set `size` above `1` to shade a band around the line that grows 6px per step at any zoom, so stronger levels, such as large option walls, read heavier. Set `style` to `dashed`, `dotted`, or `solid` to change the line pattern, which is `dashed` by default. Set `start` and `end` to times to draw a level only between those candles, such as a level that held during the morning; an ended level drops its axis tag, and one without an `end` runs to the right edge. Set `tag` to `false` to keep a minor level off the axis.
 
-<Demo section="levels" />
+<Demo name="levels" />
 
 ```svelte title="+page.svelte"
 <CandlestickChart
 	{data}
 	levels={[
 		{ price: 181.5, label: "Support", kind: "support" },
-		{ price: 186, label: "Resistance", kind: "resistance" },
+		{ price: 186, label: "Resistance", kind: "resistance", style: "solid" },
 		{ price: 200, label: "Target" },
 		{ price: 184, label: "Call wall", kind: "resistance", size: 4 },
+		{ price: 183, label: "Morning pivot", start: "2026-10-19T13:30:00Z", end: "2026-10-19T16:00:00Z" },
+	]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+```
+
+## Custom Levels
+
+Pass a `level` snippet to draw every level on screen yourself with any markup, such as a shaded band with its name in a pill. It receives the `level`, the resolved `color`, the `bandHeight` its `size` asks for, and the line's `width` from its `start` to its `end`, and replaces the line, band, and label. Each level renders in a flex row across its span, centered on its price, so a child with `flex: 1` spans the line. The price tag on the axis, the last price, and position lines keep their own drawing.
+
+<Demo name="level-snippet" />
+
+```svelte title="+page.svelte"
+<CandlestickChart
+	{data}
+	levels={[
+		{ price: 181.5, label: "Put wall", kind: "support", size: 3 },
+		{ price: 186, label: "Call wall", kind: "resistance", size: 3 },
 	]}
-/>
+>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+	{#snippet level({ level, color, bandHeight })}
+		<span class="wallBand" style:--wall-color={color} style:--wall-band="{bandHeight}px"></span>
+		<span class="wallLabel" style:--wall-color={color}>{level.label}</span>
+	{/snippet}
+</CandlestickChart>
 ```
 
 ## Markers
 
 Set `markers` to pin marks to candles, such as a trading bot's buy and sell signals. Each marker has a `time` and sits on the candle whose period contains it, so a trade at 10:03 lands on the 10:00 candle. A `buy` marker is a rising arrow under the low, and a `sell` marker is a falling arrow over the high, in the rising and falling colors. Set `text` for a short tag beside the shape, and `label` to describe the marker in the tooltip, the table, and announcements. Markers on the same side of a candle stack outward, and the chart leaves room for them above the highs and below the lows.
 
-<Demo section="markers" />
+<Demo name="markers" />
 
 ```svelte title="+page.svelte"
 <CandlestickChart
@@ -130,15 +170,17 @@ Set `markers` to pin marks to candles, such as a trading bot's buy and sell sign
 	markers={[
 		{ time: "2026-10-19T14:05:00Z", kind: "buy", text: "BUY", label: "Bought 10 at $182.40" },
 		{ time: "2026-10-19T15:20:00Z", kind: "sell", text: "SELL", label: "Sold 10 at $184.10" },
-	]}
-/>
+	]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Marker Shapes
 
 Set `shape` to `arrowUp`, `arrowDown`, `circle`, or `square`, and `size` to scale it, such as `2` for twice as big. Set `position` to `above` or `below` to pick a side, or to `price` with a `price` to sit at an exact price, such as a fill. A marker without a `kind` is a `circle` above the high in `--chart-1`, and `color` takes any CSS color, which suits sentiment bubbles sized by score.
 
-<Demo section="sentiment" />
+<Demo name="sentiment" />
 
 ```svelte title="+page.svelte"
 <CandlestickChart
@@ -147,15 +189,17 @@ Set `shape` to `arrowUp`, `arrowDown`, `circle`, or `square`, and `size` to scal
 		{ time: "2026-07-01", color: "var(--chart-3)", size: 2.2, label: "Sentiment +0.80" },
 		{ time: "2026-07-08", color: "var(--destructive)", size: 1.4, label: "Sentiment -0.27" },
 		{ time: "2026-07-10", position: "price", price: 182.4, shape: "square", text: "Fill" },
-	]}
-/>
+	]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Custom Markers
 
 Pass a `marker` snippet to draw every marker yourself with any markup, such as an icon. It receives the `marker`, its candle's `index`, the `candle`, and the resolved `color`, and replaces the shape and text. Set `size` on each marker so the space the chart stacks and reserves matches the custom mark, where `1` is about the axis text height.
 
-<Demo section="markerSnippet" />
+<Demo name="marker-snippet" />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
@@ -163,6 +207,8 @@ Pass a `marker` snippet to draw every marker yourself with any markup, such as a
 </script>
 
 <CandlestickChart {data} markers={[{ time: "2026-08-12", size: 1.8, label: "Fed decision" }]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
 	{#snippet marker({ color })}
 		<span class="newsMarker" style:--news-marker-color={color}><NewspaperIcon size={12} /></span>
 	{/snippet}
@@ -171,13 +217,13 @@ Pass a `marker` snippet to draw every marker yourself with any markup, such as a
 
 ## Positions
 
-Set `positions` to draw trades, such as the ones a trading bot opens. Each position has an `id`, a `side` of `long` or `short`, the `time` and `entry` price it filled at, and an optional `target` and `stop`. The chart shades a profit zone from the entry out to the target in the rising color and a risk zone out to the stop in the falling color, starting at the entry candle and running to the right edge, or to `exitTime` once the position closes. Each line of an open position gets a label with its price and its distance from the entry in percent, and a tag on the price axis that pins to the edge with an arrow when the price is off screen. A closed position keeps just its faded zones and lines, so past trades stay readable without crowding the chart.
+Set `positions` to draw trades, such as the ones a trading bot opens. Each position has an `id`, a `side` of `long` or `short`, the `time` and `entry` price it filled at, and an optional `target` and `stop`. The chart shades a profit zone from the entry out to the target in the rising color and a risk zone out to the stop in the falling color, starting at the entry candle and running to the latest candle, or to `exitTime` once the position closes, so open trades stop where price is now instead of running into the empty time ahead. Each line of an open position gets a label just right of the latest candle, in the empty time ahead, with its price and its distance from the entry in percent; when the latest candle sits at the plot's right edge, the label moves inside the zone's end instead. Each line also gets a tag on the price axis that pins to the edge with an arrow when the price is off screen. A closed position keeps just its faded zones and lines, so past trades stay readable without crowding the chart.
 
 Drag a target or stop line up or down to move it, or focus it and press the arrow keys to move it one `priceStep`, which defaults to `0.01`. Press Page Up, Page Down, or Shift with an arrow to move 10 steps, and Escape mid-drag to put the line back. The entry stays fixed, a target or stop always stays on its side of the entry, and closed positions and ones with `editable: false` cannot move. The line moves while you drag, and `onPositionsChange` fires once you let go, with every position and the change, so a bot can update its orders without a call per pixel. Bind `positions` to keep them in sync.
 
-Set `onPositionCancel` to add a cancel button to the entry label of every open, editable position. The first press turns it into a check mark, and pressing the check mark calls the function with the position. The check mark turns back after 3 seconds, on Escape, or when focus leaves it, so a stray press never cancels a trade; set `confirmCancel` to `false` to cancel on the first press. The chart keeps drawing the position until you remove it from `positions` or set its `exitTime`, so a bot can wait for the broker to confirm the order is gone.
+Set `onPositionCancel` to add a cancel button to the entry label of every open, editable position, and of draft and pending ones, as described under Position Stages. The first press turns it into a check mark, and pressing the check mark calls the function with the position. The check mark turns back after 3 seconds, on Escape, or when focus leaves it, so a stray press never cancels a trade; set `confirmCancel` to `false` to cancel on the first press. The chart keeps drawing the position until you remove it from `positions` or set its `exitTime`, so a bot can wait for the broker to confirm the order is gone.
 
-<Demo section="positions" />
+<Demo name="positions" />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
@@ -200,24 +246,77 @@ Set `onPositionCancel` to add a cancel button to the entry label of every open, 
 	}
 </script>
 
-<CandlestickChart {data} bind:positions onPositionsChange={updateOrder} onPositionCancel={cancelOrder} />
+<CandlestickChart {data} bind:positions onPositionsChange={updateOrder} onPositionCancel={cancelOrder}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+```
+
+## Position Stages
+
+Set `stage` on a position to set up a new trade on the chart before sending it. A position without a `stage` is `open`, or `closed` once it has an `exitTime`, so existing positions keep working.
+
+- `draft` is being set up and not confirmed yet. It starts at the latest candle and runs to the plot's right edge with dashed lines, and its entry, target, and stop all drag and take the arrow keys. Moving the entry pushes the target and stop along, so they stay on their side of it.
+- `pending` is confirmed and waiting to fill. It reads "Waiting" on its entry label and can no longer be edited.
+- `open` is filled, and `closed` is done, as described under Positions.
+
+Call `getDraftPosition` from your own Long or Short buttons to get a draft at the latest close, with a stop 0.5% away and a target twice as far on the other side, snapped to `priceStep`; pass `risk` to set the stop distance in price. The draft's entry label gets a check mark that calls `onPositionConfirm`, and a × that calls `onPositionCancel` right away, since nothing was sent yet; Escape on a focused draft line also discards it. Send the order and set the stage to `pending`, then to `open` with the fill `time` and `entry` once the broker fills it.
+
+<Demo name="position-stages" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { CandlestickChart, CandlestickChartLegend, CandlestickChartTooltip, getDraftPosition, type CandlestickChartPosition } from "#lib/components/ui/candlestick-chart/index.js";
+	import { Button } from "#lib/components/ui/button/index.js";
+
+	let positions: CandlestickChartPosition[] = $state([]);
+
+	/** Adds a draft to adjust on the chart. */
+	function startPosition(side: "long" | "short") {
+		const draft = getDraftPosition(data, { id: crypto.randomUUID(), side });
+		if (draft) positions = [...positions, draft];
+	}
+
+	/** Sends the order, waits for the fill, then opens the position. */
+	async function confirmPosition(position: CandlestickChartPosition) {
+		positions = positions.map((item) => (item.id === position.id ? { ...item, stage: "pending" } : item));
+		const fill: { time: string; price: number } = await fetch("/api/positions", { method: "POST", body: JSON.stringify(position) }).then((response) => response.json());
+		positions = positions.map((item) => (item.id === position.id ? { ...item, stage: "open", time: fill.time, entry: fill.price } : item));
+	}
+
+	/** Drops a discarded draft. */
+	function discardPosition(position: CandlestickChartPosition) {
+		positions = positions.filter((item) => item.id !== position.id);
+	}
+</script>
+
+<Button onclick={() => startPosition("long")}>Long</Button>
+<Button onclick={() => startPosition("short")}>Short</Button>
+
+<CandlestickChart {data} bind:positions onPositionConfirm={confirmPosition} onPositionCancel={discardPosition}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## VWAP
 
 Add `{ type: "vwap" }` to `indicators` for the volume-weighted average price of `(high + low + close) / 3`. It restarts each day in the chart's time zone; set `reset` to `none` to run it across all the data. Set `bands` to draw standard deviation bands, such as `[1, 2]`, and `regularHours` to skip the sessions. The line breaks at each restart, and VWAP needs `volume` on the candles.
 
-<Demo section="vwap" />
+<Demo name="vwap" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} indicators={[{ type: "vwap", bands: [1, 2] }]} />
+<CandlestickChart {data} indicators={[{ type: "vwap", bands: [1, 2] }]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Moving Averages
 
 Add `{ type: "sma", period }` for a simple moving average of the closes, or `{ type: "ema", period }` for an exponential one that follows recent closes more closely. An average starts once its window is full.
 
-<Demo section="averages" />
+<Demo name="averages" />
 
 ```svelte title="+page.svelte"
 <CandlestickChart
@@ -225,45 +324,85 @@ Add `{ type: "sma", period }` for a simple moving average of the closes, or `{ t
 	indicators={[
 		{ type: "ema", period: 20 },
 		{ type: "sma", period: 50 },
-	]}
-/>
+	]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Bollinger Bands
 
 Add `{ type: "bollinger" }` for a 20 candle simple moving average with bands 2 standard deviations away. Set `period` and `deviations` to change them.
 
-<Demo section="bollinger" />
+<Demo name="bollinger" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} indicators={[{ type: "bollinger", period: 20, deviations: 2 }]} />
+<CandlestickChart {data} indicators={[{ type: "bollinger", period: 20, deviations: 2 }]}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
+
+## Parts
+
+Every chart takes its parts as children, which choose what shows and how each looks: `CandlestickChartLegend`, `CandlestickChartTooltip`, and `CandlestickChartInfo`. A part left out is hidden, so a chart with only a `CandlestickChartTooltip` has no legend, and the crosshair, table, and announcements stay either way. Each part takes its own `variant`, `size`, `rounded`, and `class`. The variants are the same on every part: `default`, `secondary` for a filled box, `outline` for a bordered box, `ghost` for no box, and `card` for a blurred backdrop. The `size` and `rounded` settings override the chart's `size` for that part only; without them, parts follow the chart's `size` and its radius.
+
+<Demo name="parts" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { CandlestickChart, CandlestickChartInfo, CandlestickChartLegend, CandlestickChartTooltip } from "#lib/components/ui/candlestick-chart/index.js";
+</script>
+
+<CandlestickChart {data} {indicators} size="sm">
+	<CandlestickChartInfo variant="card" rounded="lg" />
+	<CandlestickChartLegend position="overlayBottom" rounded="pill" size="xs" />
+	<CandlestickChartTooltip variant="card" size="xs" rounded="xl" />
+</CandlestickChart>
+```
+
+The parts hand their settings to the chart, which draws each in its own layer, so pass them directly as children rather than inside other markup.
 
 ## Legend
 
-The legend above the plot lists the indicators, and each button hides or shows one. Indicators are named like "EMA 20" or "VWAP" unless `label` is set, and the label is the key in `hiddenIndicators`. Bind `hiddenIndicators`, or listen with `onHiddenIndicatorsChange`, and set `legend` to force the legend on or off. Set `legendPosition` to `overlay` to float the legend in the plot's top-left corner, so it takes no space above the chart.
+`CandlestickChartLegend` lists the indicators, and each button hides or shows one. Indicators are named like "EMA 20" or "VWAP" unless `label` is set, and the label is the key in `hiddenIndicators`. Bind `hiddenIndicators`, or listen with `onHiddenIndicatorsChange`. The legend shows only when there are indicators or groups. Set `position` to `bottom` to put it under the plot, or to `overlay` or `overlayBottom` to float it in the plot's top-left corner or the price pane's bottom-left corner, so it takes no space. Set `variant` to `secondary` for a filled box, `outline` for a bordered box, `ghost` for bare buttons that fill on hover, or `card` for a blurred backdrop; overlay legends use `card` and the others `default`, a plain row with a divider, unless `variant` is set; `rounded` rounds its buttons one step smaller, and both are pills with `pill`.
 
 ```svelte title="+page.svelte"
 <script lang="ts">
 	let hiddenIndicators: string[] = $state(["VWAP"]);
 </script>
 
-<CandlestickChart {data} indicators={[{ type: "vwap" }]} bind:hiddenIndicators legendPosition="overlay" />
+<CandlestickChart {data} indicators={[{ type: "vwap" }]} bind:hiddenIndicators>
+	<CandlestickChartLegend position="overlay" />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
-Set `legendOverflow` to `scroll` to keep the legend on one row that scrolls sideways when it runs out of room, instead of wrapping onto new lines, so it stays one line tall on small screens. The edges fade while there is more to scroll, and tabbing to a button scrolls it into view. It works with both legend positions.
-
-<Demo section="legendScroll" />
+<Demo name="legend-variants" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} {indicators} legendOverflow="scroll" />
+<CandlestickChart {data} {indicators}>
+	<CandlestickChartLegend variant="outline" rounded="lg" />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+```
+
+Set `overflow` to `scroll` to keep the legend on one row that scrolls sideways when it runs out of room, instead of wrapping onto new lines, so it stays one line tall on small screens. The edges fade while there is more to scroll, and tabbing to a button scrolls it into view. It works at every position.
+
+<Demo name="legend-scroll" />
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} {indicators}>
+	<CandlestickChartLegend overflow="scroll" />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Groups
 
 Set `group` on levels and markers to toggle them together from the legend, such as "Walls", "Pivots", or "Bot trades". Each group gets a button after a divider, keyed in its first item's color, with a dashed key for level groups and a dot for marker groups. Levels and markers without a `group` always show. Bind `hiddenGroups` to the hidden group names, or listen with `onHiddenGroupsChange`.
 
-<Demo section="groups" />
+<Demo name="groups" />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
@@ -279,41 +418,88 @@ Set `group` on levels and markers to toggle them together from the legend, such 
 	]}
 	markers={[{ time: "2026-10-21T14:05:00Z", kind: "buy", text: "BUY", group: "Bot trades" }]}
 	bind:hiddenGroups
-	legendPosition="overlay"
-/>
+>
+	<CandlestickChartLegend position="overlay" />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+```
+
+## Ready
+
+The chart draws once it has measured its plot and its text, so the first paint is already at full size. Bind `ready`, or listen with `onReadyChange`, to show a loader until the plot is measured and has candles, such as while they load. It turns true two frames after the chart draws, so the candles, the info, and the legend have painted before the loader hides, and turns false at once when the candles are cleared. The chart's root also gets a `data-ready` attribute for styling.
+
+<Demo name="ready" />
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { Spinner } from "#lib/components/ui/spinner/index.js";
+
+	let ready = $state(false);
+</script>
+
+<div class="chartFrame">
+	<CandlestickChart {data} bind:ready>
+		<CandlestickChartLegend />
+		<CandlestickChartTooltip />
+	</CandlestickChart>
+	{#if !ready}
+		<Spinner class="chartLoader" size="lg" />
+	{/if}
+</div>
+
+<style>
+	.chartFrame {
+		position: relative;
+	}
+
+	.chartFrame :global(.chartLoader) {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+</style>
 ```
 
 ## Volume
 
 The volume pane shows when any candle has a `volume`, with bars in a lighter step of each candle's color. Set `volume` to `false` to hide it.
 
-<Demo section="volume" />
+<Demo name="volume" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} volume={false} />
+<CandlestickChart {data} volume={false}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Zoom and Pan
 
-The chart shows the latest candles that fit, and a plain scroll still moves the page.
+The chart shows the latest candles that fit, and scrolling over it zooms instead of moving the page.
 
 - Drag the chart, or scroll sideways or with Shift held, to pan, including past the latest candle into empty space, where the time axis continues at the candle interval
-- Drag the chart up or down to move the prices, such as to center the candles; on a touch screen, start the drag sideways, since a vertical swipe scrolls the page
-- Hold Ctrl or ⌘ and scroll, or pinch on a trackpad or touch screen, to zoom around the pointer
+- Drag the chart up or down to move the prices, such as to center the candles; on a touch screen, start the drag sideways, since a vertical swipe scrolls the page, unless `gestures` is `chart`
+- Scroll, or pinch on a trackpad or touch screen, to zoom around the pointer
 - Drag the price axis up to stretch the candles taller or down to squash them, and double-click it to fit and center the prices on screen again
 - On a touch screen, drag to pan, and press and hold to show the crosshair and tooltip, then slide to move between candles; lifting the finger hides them
 - Double-click the chart to show the latest candles again
 
+Set `gestures` to `chart` for a full-screen chart where the page has nothing to scroll, so a finger drags the chart in any direction, including up and down to move the prices. With the default `page`, a vertical swipe scrolls the page so a chart in a long page never traps it.
+
 Bind `range` to the visible candles as `[start, end)` indexes, which are fractional while panning, or listen with `onRangeChange`. Set it to choose what the chart shows first, with an `end` past the data to leave empty space after the latest candle, such as the rest of the trading day. Empty space can fill up to 80% of the view.
 
-<Demo section="zoom" />
+<Demo name="zoom" />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
 	let range: [number, number] | undefined = $state([0, 60]);
 </script>
 
-<CandlestickChart {data} bind:range />
+<CandlestickChart {data} bind:range>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Variants
@@ -326,83 +512,128 @@ Set `variant` to choose the price style. Volume, indicators, and the tooltip wor
 - Use `line` for a line of the closes
 - Use `area` for a line of the closes over a soft wash
 
-<Demo section="variant" />
+<Demo name="variant" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} variant="ohlc" />
+<CandlestickChart {data} variant="ohlc">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Colors
 
 Rising candles use `--chart-3` and falling candles use `--destructive`. Set `--candlestick-chart-up` and `--candlestick-chart-down` on the chart or a parent to change them, and `--candlestick-chart-line` for the `line` and `area` styles, which default to `--chart-1`. Indicators default to `--chart-1`, `--chart-4`, and `--chart-5` in order, then `--muted-foreground`, and take any CSS color with `color`.
 
-<Demo section="colors" />
+<Demo name="colors" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} style="--candlestick-chart-up: var(--chart-1); --candlestick-chart-down: var(--chart-2)" />
-<CandlestickChart {data} variant="area" style="--candlestick-chart-line: var(--chart-5)" />
+<CandlestickChart {data} style="--candlestick-chart-up: var(--chart-1); --candlestick-chart-down: var(--chart-2)">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+<CandlestickChart {data} variant="area" style="--candlestick-chart-line: var(--chart-5)">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Grid and Scale
 
 Set `grid` to `false` to hide the gridlines and keep the axis labels. Set `scale` to `log` so equal percent moves take equal space, which suits long ranges where the price grew a lot; the axis falls back to linear when a price on screen is zero or below.
 
-<Demo section="grid" />
+<Demo name="grid" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} grid={false} />
-<CandlestickChart {data} scale="log" variant="line" />
+<CandlestickChart {data} grid={false}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+<CandlestickChart {data} scale="log" variant="line">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Formatting
 
 Set `formatPrice` to format prices on the axis, tags, tooltip, and table. Set `formatVolume` for volumes, which are compact numbers such as `1.2M` by default. Set `formatTime` to format each candle's time in the tooltip, table, and announcements; axis ticks keep their own format by zoom level.
 
-<Demo section="format" />
+<Demo name="format" />
 
 ```svelte title="+page.svelte"
 <script lang="ts">
 	const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 </script>
 
-<CandlestickChart {data} formatPrice={(price) => currency.format(price)} />
+<CandlestickChart {data} formatPrice={(price) => currency.format(price)}>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+```
+
+## Candle Info
+
+Add `CandlestickChartInfo` to show the open, high, low, close, change from the previous close, and volume, marked `V`, on one row in the plot's top-left corner, in the rising or falling color. It reads the hovered or focused candle and falls back to the latest one, so live prices show there too. An `overlay` legend moves under it. Set `variant` to `secondary` for a filled box, `outline` for a bordered box, or `card` for a blurred backdrop that keeps the values readable over busy candles; `default` and `ghost` are bare text. Leave the part out to remove the info.
+
+<Demo name="info" />
+
+Set `ohlc` to `false` on `CandlestickChartTooltip` so the tooltip keeps only the time, session, indicators, and markers while the info shows the candle's values, or leave the tooltip out to keep just the crosshair.
+
+```svelte title="+page.svelte"
+<CandlestickChart {data} {indicators}>
+	<CandlestickChartInfo />
+	<CandlestickChartLegend position="overlay" />
+	<CandlestickChartTooltip ohlc={false} />
+</CandlestickChart>
 ```
 
 ## Tooltip
 
-Pass a `tooltip` snippet to replace the tooltip content. It receives the candle's `index`, the `candle`, its time as `label`, the `session` or highlight it falls in, the `change` and `changePercent` from the previous close, the visible `indicators` values, and the `markers` on the candle.
+`CandlestickChartTooltip` follows the hovered or focused candle. Set `variant` to `secondary` for a filled box, `outline` for a bordered box on the page background, `ghost` for bare text with no box, or `card` for a see-through box over a blurred plot, and `size` and `rounded` to scale and round it; `pill` rounds to half the height of one line, since the tooltip wraps onto several. Pass a `children` snippet to replace its content. It receives the candle's `index`, the `candle`, its time as `label`, the `session` or highlight it falls in, the `change` and `changePercent` from the previous close, the visible `indicators` values, and the `markers` on the candle. Leave the part out to hide the tooltip and keep the crosshair.
 
-<Demo section="tooltip" />
+<Demo name="tooltip" />
 
 ```svelte title="+page.svelte"
 <CandlestickChart {data}>
-	{#snippet tooltip({ label, candle, changePercent })}
-		<strong>{label}</strong>
-		<span>Range: {(candle.high - candle.low).toFixed(2)}</span>
-		<span>{changePercent >= 0 ? "▲" : "▼"} {Math.abs(changePercent).toFixed(2)}%</span>
-	{/snippet}
+	<CandlestickChartTooltip>
+		{#snippet children({ label, candle, changePercent })}
+			<strong>{label}</strong>
+			<span>Range: {(candle.high - candle.low).toFixed(2)}</span>
+			<span>{changePercent >= 0 ? "▲" : "▼"} {Math.abs(changePercent).toFixed(2)}%</span>
+		{/snippet}
+	</CandlestickChartTooltip>
 </CandlestickChart>
 ```
 
 ## Sizes
 
-Set `size` to `xs`, `sm`, `md`, or `lg` to scale the text and the plot height, from 14rem to 30rem. The default is `md`. Set `--candlestick-chart-height` to give the plot any other height. Candle bodies have no `rounded` prop, since rounding would blur where each candle opened and closed.
+Set `size` to `xs`, `sm`, `md`, or `lg` to scale the text and the plot height, from 14rem to 30rem. The default is `md`, and the parts follow it unless they set their own `size`. Set `--candlestick-chart-height` to give the plot any other height. Candle bodies have no `rounded` prop, since rounding would blur where each candle opened and closed.
 
-<Demo section="sizes" />
+<Demo name="sizes" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} size="lg" />
-<CandlestickChart {data} style="--candlestick-chart-height: 40rem" />
+<CandlestickChart {data} size="lg">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
+<CandlestickChart {data} style="--candlestick-chart-height: 40rem">
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Table
 
 Every chart renders a table of the visible candles for screen readers, and it follows zoom and pan. It adds a session column when the chart has sessions or highlights, and a markers column when it has markers. Set `table` to show it on screen too.
 
-<Demo section="table" />
+<Demo name="table" />
 
 ```svelte title="+page.svelte"
-<CandlestickChart {data} table />
+<CandlestickChart {data} table>
+	<CandlestickChartLegend />
+	<CandlestickChartTooltip />
+</CandlestickChart>
 ```
 
 ## Keyboard
@@ -418,14 +649,17 @@ The plot is in the Tab order and is named by `label`, which defaults to "Candles
 
 ## API
 
-The `CandlestickChart` props extend the native `figure` attributes, and extra attributes pass through to the root. The `getSma`, `getEma`, `getBollinger`, and `getVwap` functions are exported too, for using the same math elsewhere.
+The `CandlestickChart` props extend the native `figure` attributes and require `children`, the parts to show; extra attributes pass through to the root. `CandlestickChartTooltip` and `CandlestickChartInfo` pass extra attributes to their `div`, and `CandlestickChartLegend` to its `ul`. The `getSma`, `getEma`, `getBollinger`, and `getVwap` functions are exported too, for using the same math elsewhere, and `getDraftPosition(data, options)` returns a draft position for your own Long and Short buttons.
 
 ```ts title="index.ts"
-interface Props extends CompProps<"figure"> {
+/** Candlestick chart with sessions, a volume pane, indicators, price levels, markers, live updates, zoom, and pan */
+interface Props extends CompPropsWithChild<"figure"> {
 	/** Candles in time order, oldest first */
 	data: Candle[];
 	/** Horizontal price lines, such as support and resistance */
 	levels?: PriceLevel[];
+	/** Custom content for every level on screen, in place of its line, band, and label; the price tag on the axis stays */
+	level?: Snippet<[LevelSnippetProps]>;
 	/** Overlays computed from the candles: moving averages, Bollinger bands, and VWAP */
 	indicators?: Indicator[];
 	/** Marks pinned to candles, such as a bot's buy and sell signals or sentiment bubbles */
@@ -436,8 +670,10 @@ interface Props extends CompProps<"figure"> {
 	positions?: TradePosition[];
 	/** Called once a dragged or nudged target or stop is let go, with every position and the change, so a bot can update its orders */
 	onPositionsChange?: (positions: TradePosition[], change: PositionChange) => void;
-	/** Called with a position when its cancel button is pressed; the button shows on open, editable positions only when this is set, and the chart keeps the position until `positions` drops it or sets its `exitTime` */
+	/** Called with a position when its cancel button is pressed; the button shows on draft, pending, and open editable positions only when this is set, discards a draft at once, and the chart keeps the position until `positions` drops it or closes it */
 	onPositionCancel?: (position: TradePosition) => void;
+	/** Called with a draft position when its check mark is pressed; send the order and set its `stage` to `pending`, then `open` once it fills; the check mark shows only when this is set */
+	onPositionConfirm?: (position: TradePosition) => void;
 	/** Turns the cancel button into a check mark on the first press, and runs `onPositionCancel` only when the check mark is pressed; defaults to `true` */
 	confirmCancel?: boolean;
 	/** Smallest price move for a dragged or nudged target or stop, which snaps to it; defaults to `0.01` */
@@ -454,6 +690,12 @@ interface Props extends CompProps<"figure"> {
 	range?: [number, number];
 	/** Called with the visible range when the chart zooms or pans */
 	onRangeChange?: (range: [number, number]) => void;
+	/** Touch gestures: `page` leaves vertical swipes to the page, so a finger pans only sideways, and `chart` takes them, so a finger drags in any direction, for full-screen charts where the page has nothing to scroll; the mouse wheel zooms either way; defaults to `page` */
+	gestures?: "page" | "chart";
+	/** Whether the chart has measured its plot and painted its candles, info, and legend; it turns true two frames after drawing, so a loader hides only once everything is in place; read it with `bind:ready` */
+	ready?: boolean;
+	/** Called when `ready` changes, such as when the first candles are drawn */
+	onReadyChange?: (ready: boolean) => void;
 	/** Labels of the indicators hidden with the legend; supports `bind:hiddenIndicators` */
 	hiddenIndicators?: string[];
 	/** Called with the hidden indicator labels when the legend hides or shows one */
@@ -470,7 +712,7 @@ interface Props extends CompProps<"figure"> {
 	grid?: boolean;
 	/** Marks the latest close with a dotted line and an axis tag, which follows live updates; defaults to `true` */
 	lastPrice?: boolean;
-	/** Axis and legend text, and the plot height unless `--candlestick-chart-height` is set; defaults to `md` */
+	/** Axis text, the plot height unless `--candlestick-chart-height` is set, and the size and radius of the parts that do not set their own; defaults to `md` */
 	size?: UiSize;
 	/** Formats prices on the axis, tags, tooltip, and table */
 	formatPrice?: (price: number) => string;
@@ -478,25 +720,101 @@ interface Props extends CompProps<"figure"> {
 	formatTime?: (time: Date, index: number) => string;
 	/** Formats volumes in the tooltip and table; compact numbers, such as 1.2K, when omitted */
 	formatVolume?: (volume: number) => string;
-	/** Custom tooltip content for the hovered candle */
-	tooltip?: Snippet<[TooltipSnippetProps]>;
-	/** Shows the legend of indicators and groups; on when there are any */
-	legend?: boolean;
-	/** `top` puts the legend above the plot, and `overlay` floats it in the plot's top-left corner, taking no space; defaults to `top` */
-	legendPosition?: "top" | "overlay";
-	/** `wrap` breaks the legend onto new lines when it runs out of room, and `scroll` keeps it on one row that scrolls sideways with faded edges, for small screens; defaults to `wrap` */
-	legendOverflow?: "wrap" | "scroll";
+	/** Parts to show, such as `CandlestickChartLegend`, `CandlestickChartTooltip`, and `CandlestickChartInfo`; a part left out is hidden */
+	children: Snippet;
 	/** Shows the table of visible candles under the chart; screen readers always get it */
 	table?: boolean;
 	/** Accessible name of the plot, such as "AAPL, 5 minute candles"; defaults to "Candlestick chart" */
 	label?: string;
+	/** Classes merged onto the chart */
+	class?: CompProps<"figure">["class"];
 }
 
-type Indicator =
-	| { type: "sma" | "ema"; period: number; label?: string; color?: string }
-	| { type: "bollinger"; period?: number; deviations?: number; label?: string; color?: string }
-	| { type: "vwap"; reset?: "day" | "none"; bands?: number[]; regularHours?: boolean; label?: string; color?: string };
+/** Floating readout of the hovered candle; leave it out of the chart's children to hide the tooltip and keep the crosshair */
+interface TooltipProps extends Omit<CompProps<"div">, "children"> {
+	/** Shows the open, high, low, close, change, and volume; set `false` next to `CandlestickChartInfo`, which shows them, so the tooltip keeps the time, session, indicators, and markers; defaults to `true` */
+	ohlc?: boolean;
+	/** `default` is a popover card, `secondary` a filled box, `outline` a bordered box on the page background, `ghost` bare text with no box, and `card` a see-through box over a blurred plot; defaults to `default` */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "card";
+	/** Padding, text, and radius; overrides the chart's `size` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted; `pill` rounds to half the height of one line, since the tooltip wraps onto several */
+	rounded?: UiRounded;
+	/** Custom content for the hovered candle, in place of the default rows */
+	children?: Snippet<[TooltipSnippetProps]>;
+	/** Classes merged onto the tooltip */
+	class?: CompProps<"div">["class"];
+}
 
+/** Open, high, low, close, change, and volume of the hovered candle, or the latest one, on one row in the plot's top-left corner; an `overlay` legend moves under it */
+interface InfoProps extends CompProps<"div"> {
+	/** `default` and `ghost` are bare text over the plot, `secondary` a filled box, `outline` a bordered box, and `card` a blurred backdrop so busy candles stay readable under it; defaults to `default` */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "card";
+	/** Text size, and padding with `card`; overrides the chart's `size` */
+	size?: UiSize;
+	/** Corner radius of the `card` backdrop; follows `size` when omitted; `pill` rounds to half the height of one line, since the info wraps on narrow charts */
+	rounded?: UiRounded;
+	/** Classes merged onto the info */
+	class?: CompProps<"div">["class"];
+}
+
+/** Buttons that hide or show each indicator and each level and marker group */
+interface LegendProps extends CompProps<"ul"> {
+	/** `top` puts the legend above the plot and `bottom` below it, while `overlay` floats it in the plot's top-left corner and `overlayBottom` in the price pane's bottom-left corner, taking no space; defaults to `top` */
+	position?: "top" | "bottom" | "overlay" | "overlayBottom";
+	/** `wrap` breaks onto new lines when it runs out of room, and `scroll` keeps one row that scrolls sideways with faded edges, for small screens; defaults to `wrap` */
+	overflow?: "wrap" | "scroll";
+	/** `default` is a plain row with a divider, `secondary` a filled box, `outline` a bordered box, `ghost` bare buttons that fill on hover, and `card` a blurred backdrop; defaults to `card` for the overlay positions and `default` otherwise */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "card";
+	/** Text and button padding; overrides the chart's `size` */
+	size?: UiSize;
+	/** Corner radius of the `card` backdrop; its buttons use one step smaller, and both are pills with `pill`; follows `size` when omitted */
+	rounded?: UiRounded;
+	/** Classes merged onto the legend */
+	class?: CompProps<"ul">["class"];
+}
+
+/** One period of trading: its open, high, low, close, and volume */
+interface Candle {
+	/** Start of the period, as a `Date`, a timestamp in milliseconds, or a date string */
+	time: Date | number | string;
+	/** First price */
+	open: number;
+	/** Highest price */
+	high: number;
+	/** Lowest price */
+	low: number;
+	/** Last price */
+	close: number;
+	/** Traded volume; the volume pane and VWAP need it */
+	volume?: number;
+}
+
+/** Horizontal price line, such as a support or resistance level */
+interface PriceLevel {
+	/** Price of the line */
+	price: number;
+	/** Name drawn above the line, such as "Support" */
+	label?: string;
+	/** `support` uses the rising color, `resistance` the falling color, and `default` a neutral one */
+	kind?: "support" | "resistance" | "default";
+	/** Any CSS color; overrides the `kind` color */
+	color?: string;
+	/** Thickness: `1` is a thin line, and bigger values shade a band centered on the price that grows 6px per step, the same at any zoom; defaults to `1` */
+	size?: number;
+	/** Time the line starts, at the candle whose period contains it; the plot's left edge when omitted */
+	start?: Date | number | string;
+	/** Time the line ends, at the candle whose period contains it; an ended level drops its axis tag, and one omitted or past the latest candle runs to the right edge */
+	end?: Date | number | string;
+	/** Line pattern: `dashed`, `dotted`, or `solid`; defaults to `dashed` */
+	style?: "dashed" | "dotted" | "solid";
+	/** Shows the price tag on the axis while the level runs; set `false` for minor levels that would crowd the axis; defaults to `true` */
+	tag?: boolean;
+	/** Legend group, such as "Pivots"; the legend gets a button that hides or shows every level and marker in it */
+	group?: string;
+}
+
+/** Mark pinned to one candle, such as a bot's buy or sell signal or a sentiment bubble */
 interface CandleMarker {
 	/** Time of the event; the marker sits on the candle whose period contains it */
 	time: Date | number | string;
@@ -520,6 +838,7 @@ interface CandleMarker {
 	group?: string;
 }
 
+/** Values a custom `marker` snippet receives */
 interface MarkerSnippetProps {
 	/** Marker being drawn */
 	marker: CandleMarker;
@@ -531,6 +850,89 @@ interface MarkerSnippetProps {
 	color: string;
 }
 
+/** Values a custom `level` snippet receives */
+interface LevelSnippetProps {
+	/** Level being drawn */
+	level: PriceLevel;
+	/** Level color after `kind` and `color` */
+	color: string;
+	/** Height in pixels of the band a `size` above `1` shades, centered on the price; `0` for a plain line */
+	bandHeight: number;
+	/** Width in pixels of the line, from its `start` to its `end` */
+	width: number;
+}
+
+/** Daily clock window shaded behind the candles, such as pre-market or after hours */
+interface TradingSession {
+	/** Start time as `HH:mm` in `timeZone`, such as `04:00` */
+	start: string;
+	/** End time as `HH:mm` in `timeZone`, not included, such as `09:30`; an end before the start runs past midnight */
+	end: string;
+	/** Name on the shading and in the tooltip, such as "Pre-market" */
+	label: string;
+	/** Any CSS color for the shading; defaults to `--chart-1` for the first session and `--muted-foreground` for the second, then repeats */
+	color?: string;
+	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
+	showLabel?: boolean;
+}
+
+/** Fixed time range shaded behind the candles, such as an earnings release */
+interface TimeHighlight {
+	/** Start of the range, as a `Date`, a timestamp in milliseconds, or a date string */
+	start: Date | number | string;
+	/** End of the range, not included */
+	end: Date | number | string;
+	/** Name on the shading and in the tooltip */
+	label?: string;
+	/** Any CSS color for the shading; defaults to `--chart-4` */
+	color?: string;
+	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
+	showLabel?: boolean;
+}
+
+/** Simple or exponential moving average of the closes */
+interface MovingAverageIndicator {
+	/** `sma` weighs every close in the window equally; `ema` weighs recent closes more */
+	type: "sma" | "ema";
+	/** Number of candles in the window, such as 20 */
+	period: number;
+	/** Name in the legend and tooltip; defaults to "SMA 20" or "EMA 20"; also the key in `hiddenIndicators` */
+	label?: string;
+	/** Any CSS color; defaults to the next indicator color */
+	color?: string;
+}
+
+/** Bollinger bands around a simple moving average */
+interface BollingerIndicator {
+	/** Bollinger bands */
+	type: "bollinger";
+	/** Number of candles in the window; defaults to 20 */
+	period?: number;
+	/** Standard deviations from the average to each band; defaults to 2 */
+	deviations?: number;
+	/** Name in the legend and tooltip; defaults to "BB 20, 2"; also the key in `hiddenIndicators` */
+	label?: string;
+	/** Any CSS color; defaults to the next indicator color */
+	color?: string;
+}
+
+/** Volume-weighted average price */
+interface VwapIndicator {
+	/** Volume-weighted average price */
+	type: "vwap";
+	/** `day` restarts the average at each local day; `none` runs it across all the data; defaults to `day` */
+	reset?: "day" | "none";
+	/** Standard deviation bands to draw, such as `[1, 2]`; none by default */
+	bands?: number[];
+	/** Skips candles inside `sessions`, such as pre-market and after hours, so the average covers regular hours only */
+	regularHours?: boolean;
+	/** Name in the legend and tooltip; defaults to "VWAP"; also the key in `hiddenIndicators` */
+	label?: string;
+	/** Any CSS color; defaults to the next indicator color */
+	color?: string;
+}
+
+/** A trade on the chart, such as one a bot opened, with a profit zone out to its target and a risk zone out to its stop */
 interface TradePosition {
 	/** Unique id, reported back when the target or stop changes */
 	id: string;
@@ -544,19 +946,22 @@ interface TradePosition {
 	target?: number;
 	/** Stop-loss price; below `entry` for a long and above it for a short */
 	stop?: number;
-	/** Time the position closed; the zones end at that candle, lose their labels and axis tags, and can no longer be edited; open positions run to the right edge */
+	/** Where the trade stands: `draft` while it is set up and not confirmed, with the entry, target, and stop draggable and a check mark that runs `onPositionConfirm`; `pending` once confirmed and waiting to fill, locked and marked "Waiting"; `open` once filled; and `closed` once done; draft and pending positions start at the latest candle whatever their `time`; defaults to `closed` with `exitTime` and `open` otherwise */
+	stage?: "draft" | "pending" | "open" | "closed";
+	/** Time the position closed; the zones end at that candle, lose their labels and axis tags, and can no longer be edited; open positions run to the latest candle, with their labels just right of it, or inside the zone's end when the plot has no room there */
 	exitTime?: Date | number | string;
 	/** Name on the entry line, such as "Bot #2"; defaults to "Long" or "Short" */
 	label?: string;
-	/** Lets the target and stop be dragged and moved with the arrow keys, and shows the cancel button when `onPositionCancel` is set; defaults to `true` while the position is open */
+	/** Lets the target and stop, and a draft's entry, be dragged and moved with the arrow keys, and shows the cancel button when `onPositionCancel` is set; defaults to `true` while the position is a draft or open */
 	editable?: boolean;
 }
 
+/** A target or stop change that `onPositionsChange` reports */
 interface PositionChange {
 	/** `id` of the changed position */
 	id: string;
-	/** Line that moved */
-	field: "target" | "stop";
+	/** Line that moved; `entry` moves only on draft positions */
+	field: "entry" | "target" | "stop";
 	/** New price */
 	price: number;
 	/** Price before the change */
@@ -565,43 +970,52 @@ interface PositionChange {
 	position: TradePosition;
 }
 
-interface TradingSession {
-	/** Start time as `HH:mm` in `timeZone`, such as `04:00` */
-	start: string;
-	/** End time as `HH:mm` in `timeZone`, not included; an end before the start runs past midnight */
-	end: string;
-	/** Name on the shading and in the tooltip, such as "Pre-market" */
+/** Overlay computed from the candles */
+type Indicator = MovingAverageIndicator | BollingerIndicator | VwapIndicator;
+
+/** One indicator value a custom `tooltip` snippet receives */
+interface IndicatorValue {
+	/** Indicator label */
 	label: string;
-	/** Any CSS color for the shading; defaults to `--chart-1` for the first session and `--muted-foreground` for the second, then repeats */
-	color?: string;
-	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
-	showLabel?: boolean;
+	/** Indicator color */
+	color: string;
+	/** Raw value; `NaN` before the indicator has enough candles */
+	value: number;
+	/** Value after `formatPrice` */
+	formattedValue: string;
 }
 
-interface TimeHighlight {
-	/** Start of the range, as a `Date`, a timestamp in milliseconds, or a date string */
-	start: Date | number | string;
-	/** End of the range, not included */
-	end: Date | number | string;
-	/** Name on the shading and in the tooltip */
-	label?: string;
-	/** Any CSS color for the shading; defaults to `--chart-4` */
-	color?: string;	/** Draws `label` on the shading; the tooltip and table show it either way; defaults to `true` */
-	showLabel?: boolean;
+/** Values a custom `tooltip` snippet receives */
+interface TooltipSnippetProps {
+	/** Index of the hovered candle in `data` */
+	index: number;
+	/** Hovered candle */
+	candle: Candle;
+	/** Time after `formatTime` */
+	label: string;
+	/** Label of the session or highlight the candle falls in, such as "Pre-market" */
+	session?: string;
+	/** Change from the previous close, or from the open on the first candle */
+	change: number;
+	/** Change in percent */
+	changePercent: number;
+	/** Value of every visible indicator at this candle */
+	indicators: IndicatorValue[];
+	/** Markers on this candle */
+	markers: CandleMarker[];
 }
 
-interface PriceLevel {
-	/** Price of the line */
-	price: number;
-	/** Name drawn above the line, such as "Support" */
+/** Options for a draft position */
+interface DraftPositionOptions {
+	/** Unique id of the new position */
+	id: string;
+	/** `long` profits when the price rises, and `short` when it falls */
+	side: TradePosition["side"];
+	/** Price distance from the entry to the stop; the target sits twice as far on the other side; defaults to 0.5% of the entry */
+	risk?: number;
+	/** Smallest price move, which the prices snap to; defaults to `0.01` */
+	priceStep?: number;
+	/** Name on the entry line, such as "Bot #2" */
 	label?: string;
-	/** `support` uses the rising color, `resistance` the falling color, and `default` a neutral one */
-	kind?: "support" | "resistance" | "default";
-	/** Any CSS color; overrides the `kind` color */
-	color?: string;
-	/** Thickness: `1` is a thin line, and bigger values shade a band centered on the price that grows 6px per step, the same at any zoom; defaults to `1` */
-	size?: number;
-	/** Legend group, such as "Pivots"; the legend gets a button that hides or shows every level and marker in it */
-	group?: string;
 }
 ```

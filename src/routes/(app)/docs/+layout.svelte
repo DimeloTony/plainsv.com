@@ -1,5 +1,4 @@
 <script lang="ts">
-	import "../../../styles/typeset.css";
 	const { children } = $props();
 </script>
 

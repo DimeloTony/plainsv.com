@@ -144,6 +144,8 @@ The `deploy` item adds `src/lib/server/deploy/index.ts` and `src/lib/server/depl
 - Leave out `--port` and `--i` on later deploys to keep what the running app uses
 - Pass `--name` to change the pm2 app name, which defaults to the first part of `--dir`, such as `example`
 - Pass `--pm` as `npm`, `bun`, `pnpm`, or `yarn` to build and install with that package manager, which defaults to `pnpm`
+- Pass `--src` to also copy the `src` folder to the server, such as for scripts you run there with `node`, which is off by default
+- Pass `--build` in `copy` mode to build locally first, which a normal deploy always does
 - Add server-only files or folders to `keepPaths` in `src/lib/server/deploy/index.ts`, which holds `db` by default
 
 ```pm
@@ -180,6 +182,25 @@ Every deploy builds locally, so a broken build stops before the server changes. 
 
 ```pm
 npm run deploy
+```
+
+## Copy Without a Domain
+
+Use `copy` to put the app on a server that only runs scripts, such as a cron job, with no Cloudflare certificate, nginx site, or pm2 app. It needs only `--host` and `--dir`, and `--dir` is just the folder name in `/var/www`, so it does not have to be a domain. The script copies `package.json`, the lock file, `.env`, and `.env.production`, plus `build` when it exists and `src` with `--src`. It installs production dependencies, then swaps the release in like a deploy, so `_prev` and `keepPaths` work the same. It builds locally only when you pass `--build`.
+
+- Pass `--src` to copy the `src` folder, so cron can run scripts from it with `node`
+- Pass `--build` to build locally and copy `build` too
+- Run a normal deploy with `--port` on the same `--dir` later to add the domain and pm2 app
+- Rollback skips the pm2 restart when the app is not running and no `--port` is given
+
+```pm
+npm run deploy copy -- --host deploy@SERVER_IP --dir cron-app --src
+```
+
+Add the cron job on the server with `crontab -e`, loading Node.js first when you use nvm.
+
+```sh title="crontab"
+0 * * * * cd /var/www/cron-app && . ~/.nvm/nvm.sh && node src/jobs/sync.ts
 ```
 
 ## Cluster Mode

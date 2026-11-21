@@ -1,5 +1,5 @@
 import fs from "fs";
-import { dbCollectionsSchema } from "./schema.js";
+import { dbCollectionsSchema } from "./schema.ts";
 const INDEX_PATH = "src/lib/server/mongodb/index.ts";
 const dbData = fs.readFileSync(INDEX_PATH).toString();
 
@@ -9,7 +9,8 @@ const getMethods = (col: string, colCapitalized: string) => {
 	if (col.startsWith("app")) {
 		return `\n    create${colCapitalized} = (data: Omit<DbCollectionsSchema["${col}"], "_id"> & { _id?:string}) => this.createOne<"${col}">("${col}", data);
 	find${colCapitalized} = (filter?: QueryFilter<"${col}">, options?: QueryOptions<"${col}">) => this.findOne<"${col}">("${col}", filter, options);
-	update${colCapitalized} = (filter: QueryFilter<"${col}">, data: QueryUpdateFilter<"${col}">, options?: UpdateOptions) => this.updateOne<"${col}">("${col}", filter, data, options);`;
+	update${colCapitalized} = (filter: QueryFilter<"${col}">, data: QueryUpdateFilter<"${col}">, options?: UpdateOptions) => this.updateOne<"${col}">("${col}", filter, data, options);
+	watch${colCapitalized} = (options?: WatchOptions) => this.watchMany<"${col}">("${col}", undefined, options);`;
 	}
 
 	// Else: Create all methods
@@ -24,7 +25,9 @@ const getMethods = (col: string, colCapitalized: string) => {
 	delete${colCapitalized}ById = (id: ${col.startsWith("app") ? 'DbCollectionsSchema["appData"]["_id"]' : "string"}) => this.deleteOneById<"${col}">("${col}", id);
 	update${colCapitalized} = (filter: QueryFilter<"${col}">, data: QueryUpdateFilter<"${col}">, options?: UpdateOptions) => this.updateOne<"${col}">("${col}", filter, data, options);
 	update${colCapitalized}s = (filter: QueryFilter<"${col}">, data: QueryUpdateFilter<"${col}">, options?: UpdateOptions) => this.updateMany<"${col}">("${col}", filter, data, options);
-	update${colCapitalized}ById = (id: ${col.startsWith("app") ? 'DbCollectionsSchema["appData"]["_id"]' : "string"}, data: QueryUpdateFilter<"${col}">, options?: UpdateOptions) => this.updateOneById<"${col}">("${col}", id, data, options);`;
+	update${colCapitalized}ById = (id: ${col.startsWith("app") ? 'DbCollectionsSchema["appData"]["_id"]' : "string"}, data: QueryUpdateFilter<"${col}">, options?: UpdateOptions) => this.updateOneById<"${col}">("${col}", id, data, options);
+	watch${colCapitalized} = (filter?: QueryFilter<"${col}">, options?: WatchOptions) => this.watchMany<"${col}">("${col}", filter, options);
+	watch${colCapitalized}ById = (id: string, options?: WatchOptions) => this.watchOneById<"${col}">("${col}", id, options);`;
 };
 
 const generateMethods = () => {

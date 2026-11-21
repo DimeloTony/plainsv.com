@@ -1,5 +1,9 @@
 export { default as CandlestickChart } from "./_.svelte";
+export { default as CandlestickChartTooltip } from "./tooltip.svelte";
+export { default as CandlestickChartInfo } from "./info.svelte";
+export { default as CandlestickChartLegend } from "./legend.svelte";
 export { getSma, getEma, getBollinger, getVwap } from "./indicators.js";
+export { getDraftPosition, type DraftPositionOptions as CandlestickChartDraftPositionOptions } from "./positions.js";
 
 /** One period of trading: its open, high, low, close, and volume */
 export interface Candle {
@@ -29,6 +33,14 @@ export interface PriceLevel {
 	color?: string;
 	/** Thickness: `1` is a thin line, and bigger values shade a band centered on the price that grows 6px per step, the same at any zoom; defaults to `1` */
 	size?: number;
+	/** Time the line starts, at the candle whose period contains it; the plot's left edge when omitted */
+	start?: Date | number | string;
+	/** Time the line ends, at the candle whose period contains it; an ended level drops its axis tag, and one omitted or past the latest candle runs to the right edge */
+	end?: Date | number | string;
+	/** Line pattern: `dashed`, `dotted`, or `solid`; defaults to `dashed` */
+	style?: "dashed" | "dotted" | "solid";
+	/** Shows the price tag on the axis while the level runs; set `false` for minor levels that would crowd the axis; defaults to `true` */
+	tag?: boolean;
 	/** Legend group, such as "Pivots"; the legend gets a button that hides or shows every level and marker in it */
 	group?: string;
 }
@@ -67,6 +79,18 @@ export interface MarkerSnippetProps {
 	candle: Candle;
 	/** Marker color after `kind` and `color` */
 	color: string;
+}
+
+/** Values a custom `level` snippet receives */
+export interface LevelSnippetProps {
+	/** Level being drawn */
+	level: PriceLevel;
+	/** Level color after `kind` and `color` */
+	color: string;
+	/** Height in pixels of the band a `size` above `1` shades, centered on the price; `0` for a plain line */
+	bandHeight: number;
+	/** Width in pixels of the line, from its `start` to its `end` */
+	width: number;
 }
 
 /** Daily clock window shaded behind the candles, such as pre-market or after hours */
@@ -153,11 +177,13 @@ export interface TradePosition {
 	target?: number;
 	/** Stop-loss price; below `entry` for a long and above it for a short */
 	stop?: number;
-	/** Time the position closed; the zones end at that candle, lose their labels and axis tags, and can no longer be edited; open positions run to the right edge */
+	/** Where the trade stands: `draft` while it is set up and not confirmed, with the entry, target, and stop draggable and a check mark that runs `onPositionConfirm`; `pending` once confirmed and waiting to fill, locked and marked "Waiting"; `open` once filled; and `closed` once done; draft and pending positions start at the latest candle whatever their `time`; defaults to `closed` with `exitTime` and `open` otherwise */
+	stage?: "draft" | "pending" | "open" | "closed";
+	/** Time the position closed; the zones end at that candle, lose their labels and axis tags, and can no longer be edited; open positions run to the latest candle, with their labels just right of it, or inside the zone's end when the plot has no room there */
 	exitTime?: Date | number | string;
 	/** Name on the entry line, such as "Bot #2"; defaults to "Long" or "Short" */
 	label?: string;
-	/** Lets the target and stop be dragged and moved with the arrow keys, and shows the cancel button when `onPositionCancel` is set; defaults to `true` while the position is open */
+	/** Lets the target and stop, and a draft's entry, be dragged and moved with the arrow keys, and shows the cancel button when `onPositionCancel` is set; defaults to `true` while the position is a draft or open */
 	editable?: boolean;
 }
 
@@ -165,8 +191,8 @@ export interface TradePosition {
 export interface PositionChange {
 	/** `id` of the changed position */
 	id: string;
-	/** Line that moved */
-	field: "target" | "stop";
+	/** Line that moved; `entry` moves only on draft positions */
+	field: "entry" | "target" | "stop";
 	/** New price */
 	price: number;
 	/** Price before the change */
@@ -211,11 +237,13 @@ export interface TooltipSnippetProps {
 }
 
 /** Candlestick chart with sessions, a volume pane, indicators, price levels, markers, live updates, zoom, and pan */
-export interface Props extends CompProps<"figure"> {
+export interface Props extends CompPropsWithChild<"figure"> {
 	/** Candles in time order, oldest first */
 	data: Candle[];
 	/** Horizontal price lines, such as support and resistance */
 	levels?: PriceLevel[];
+	/** Custom content for every level on screen, in place of its line, band, and label; the price tag on the axis stays */
+	level?: Snippet<[LevelSnippetProps]>;
 	/** Overlays computed from the candles: moving averages, Bollinger bands, and VWAP */
 	indicators?: Indicator[];
 	/** Marks pinned to candles, such as a bot's buy and sell signals or sentiment bubbles */
@@ -226,8 +254,10 @@ export interface Props extends CompProps<"figure"> {
 	positions?: TradePosition[];
 	/** Called once a dragged or nudged target or stop is let go, with every position and the change, so a bot can update its orders */
 	onPositionsChange?: (positions: TradePosition[], change: PositionChange) => void;
-	/** Called with a position when its cancel button is pressed; the button shows on open, editable positions only when this is set, and the chart keeps the position until `positions` drops it or sets its `exitTime` */
+	/** Called with a position when its cancel button is pressed; the button shows on draft, pending, and open editable positions only when this is set, discards a draft at once, and the chart keeps the position until `positions` drops it or closes it */
 	onPositionCancel?: (position: TradePosition) => void;
+	/** Called with a draft position when its check mark is pressed; send the order and set its `stage` to `pending`, then `open` once it fills; the check mark shows only when this is set */
+	onPositionConfirm?: (position: TradePosition) => void;
 	/** Turns the cancel button into a check mark on the first press, and runs `onPositionCancel` only when the check mark is pressed; defaults to `true` */
 	confirmCancel?: boolean;
 	/** Smallest price move for a dragged or nudged target or stop, which snaps to it; defaults to `0.01` */
@@ -244,6 +274,12 @@ export interface Props extends CompProps<"figure"> {
 	range?: [number, number];
 	/** Called with the visible range when the chart zooms or pans */
 	onRangeChange?: (range: [number, number]) => void;
+	/** Touch gestures: `page` leaves vertical swipes to the page, so a finger pans only sideways, and `chart` takes them, so a finger drags in any direction, for full-screen charts where the page has nothing to scroll; the mouse wheel zooms either way; defaults to `page` */
+	gestures?: "page" | "chart";
+	/** Whether the chart has measured its plot and painted its candles, info, and legend; it turns true two frames after drawing, so a loader hides only once everything is in place; read it with `bind:ready` */
+	ready?: boolean;
+	/** Called when `ready` changes, such as when the first candles are drawn */
+	onReadyChange?: (ready: boolean) => void;
 	/** Labels of the indicators hidden with the legend; supports `bind:hiddenIndicators` */
 	hiddenIndicators?: string[];
 	/** Called with the hidden indicator labels when the legend hides or shows one */
@@ -260,7 +296,7 @@ export interface Props extends CompProps<"figure"> {
 	grid?: boolean;
 	/** Marks the latest close with a dotted line and an axis tag, which follows live updates; defaults to `true` */
 	lastPrice?: boolean;
-	/** Axis and legend text, and the plot height unless `--candlestick-chart-height` is set; defaults to `md` */
+	/** Axis text, the plot height unless `--candlestick-chart-height` is set, and the size and radius of the parts that do not set their own; defaults to `md` */
 	size?: UiSize;
 	/** Formats prices on the axis, tags, tooltip, and table */
 	formatPrice?: (price: number) => string;
@@ -268,14 +304,8 @@ export interface Props extends CompProps<"figure"> {
 	formatTime?: (time: Date, index: number) => string;
 	/** Formats volumes in the tooltip and table; compact numbers, such as 1.2K, when omitted */
 	formatVolume?: (volume: number) => string;
-	/** Custom tooltip content for the hovered candle */
-	tooltip?: Snippet<[TooltipSnippetProps]>;
-	/** Shows the legend of indicators and groups; on when there are any */
-	legend?: boolean;
-	/** `top` puts the legend above the plot, and `overlay` floats it in the plot's top-left corner, taking no space; defaults to `top` */
-	legendPosition?: "top" | "overlay";
-	/** `wrap` breaks the legend onto new lines when it runs out of room, and `scroll` keeps it on one row that scrolls sideways with faded edges, for small screens; defaults to `wrap` */
-	legendOverflow?: "wrap" | "scroll";
+	/** Parts to show, such as `CandlestickChartLegend`, `CandlestickChartTooltip`, and `CandlestickChartInfo`; a part left out is hidden */
+	children: Snippet;
 	/** Shows the table of visible candles under the chart; screen readers always get it */
 	table?: boolean;
 	/** Accessible name of the plot, such as "AAPL, 5 minute candles"; defaults to "Candlestick chart" */
@@ -284,12 +314,60 @@ export interface Props extends CompProps<"figure"> {
 	class?: CompProps<"figure">["class"];
 }
 
+/** Floating readout of the hovered candle; leave it out of the chart's children to hide the tooltip and keep the crosshair */
+export interface TooltipProps extends Omit<CompProps<"div">, "children"> {
+	/** Shows the open, high, low, close, change, and volume; set `false` next to `CandlestickChartInfo`, which shows them, so the tooltip keeps the time, session, indicators, and markers; defaults to `true` */
+	ohlc?: boolean;
+	/** `default` is a popover card, `secondary` a filled box, `outline` a bordered box on the page background, `ghost` bare text with no box, and `card` a see-through box over a blurred plot; defaults to `default` */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "card";
+	/** Padding, text, and radius; overrides the chart's `size` */
+	size?: UiSize;
+	/** Corner radius; follows `size` when omitted; `pill` rounds to half the height of one line, since the tooltip wraps onto several */
+	rounded?: UiRounded;
+	/** Custom content for the hovered candle, in place of the default rows */
+	children?: Snippet<[TooltipSnippetProps]>;
+	/** Classes merged onto the tooltip */
+	class?: CompProps<"div">["class"];
+}
+
+/** Open, high, low, close, change, and volume of the hovered candle, or the latest one, on one row in the plot's top-left corner; an `overlay` legend moves under it */
+export interface InfoProps extends CompProps<"div"> {
+	/** `default` and `ghost` are bare text over the plot, `secondary` a filled box, `outline` a bordered box, and `card` a blurred backdrop so busy candles stay readable under it; defaults to `default` */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "card";
+	/** Text size, and padding with `card`; overrides the chart's `size` */
+	size?: UiSize;
+	/** Corner radius of the `card` backdrop; follows `size` when omitted; `pill` rounds to half the height of one line, since the info wraps on narrow charts */
+	rounded?: UiRounded;
+	/** Classes merged onto the info */
+	class?: CompProps<"div">["class"];
+}
+
+/** Buttons that hide or show each indicator and each level and marker group */
+export interface LegendProps extends CompProps<"ul"> {
+	/** `top` puts the legend above the plot and `bottom` below it, while `overlay` floats it in the plot's top-left corner and `overlayBottom` in the price pane's bottom-left corner, taking no space; defaults to `top` */
+	position?: "top" | "bottom" | "overlay" | "overlayBottom";
+	/** `wrap` breaks onto new lines when it runs out of room, and `scroll` keeps one row that scrolls sideways with faded edges, for small screens; defaults to `wrap` */
+	overflow?: "wrap" | "scroll";
+	/** `default` is a plain row with a divider, `secondary` a filled box, `outline` a bordered box, `ghost` bare buttons that fill on hover, and `card` a blurred backdrop; defaults to `card` for the overlay positions and `default` otherwise */
+	variant?: "default" | "secondary" | "outline" | "ghost" | "card";
+	/** Text and button padding; overrides the chart's `size` */
+	size?: UiSize;
+	/** Corner radius of the `card` backdrop; its buttons use one step smaller, and both are pills with `pill`; follows `size` when omitted */
+	rounded?: UiRounded;
+	/** Classes merged onto the legend */
+	class?: CompProps<"ul">["class"];
+}
+
 export type CandlestickChartProps = Props;
+export type CandlestickChartTooltipProps = TooltipProps;
+export type CandlestickChartInfoProps = InfoProps;
+export type CandlestickChartLegendProps = LegendProps;
 export type CandlestickChartCandle = Candle;
 export type CandlestickChartPriceLevel = PriceLevel;
 export type CandlestickChartIndicator = Indicator;
 export type CandlestickChartMarker = CandleMarker;
 export type CandlestickChartMarkerSnippetProps = MarkerSnippetProps;
+export type CandlestickChartLevelSnippetProps = LevelSnippetProps;
 export type CandlestickChartTradingSession = TradingSession;
 export type CandlestickChartTimeHighlight = TimeHighlight;
 export type CandlestickChartPosition = TradePosition;

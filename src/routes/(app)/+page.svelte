@@ -7,7 +7,6 @@
 	import { Input } from "#lib/components/ui/input/index.js";
 	import { Kbd, KbdGroup } from "#lib/components/ui/kbd/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
-	import { PackageCommand } from "#lib/components/ui/package-command/index.js";
 	import { Progress } from "#lib/components/ui/progress/index.js";
 	import { Slider } from "#lib/components/ui/slider/index.js";
 	import { Spinner } from "#lib/components/ui/spinner/index.js";
@@ -39,7 +38,6 @@
 			<Button size="lg" rounded="xl" href="/docs">Get started</Button>
 			<Button size="lg" rounded="xl" variant="outline" href="/examples">See examples</Button>
 		</div>
-		<PackageCommand class="catalogCommand" command="remote0 add https://plainsv.com/r/init.json" />
 	</header>
 
 	<!-- Bento grid; each tile is a live component and a link to its docs. -->

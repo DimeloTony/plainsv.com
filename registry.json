@@ -4,132 +4,34 @@
 	"description": "Accessible Svelte 5 components, utilities, and Vite plugins written with runes, scoped styles, and native elements, using shadcn design tokens and as few packages as possible.",
 	"items": [
 		{
-			"name": "init-project",
-			"description": "The package.json, tsconfig, and global types that every init item writes first, before it installs any package.",
-			"files": [
-				{ "type": "file", "path": "template/packageJson.txt", "target": "package.json" },
-				{ "type": "file", "path": "tsconfig.json" },
-				{ "type": "file", "path": "src/app.d.ts" }
-			]
-		},
-		{
-			"name": "init-project-cloudflare",
-			"description": "The package.json, tsconfig, and global types for Cloudflare Workers, with Wrangler scripts and platform types, that init-cloudflare writes first.",
-			"files": [
-				{ "type": "file", "path": "template/packageJsonCloudflare.txt", "target": "package.json" },
-				{ "type": "file", "path": "template/tsconfigCloudflare.txt", "target": "tsconfig.json" },
-				{ "type": "file", "path": "template/appDtsCloudflare.txt", "target": "src/app.d.ts" }
-			]
-		},
-		{
-			"name": "init-base",
-			"description": "The shared PlainSv app shell with app.html, git, npm, Prettier, and VS Code settings, the app context, layout, home and about pages, and page meta, used by every init item.",
-			"files": [
-				{ "type": "file", "path": "src/app.html" },
-				{ "type": "file", "path": "template/gitignore.txt", "target": ".gitignore" },
-				{ "type": "file", "path": ".npmrc" },
-				{ "type": "file", "path": ".prettierrc" },
-				{ "type": "file", "path": ".vscode/extensions.json" },
-				{ "type": "file", "path": ".vscode/settings.json" },
-				{ "type": "file", "path": "template/robots.txt", "target": "static/robots.txt" },
-				{ "type": "file", "path": "src/hooks.server.ts" },
-				{ "type": "file", "path": "template/appContext.txt", "target": "src/lib/context/app.svelte.ts" },
-				{ "type": "file", "path": "template/appData.txt", "target": "src/lib/data/app.ts" },
-				{ "type": "file", "path": "template/sharedCompIndex.txt", "target": "src/lib/components/shared/index.ts" },
-				{ "type": "file", "path": "src/lib/components/shared/logo.svelte" },
-				{ "type": "file", "path": "template/pageMeta.txt", "target": "src/lib/components/shared/pageMeta.svelte" },
-				{ "type": "file", "path": "template/layout.txt", "target": "src/routes/+layout.svelte" },
-				{ "type": "file", "path": "template/home.txt", "target": "src/routes/+page.svelte" },
-				{ "type": "file", "path": "template/layoutAbout.txt", "target": "src/routes/(typeset)/+layout.svelte" },
-				{ "type": "file", "path": "template/homeAbout.txt", "target": "src/routes/(typeset)/about/+page.svx" },
-				{ "type": "file", "path": "static/manifest.json" },
-				{ "type": "file", "path": "static/images/apple-icon.png" },
-				{ "type": "file", "path": "static/images/favicon.svg" },
-				{ "type": "file", "path": "static/images/manifest-192.png" },
-				{ "type": "file", "path": "static/images/manifest-512.png" },
-				{ "type": "file", "path": "static/images/og.png" },
-				{ "type": "file", "content": "DOMAIN_URL=\"http://localhost:3000\"", "target": ".env" },
-				{ "type": "file", "content": "DOMAIN_URL=\"https://example.com\"", "target": ".env.production" },
-				{ "type": "file", "path": "PROJECT.CLAUDE.md", "target": "CLAUDE.md" }
-			]
-		},
-		{
 			"name": "init",
-			"description": "A starter SvelteKit app with the auto adapter, the PlainSv theme, app context, dark mode, layout, and page meta, that picks its deploy target at build time.",
-			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
-			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-auto"],
-			"files": [
-				{ "type": "file", "path": "template/viteConfig.txt", "target": "vite.config.ts" },
-				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" }
-			]
-		},
-		{
-			"name": "init-node",
-			"description": "A starter SvelteKit app on the Node adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on a Node server.",
-			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
-			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-node"],
-			"files": [
-				{ "type": "file", "path": "template/viteConfigNode.txt", "target": "vite.config.ts" },
-				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" }
-			]
-		},
-		{
-			"name": "init-bun",
-			"description": "A starter SvelteKit app on the Bun adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on a Bun server.",
-			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
-			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-bun"],
-			"files": [
-				{ "type": "file", "path": "template/viteConfigBun.txt", "target": "vite.config.ts" },
-				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" },
-				{ "type": "file", "path": "template/bunfig.txt", "target": "bunfig.toml" }
-			]
-		},
-		{
-			"name": "init-vercel",
-			"description": "A starter SvelteKit app on the Vercel adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on Vercel functions.",
-			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
-			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-vercel"],
-			"files": [
-				{ "type": "file", "path": "template/viteConfigVercel.txt", "target": "vite.config.ts" },
-				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" }
-			]
-		},
-		{
-			"name": "init-cloudflare",
-			"description": "A starter SvelteKit app on the Cloudflare adapter with the PlainSv theme, app context, dark mode, layout, and page meta, rendered on Cloudflare Workers.",
-			"itemDependencies": ["/r/init-project-cloudflare.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
-			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-cloudflare", "wrangler"],
-			"files": [
-				{ "type": "file", "path": "template/viteConfigCloudflare.txt", "target": "vite.config.ts" },
-				{ "type": "file", "path": "template/layoutServer.txt", "target": "src/routes/+layout.server.ts" },
-				{ "type": "file", "path": "template/wrangler.txt", "target": "wrangler.jsonc" }
-			]
-		},
-		{
-			"name": "init-static",
-			"description": "A starter SvelteKit app on the static adapter with the PlainSv theme, app context, dark mode, layout, and page meta, prerendered at build time.",
-			"itemDependencies": ["/r/init-project.json", "/r/init-base.json", "/r/styles.json", "/r/button.json", "/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
-			"devDependencies": ["@lucide/svelte", "@sveltejs/adapter-static"],
-			"files": [
-				{ "type": "file", "path": "template/viteConfigStatic.txt", "target": "vite.config.ts" },
-				{ "type": "file", "path": "template/layoutServerStatic.txt", "target": "src/routes/+layout.server.ts" }
-			]
-		},
-		{
-			"name": "init-existing",
-			"description": "The PlainSv styles and global types for an existing SvelteKit project, so components can be added one at a time.",
-			"itemDependencies": ["/r/styles.json"],
-			"files": [{ "type": "file", "path": "src/app.d.ts" }]
-		},
-		{
-			"name": "styles",
-			"description": "The PlainSv theme tokens, resets, CSS utilities, and typeset styles that every component reads.",
+			"description": "The PlainSv styles, global types, app context, root layout, dark mode hook, page meta, static assets, and Vite plugins for a new SvelteKit project.",
+			"itemDependencies": ["/r/toaster.json", "/r/dev-plugin.json", "/r/svx-plugin-simple.json"],
 			"devDependencies": ["@fontsource-variable/geist"],
 			"files": [
 				{ "type": "file", "path": "src/styles/app.css" },
 				{ "type": "file", "path": "src/styles/theme.css" },
 				{ "type": "file", "path": "src/styles/typeset.css" },
-				{ "type": "file", "path": "src/styles/utils.css" }
+				{ "type": "file", "path": "src/styles/utils.css" },
+				{ "type": "file", "path": "src/app.d.ts" },
+				{ "type": "file", "path": "src/lib/context/app.svelte.ts" },
+				{ "type": "file", "content": "/** App core data */\nexport const appData = {\n\tname: \"PlainSv\",\n\ttitle: \"Components, utilities, and plugins in plain Svelte\",\n\tdescription: \"Accessible components, utilities, and Vite plugins for Svelte 5, written the Svelte way: runes, scoped styles, and native elements, with as few packages as possible.\",\n};", "target": "src/lib/data/app.ts" },
+				{ "type": "file", "content": "export { default as PageMeta } from \"./pageMeta.svelte\";\nexport { default as Logo } from \"./logo.svelte\";", "target": "src/lib/components/shared/index.ts" },
+				{ "type": "file", "path": "src/lib/components/shared/logo.svelte" },
+				{ "type": "file", "path": "src/lib/components/shared/pageMeta.svelte" },
+				{ "type": "file", "path": "src/routes/+layout.svelte" },
+				{ "type": "file", "path": "src/routes/+layout.server.ts" },
+				{ "type": "file", "path": "src/hooks.server.ts" },
+				{ "type": "file", "path": "static/manifest.json" },
+				{ "type": "file", "content": "# allow crawling everything by default\nUser-agent: *\nDisallow:", "target": "static/robots.txt" },
+				{ "type": "file", "path": "static/images/apple-icon.png" },
+				{ "type": "file", "path": "static/images/favicon.svg" },
+				{ "type": "file", "path": "static/images/manifest-192.png" },
+				{ "type": "file", "path": "static/images/manifest-512.png" },
+				{ "type": "file", "path": "static/images/og.png" },
+				{ "type": "file", "content": "{\n\t\"explorer.sortOrder\": \"type\"\n}", "target": ".vscode/settings.json" },
+				{ "type": "file", "content": "DOMAIN_URL=\"http://localhost:3000\"", "target": ".env" },
+				{ "type": "file", "content": "DOMAIN_URL=\"https://example.com\"", "target": ".env.production" }
 			]
 		},
 		{
@@ -719,16 +621,22 @@
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/ctx.svelte.ts" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/index.ts" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/indicators.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/info-view.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/info.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/legend-view.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/legend.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/level-lines.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/levels.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/markers.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/overlays.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/position-handles.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/positions.svelte" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/positions.ts" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/price-axis.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/sessions.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/table.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/time.ts" },
+				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/tooltip-view.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/tooltip.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/candlestick-chart/volume.svelte" },
 				{ "type": "file", "path": "src/lib/components/ui/chart/utils.ts" }
@@ -1056,7 +964,7 @@
 		{
 			"name": "trading-01",
 			"description": "A full-screen trading chart with options walls, floor pivots, bot buy and sell markers, swing points, sentiment, and news.",
-			"itemDependencies": ["/r/candlestick-chart.json", "/r/badge.json"],
+			"itemDependencies": ["/r/candlestick-chart.json", "/r/badge.json", "/r/button.json", "/r/spinner.json"],
 			"files": [
 				{ "type": "file", "path": "src/routes/(custom)/examples/trading-01/+page.svelte", "target": "src/routes/(blocks)/trading-01/+page.svelte" },
 				{ "type": "file", "path": "src/routes/(custom)/examples/trading-01/data.ts", "target": "src/routes/(blocks)/trading-01/data.ts" }

@@ -4,12 +4,12 @@
 	import { DOWN_COLOR, UP_COLOR, useCompCtx } from "./ctx.svelte.js";
 	const ctx = useCompCtx();
 	const plotRight = $derived(ctx.marginLeft + ctx.plotWidth);
-	// Zone edges in pixels: from the entry candle to the exit candle, or to the right edge while open.
+	// Zone edges in pixels: from the entry candle to the exit candle, to the latest candle's right edge while open, or to the plot's right edge for draft and pending trades, which project into the time ahead.
 	const zones = $derived(
 		ctx.placedPositions.map((item) => {
 			const left = ctx.x(item.start);
-			const right = item.end === null ? plotRight : ctx.x(item.end);
-			const entryY = ctx.priceToY(item.position.entry);
+			const right = item.isWaiting ? plotRight : Math.min(plotRight, item.end === null ? ctx.latestCandleRight : ctx.x(item.end));
+			const entryY = ctx.priceToY(item.entry);
 			return { ...item, left, width: Math.max(0, right - left), entryY };
 		}),
 	);
@@ -25,7 +25,7 @@
 <g class="candlestickChartPositions">
 	{#each zones as zone (zone.position.id)}
 		{#if zone.width > 0}
-			<g class="candlestickChartPosition" data-closed={zone.end !== null || undefined}>
+			<g class="candlestickChartPosition" data-stage={zone.stage}>
 				{#if zone.target !== undefined}
 					{@const profit = getZone(zone.entryY, zone.target)}
 					<rect class="candlestickChartPositionZone" x={zone.left} y={profit.y} width={zone.width} height={profit.height} style:--candlestick-chart-series-color={UP_COLOR} />
@@ -63,16 +63,26 @@
 
 	/* =============== States =============== */
 
+	/* Draft and pending trades have not filled, so their zones read lighter */
+	.candlestickChartPosition:is([data-stage="draft"], [data-stage="pending"]) .candlestickChartPositionZone {
+		fill: color-mix(in oklab, var(--candlestick-chart-series-color) 9%, transparent);
+	}
+
+	/* A draft's lines are dashed while it is being set up */
+	.candlestickChartPosition[data-stage="draft"] .candlestickChartPositionLine {
+		stroke-dasharray: 4 3;
+	}
+
 	/* Closed positions fade, so open trades lead */
-	.candlestickChartPosition[data-closed] .candlestickChartPositionZone {
+	.candlestickChartPosition[data-stage="closed"] .candlestickChartPositionZone {
 		fill: color-mix(in oklab, var(--candlestick-chart-series-color) 7%, transparent);
 	}
 
-	.candlestickChartPosition[data-closed] .candlestickChartPositionLine {
+	.candlestickChartPosition[data-stage="closed"] .candlestickChartPositionLine {
 		stroke: color-mix(in oklab, var(--candlestick-chart-series-color) 50%, transparent);
 	}
 
-	.candlestickChartPosition[data-closed] .candlestickChartPositionLine[data-field="entry"] {
+	.candlestickChartPosition[data-stage="closed"] .candlestickChartPositionLine[data-field="entry"] {
 		stroke: color-mix(in oklab, var(--foreground) 50%, transparent);
 	}
 </style>

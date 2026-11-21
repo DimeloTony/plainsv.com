@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId } from "mongodb";
-import type { DbCollectionsSchema } from "./schema.js";
-import type { Filter, FindOptions, UpdateFilter, AggregateOptions, UpdateOptions, Document as MongoDocument } from "mongodb";
+import type { DbCollectionsSchema } from "./schema.ts";
+import type { Filter, FindOptions, UpdateFilter, AggregateOptions, UpdateOptions, Document as MongoDocument, ChangeStreamDocument, ChangeStreamOptions } from "mongodb";
 export { ObjectId };
 
 // TYPES =====
@@ -11,6 +11,8 @@ type QueryFilter<ColName extends DbCollations> = Filter<Omit<DbCollectionsSchema
 type KnownKeys<T> = { [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K] };
 type QueryUpdateFilter<ColName extends DbCollations> = Omit<KnownKeys<UpdateFilter<Omit<DbCollectionsSchema[ColName], "_id">>>, "$set"> & { $set?: Readonly<Partial<DbCollectionsSchema[ColName]>> | Record<`${Extract<keyof DbCollectionsSchema[ColName], string | number>}.${string}`, any> };
 type QueryResult<T, TSelect> = keyof TSelect extends never ? T : Pick<T, keyof TSelect & keyof T>;
+type DbChange<ColName extends DbCollations> = ChangeStreamDocument<DbCollectionsSchema[ColName]>;
+type WatchOptions = { operations?: ("insert" | "update" | "replace" | "delete")[] } & ChangeStreamOptions;
 
 // CREATE CLIENT
 export const client = new MongoClient(process.env.MONGODB_URI);
@@ -67,10 +69,24 @@ export const db = new (class Database {
 	private async updateMany<ColName extends DbCollations>(colName: ColName, filter: QueryFilter<ColName>, data: QueryUpdateFilter<ColName>, options?: UpdateOptions) {
 		return database.collection(colName).updateMany(filter as any, data as any, options);
 	}
+	/** Watch changes in a collection, optionally only documents matching a top-level filter */
+	private watchMany<ColName extends DbCollations>(colName: ColName, filter?: QueryFilter<ColName>, options: WatchOptions = {}) {
+		const { operations = ["insert", "update", "replace", "delete"], ...streamOptions } = options;
+		const match: MongoDocument = { operationType: { $in: operations } };
+		// Prefix filter fields with `fullDocument.` so they match the changed document (deletes have no fullDocument, so a filter skips them).
+		for (const [key, value] of Object.entries(filter ?? {})) match[key.startsWith("$") ? key : `fullDocument.${key}`] = value;
+		return database.collection<DbCollectionsSchema[ColName]>(colName).watch<DbCollectionsSchema[ColName], DbChange<ColName>>([{ $match: match }], { fullDocument: "updateLookup", ...streamOptions });
+	}
+	/** Watch changes to one document by _id, including its delete */
+	private watchOneById<ColName extends DbCollations>(colName: ColName, id: string, options: WatchOptions = {}) {
+		const { operations = ["insert", "update", "replace", "delete"], ...streamOptions } = options;
+		return database.collection<DbCollectionsSchema[ColName]>(colName).watch<DbCollectionsSchema[ColName], DbChange<ColName>>([{ $match: { operationType: { $in: operations }, "documentKey._id": id } }], { fullDocument: "updateLookup", ...streamOptions });
+	}
 	//<COLLECTIONS>
     createAppData = (data: Omit<DbCollectionsSchema["appData"], "_id"> & { _id?:string}) => this.createOne<"appData">("appData", data);
 	findAppData = (filter?: QueryFilter<"appData">, options?: QueryOptions<"appData">) => this.findOne<"appData">("appData", filter, options);
 	updateAppData = (filter: QueryFilter<"appData">, data: QueryUpdateFilter<"appData">, options?: UpdateOptions) => this.updateOne<"appData">("appData", filter, data, options);
+	watchAppData = (options?: WatchOptions) => this.watchMany<"appData">("appData", undefined, options);
     createUser = (data: Omit<DbCollectionsSchema["user"], "_id"> & { _id?:string}) => this.createOne<"user">("user", data);
 	createUsers = (data: (Omit<DbCollectionsSchema["user"], "_id"> & { _id?:string})[]) => this.createMany<"user">("user", data);
 	findUser = (filter?: QueryFilter<"user">, options?: QueryOptions<"user">) => this.findOne<"user">("user", filter, options);
@@ -83,6 +99,8 @@ export const db = new (class Database {
 	updateUser = (filter: QueryFilter<"user">, data: QueryUpdateFilter<"user">, options?: UpdateOptions) => this.updateOne<"user">("user", filter, data, options);
 	updateUsers = (filter: QueryFilter<"user">, data: QueryUpdateFilter<"user">, options?: UpdateOptions) => this.updateMany<"user">("user", filter, data, options);
 	updateUserById = (id: string, data: QueryUpdateFilter<"user">, options?: UpdateOptions) => this.updateOneById<"user">("user", id, data, options);
+	watchUser = (filter?: QueryFilter<"user">, options?: WatchOptions) => this.watchMany<"user">("user", filter, options);
+	watchUserById = (id: string, options?: WatchOptions) => this.watchOneById<"user">("user", id, options);
     createSession = (data: Omit<DbCollectionsSchema["session"], "_id"> & { _id?:string}) => this.createOne<"session">("session", data);
 	createSessions = (data: (Omit<DbCollectionsSchema["session"], "_id"> & { _id?:string})[]) => this.createMany<"session">("session", data);
 	findSession = (filter?: QueryFilter<"session">, options?: QueryOptions<"session">) => this.findOne<"session">("session", filter, options);
@@ -95,5 +113,7 @@ export const db = new (class Database {
 	updateSession = (filter: QueryFilter<"session">, data: QueryUpdateFilter<"session">, options?: UpdateOptions) => this.updateOne<"session">("session", filter, data, options);
 	updateSessions = (filter: QueryFilter<"session">, data: QueryUpdateFilter<"session">, options?: UpdateOptions) => this.updateMany<"session">("session", filter, data, options);
 	updateSessionById = (id: string, data: QueryUpdateFilter<"session">, options?: UpdateOptions) => this.updateOneById<"session">("session", id, data, options);
+	watchSession = (filter?: QueryFilter<"session">, options?: WatchOptions) => this.watchMany<"session">("session", filter, options);
+	watchSessionById = (id: string, options?: WatchOptions) => this.watchOneById<"session">("session", id, options);
     //</COLLECTIONS>
 })();

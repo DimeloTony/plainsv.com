@@ -9,10 +9,10 @@ PlainSv is a registry of components, utilities, and plugins for Svelte developme
 
 ## Usage
 
-- Run `npx remote0 add https://plainsv.com/r/init.json` to create a starter SvelteKit app with the PlainSv theme
-- Run `npx remote0 add https://plainsv.com/r/init-existing.json` to add the PlainSv styles to an existing SvelteKit project
+- Run `npx sv@latest create project-name` to create a SvelteKit app with the adapter for your host
+- Run `npx remote0 add https://plainsv.com/r/init.json` inside it to add the PlainSv styles, types, app context, and Vite plugins
 - Run `npx remote0 add https://plainsv.com/r/button.json` to add a component, such as `Button`
-- Read `https://plainsv.com/docs` for every init item and the full item list
+- Read `https://plainsv.com/docs` for the setup steps and the full item list
 
 ## Features
 

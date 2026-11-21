@@ -35,8 +35,8 @@ if (!pm) {
 }
 
 // STOP IF THE MODE IS UNKNOWN
-if (!["deploy", "setup", "rollback", "remove"].includes(args.mode)) {
-	log.error("Pass deploy, setup, rollback, or remove as the mode, such as `node src/lib/server/deploy/index.ts rollback --host …`");
+if (!["deploy", "copy", "setup", "rollback", "remove"].includes(args.mode)) {
+	log.error("Pass deploy, copy, setup, rollback, or remove as the mode, such as `node src/lib/server/deploy/index.ts rollback --host …`");
 	process.exit(1);
 }
 
@@ -47,7 +47,7 @@ if (args.i && args.i !== "max" && !/^[1-9]\d*$/.test(args.i)) {
 }
 
 // STOP IF THE LOCK FILE IS MISSING, since the server installs from it
-if (args.mode === "deploy" && !fs.existsSync(pm.lockFile)) {
+if ((args.mode === "deploy" || args.mode === "copy") && !fs.existsSync(pm.lockFile)) {
 	log.error(`Missing ${pm.lockFile}. Run ${args.pm} install first, or pass the --pm you use.`);
 	process.exit(1);
 }
@@ -237,8 +237,18 @@ if (args.mode === "setup") {
 // ROLLBACK: swap the live and previous releases, so a second rollback returns to the newer one
 if (args.mode === "rollback") {
 	log.normal(`Rolling back to ${prevDir}`);
-	ssh(sshHost, [loadNode, `if [ ! -d ${prevDir} ]; then echo "No previous release at ${prevDir}" >&2; exit 1; fi`, `rm -rf ${tmpDir}`, `mv ${appDir} ${tmpDir}`, `mv ${prevDir} ${appDir}`, ...keep(tmpDir, appDir), `mv ${tmpDir} ${prevDir}`, ...restart()]);
+	ssh(sshHost, [loadNode, `if [ ! -d ${prevDir} ]; then echo "No previous release at ${prevDir}" >&2; exit 1; fi`, `rm -rf ${tmpDir}`, `mv ${appDir} ${tmpDir}`, `mv ${prevDir} ${appDir}`, ...keep(tmpDir, appDir), `mv ${tmpDir} ${prevDir}`, ...(args.port || getServerApp() ? restart() : [])]);
 	log.successful(`Rolled back ${appName}`);
+	process.exit(0);
+}
+
+// COPY: copy files and install dependencies only, with no Cloudflare, nginx, or pm2, such as for a server that runs a cron job
+if (args.mode === "copy") {
+	// If --build is passed: build first. Otherwise: copy the build folder only when it exists.
+	if (args.build) build();
+	copyFiles(fs.existsSync("build"));
+	installAndSwap([]);
+	log.successful(`Copied ${appName} to ${appDir}`);
 	process.exit(0);
 }
 
@@ -246,42 +256,60 @@ if (args.mode === "rollback") {
 const restartLines = restart();
 
 // BUILD APP first, so a broken build stops before the server changes
-log.normal("Building app");
-execSync(`${args.pm} run build`, { stdio: "inherit" });
-log.successful("Built app");
+build();
 
 // SET UP THE DOMAIN on the first deploy, when the server has no nginx site for it yet
 if (!sshTest(sshHost, `test -f ${nginxSite}`)) await setup();
 
-// COPY FILES TO A STAGING FOLDER, so the live app keeps running
-log.normal(`Copying files to ${nextDir}`);
-ssh(sshHost, [`rm -rf ${nextDir}`, `mkdir -p ${nextDir}`]);
-rsync(["--delete", "build/", `${sshHost}:${nextDir}/build/`]);
-const extraFiles = ["package.json", pm.lockFile, ...pm.configFiles, ".env", ".env.production"].filter((file) => fs.existsSync(file));
-rsync([...extraFiles, `${sshHost}:${nextDir}/`]);
-log.successful("Copied files");
+copyFiles(true);
 
 // INSTALL, SWAP RELEASES, AND RESTART WITH PM2 ON SERVER
-log.normal("Installing and swapping releases on server");
-ssh(sshHost, [
-	loadNode,
-	`cd ${nextDir}`,
-	// Make the env files readable only by the server user
-	"chmod 600 .env .env.production 2>/dev/null || true",
-	pm.install,
-	"cd ~",
-	// If a release is live: keep it as _prev and move its server-only files over. Otherwise: this is the first deploy.
-	`if [ -d ${appDir} ]; then`,
-	`rm -rf ${prevDir}`,
-	`mv ${appDir} ${prevDir}`,
-	`mv ${nextDir} ${appDir}`,
-	...keep(prevDir, appDir),
-	"else",
-	`mv ${nextDir} ${appDir}`,
-	"fi",
-	...restartLines,
-]);
+installAndSwap(restartLines);
 log.successful(`Deployed ${appName} to https://${domain}`);
+
+/** Build the app locally, so a broken build stops before the server changes */
+function build() {
+	log.normal("Building app");
+	execSync(`${args.pm} run build`, { stdio: "inherit" });
+	log.successful("Built app");
+}
+
+/** Copy the build, optional src folder, and package files to a staging folder on the server, so the live app keeps running */
+function copyFiles(withBuild: boolean) {
+	log.normal(`Copying files to ${nextDir}`);
+	// If /var/www is missing or not writable, such as on a fresh server before any setup: create it with sudo, in a terminal so sudo can ask for a password
+	if (!sshTest(sshHost!, "test -w /var/www")) ssh(sshHost!, ["sudo mkdir -p /var/www", 'sudo chown "$(id -un):$(id -un)" /var/www'], true);
+	ssh(sshHost!, [`rm -rf ${nextDir}`, `mkdir -p ${nextDir}`]);
+	if (withBuild) rsync(["--delete", "build/", `${sshHost}:${nextDir}/build/`]);
+	// If --src is passed: copy the src folder too, so scripts in it can run on the server
+	if (args.src) rsync(["--delete", "src/", `${sshHost}:${nextDir}/src/`]);
+	const extraFiles = ["package.json", pm!.lockFile, ...pm!.configFiles, ".env", ".env.production"].filter((file) => fs.existsSync(file));
+	rsync([...extraFiles, `${sshHost}:${nextDir}/`]);
+	log.successful("Copied files");
+}
+
+/** Install production dependencies in the staging folder, swap it in as the live release, then run the extra lines, such as the pm2 restart */
+function installAndSwap(extraLines: string[]) {
+	log.normal("Installing and swapping releases on server");
+	ssh(sshHost!, [
+		loadNode,
+		`cd ${nextDir}`,
+		// Make the env files readable only by the server user
+		"chmod 600 .env .env.production 2>/dev/null || true",
+		pm!.install,
+		"cd ~",
+		// If a release is live: keep it as _prev and move its server-only files over. Otherwise: this is the first deploy.
+		`if [ -d ${appDir} ]; then`,
+		`rm -rf ${prevDir}`,
+		`mv ${appDir} ${prevDir}`,
+		`mv ${nextDir} ${appDir}`,
+		...keep(prevDir, appDir),
+		"else",
+		`mv ${nextDir} ${appDir}`,
+		"fi",
+		...extraLines,
+	]);
+}
 
 /** One process from `pm2 jlist` */
 interface Pm2Process {

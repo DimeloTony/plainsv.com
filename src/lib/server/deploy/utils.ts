@@ -23,9 +23,13 @@ export function getArgs() {
 			i: { type: "string" },
 			// Package manager that builds locally and installs production dependencies on the server: npm, bun, pnpm, or yarn
 			pm: { type: "string", default: "pnpm" },
+			// Copy the src folder to the server too, such as for scripts run there with node; off by default
+			src: { type: "boolean", default: false },
+			// Build locally first in copy mode; deploy always builds
+			build: { type: "boolean", default: false },
 		},
 	});
-	// The first positional picks the mode: deploy by default, or setup, rollback, or remove
+	// The first positional picks the mode: deploy by default, or copy, setup, rollback, or remove
 	return { ...values, mode: positionals[0] ?? "deploy" };
 }
 

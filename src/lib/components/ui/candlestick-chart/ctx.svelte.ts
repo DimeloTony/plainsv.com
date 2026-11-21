@@ -1,9 +1,10 @@
 import { setContext, getContext } from "svelte";
 import { getNiceTicks } from "#lib/components/ui/chart/utils.js";
 import { getBollinger, getEma, getSma, getVwap } from "./indicators.js";
+import { snapPrice } from "./positions.js";
 import { formatFullTime, getMedianGap, getTimeTicks, getZonedTime, isInWindow, isIntraday, parseClock, toTimestamp } from "./time.js";
 import type { IndicatorSeries } from "./indicators.js";
-import type { Candle, CandleMarker, Indicator, IndicatorValue, PositionChange, PriceLevel, Props, TimeHighlight, TradePosition, TradingSession } from "./index.js";
+import type { Candle, CandleMarker, Indicator, IndicatorValue, InfoProps, LegendProps, PositionChange, PriceLevel, Props, TimeHighlight, TooltipProps, TradePosition, TradingSession } from "./index.js";
 
 const CONTEXT_ID = "candlestick-chart-context";
 // Space in pixels between the plot and its labels, and around a tag's text.
@@ -39,6 +40,8 @@ export const DOWN_COLOR = "var(--candlestick-chart-down, var(--destructive))";
 const MARKER_SHARE = 0.9;
 export const MARKER_GAP = 4;
 const MARKER_COLOR = "var(--chart-1)";
+// Pixels a level band grows for each step of `size` past 1, so `size: 2` is 6px tall and `size: 4` is 18px.
+const BAND_STEP = 6;
 const priceFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const compactFormat = new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 });
 
@@ -47,6 +50,8 @@ class UseCompCtx {
 	data: Candle[] = $state([]);
 	/** Horizontal price lines */
 	levels: PriceLevel[] = $state([]);
+	/** Custom level content */
+	level?: Props["level"] = $state();
 	/** Indicator settings */
 	indicators: Indicator[] = $state([]);
 	/** Marks pinned to candles */
@@ -59,6 +64,8 @@ class UseCompCtx {
 	onPositionsChange?: Props["onPositionsChange"];
 	/** Called when a position's cancel is confirmed */
 	onPositionCancel?: Props["onPositionCancel"];
+	/** Called when a draft position's check mark is pressed */
+	onPositionConfirm?: Props["onPositionConfirm"];
 	/** Whether a cancel waits for the user to confirm */
 	confirmCancel = $state(true);
 	/** `id` of the position whose cancel button shows a check mark, waiting for a second press to confirm */
@@ -93,8 +100,12 @@ class UseCompCtx {
 	formatTime?: Props["formatTime"] = $state();
 	/** Custom volume format */
 	formatVolume?: Props["formatVolume"] = $state();
-	/** Custom tooltip content */
-	tooltip?: Props["tooltip"] = $state();
+	/** Settings of the `CandlestickChartTooltip` part; null while it is left out */
+	tooltipPart: TooltipProps | null = $state.raw(null);
+	/** Settings of the `CandlestickChartInfo` part; null while it is left out */
+	infoPart: InfoProps | null = $state.raw(null);
+	/** Settings of the `CandlestickChartLegend` part; null while it is left out */
+	legendPart: LegendProps | null = $state.raw(null);
 	/** Called with the visible range */
 	onRangeChange?: Props["onRangeChange"];
 	/** Called with the hidden indicator labels */
@@ -107,6 +118,8 @@ class UseCompCtx {
 	height = $state(0);
 	/** Axis text size in pixels, read from CSS */
 	fontSize = $state(12);
+	/** Height in pixels of the candle info, so an overlay legend sits under it; 0 while it is off */
+	infoHeight = $state(0);
 	/** Index of the hovered or focused candle; -1 while none is */
 	activeIndex = $state(-1);
 	/** Pointer position in plot pixels; null while the keyboard drives the tooltip */
@@ -155,22 +168,31 @@ class UseCompCtx {
 	/** Every position on a candle, with the dragged price applied, its zone edges as candle indexes, and its entry, target, and stop lines */
 	placedPositions = $derived.by(() =>
 		this.positions.flatMap((position) => {
-			const start = this.findPositionCandle(position.time);
+			const stage = this.getPositionStage(position);
+			// Draft and pending trades have not filled, so they wait at the latest candle whatever their time.
+			const isWaiting = stage === "draft" || stage === "pending";
+			const start = isWaiting ? this.data.length - 1 : this.findPositionCandle(position.time);
 			// If there are no candles to place it on: skip it.
 			if (start < 0) return [];
-			const end = position.exitTime === undefined ? null : this.findPositionCandle(position.exitTime);
+			const end = stage === "closed" ? this.findPositionCandle(position.exitTime ?? this.times[this.times.length - 1]) : null;
 			const draft = this.positionDraft?.id === position.id ? this.positionDraft : null;
-			const target = draft?.field === "target" ? draft.price : position.target;
-			const stop = draft?.field === "stop" ? draft.price : position.stop;
+			// A dragged draft entry pushes the target and stop along, so they stay on their side of it.
+			const entry = draft?.field === "entry" ? draft.price : position.entry;
+			const moved = { side: position.side, entry };
+			const target = draft?.field === "target" ? draft.price : position.target === undefined ? undefined : draft?.field === "entry" ? this.clampPositionPrice(moved, "target", position.target) : position.target;
+			const stop = draft?.field === "stop" ? draft.price : position.stop === undefined ? undefined : draft?.field === "entry" ? this.clampPositionPrice(moved, "stop", position.stop) : position.stop;
 			// Profit zones use the rising color and risk zones the falling color, whichever way the trade points.
-			const lines: { field: "entry" | PositionChange["field"]; price: number; color: string }[] = [{ field: "entry", price: position.entry, color: FALLBACK_COLOR }];
+			const lines: { field: PositionChange["field"]; price: number; color: string }[] = [{ field: "entry", price: entry, color: FALLBACK_COLOR }];
 			if (target !== undefined) lines.push({ field: "target", price: target, color: UP_COLOR });
 			if (stop !== undefined) lines.push({ field: "stop", price: stop, color: DOWN_COLOR });
-			return [{ position, start, end, target, stop, lines, isEditable: (position.editable ?? true) && end === null, name: position.label ?? (position.side === "long" ? "Long" : "Short") }];
+			const isEditable = (position.editable ?? true) && (stage === "draft" || stage === "open");
+			return [{ position, stage, isWaiting, start, end, entry, target, stop, lines, isEditable, name: position.label ?? (position.side === "long" ? "Long" : "Short") }];
 		}),
 	);
 	/** Levels outside the hidden groups */
 	shownLevels = $derived(this.levels.filter((level) => !level.group || !this.hiddenGroups.includes(level.group)));
+	/** Candle span of each shown level, found once per data or level change rather than on every pan and zoom frame */
+	levelSpans = $derived(this.shownLevels.map((level) => this.getLevelSpan(level)));
 	/** Markers outside the hidden groups */
 	shownMarkers = $derived(this.markers.filter((marker) => !marker.group || !this.hiddenGroups.includes(marker.group)));
 	/** Pixels above the plot; leaves room for half of the top price label */
@@ -304,13 +326,15 @@ class UseCompCtx {
 		const lastLevel: PriceLevel[] = this.lastPrice && last ? [{ price: last.close, kind: last.close >= last.open ? "support" : "resistance" }] : [];
 		// Open position lines only get tags here; the positions part draws their lines across their zones, and closed positions keep just their zones and lines.
 		const positionLevels: PriceLevel[] = this.placedPositions.flatMap((item) => (item.end === null ? item.lines.map((line) => ({ price: line.price, color: line.color })) : []));
-		const all = [...this.shownLevels, ...positionLevels, ...lastLevel];
+		// Ended levels are history, so only levels still running get a tag, unless they turn it off.
+		const runningLevels = this.shownLevels.filter((level, position) => level.tag !== false && this.levelSpans[position].end === null);
+		const all = [...runningLevels, ...positionLevels, ...lastLevel];
 		const tags = all.map((level, position) => {
 			// Levels off screen pin to the nearest edge with an arrow toward them.
 			const placement = level.price > max ? "above" : level.price < min ? "below" : "inside";
 			const lineY = placement === "above" ? this.marginTop + this.tagHeight / 2 : placement === "below" ? this.marginTop + this.priceHeight - this.tagHeight / 2 : this.priceToY(level.price);
 			const text = `${placement === "above" ? "▲ " : placement === "below" ? "▼ " : ""}${this.formatPriceValue(level.price)}`;
-			return { ...level, position, placement, lineY, tagY: lineY, text, color: this.levelColor(level), isPosition: position >= this.shownLevels.length && position < this.shownLevels.length + positionLevels.length, isLast: lastLevel.length > 0 && position === all.length - 1 };
+			return { ...level, position, placement, lineY, tagY: lineY, text, color: this.levelColor(level), isPosition: position >= runningLevels.length && position < runningLevels.length + positionLevels.length, isLast: lastLevel.length > 0 && position === all.length - 1 };
 		});
 		// Walk the tags from top to bottom and push each one below the tag above it when they would overlap.
 		const sorted = tags.toSorted((a, b) => a.lineY - b.lineY);
@@ -320,6 +344,23 @@ class UseCompCtx {
 		}
 		return tags;
 	});
+	/** User levels on screen with their line from the left edge of the `start` candle, or the plot, to the right edge of the `end` candle, or the plot */
+	levelLines = $derived.by(() => {
+		const [min, max] = this.priceDomain;
+		const plotRight = this.marginLeft + this.plotWidth;
+		return this.shownLevels.flatMap((level, position) => {
+			// If the price is off screen: only its tag shows, pinned to the edge.
+			if (level.price > max || level.price < min) return [];
+			const span = this.levelSpans[position];
+			const left = span.start === null ? this.marginLeft : this.x(span.start) - this.spacing / 2;
+			const right = span.end === null ? plotRight : this.x(span.end) + this.spacing / 2;
+			// If the span is panned off screen: skip it.
+			if (right <= this.marginLeft || left >= plotRight) return [];
+			return [{ level, position, color: this.levelColor(level), lineY: this.priceToY(level.price), left, right, bandHeight: this.levelBandHeight(level.size) }];
+		});
+	});
+	/** Right edge in pixels of the latest candle, where open positions end, so they stop at the current candle instead of running into the empty time ahead */
+	latestCandleRight = $derived(this.x(this.data.length - 1) + this.spacing / 2);
 	/** Heights of the tags on the price axis: the crosshair's, the last price's, and every level's */
 	priceTagYs = $derived([...(this.timeTag ? [this.crosshairY] : []), ...this.levelTags.map((tag) => tag.tagY)]);
 	/** Time ticks on calendar boundaries, spaced so labels never overlap */
@@ -460,12 +501,17 @@ class UseCompCtx {
 		return toTimestamp(time) < this.times[0] ? 0 : this.data.length - 1;
 	}
 
-	/** Snaps a target or stop to `priceStep` and keeps it at least one step on its side of the entry, so a target never turns into a loss. */
-	clampPositionPrice(position: TradePosition, field: PositionChange["field"], price: number) {
+	/** Stage of a position: its own, else `closed` with an exit time and `open` without one. */
+	getPositionStage(position: TradePosition) {
+		return position.stage ?? (position.exitTime === undefined ? "open" : "closed");
+	}
+
+	/** Snaps a price to `priceStep`; an entry stays above zero, and a target or stop stays at least one step on its side of the entry, so a target never turns into a loss. */
+	clampPositionPrice(position: Pick<TradePosition, "side" | "entry">, field: PositionChange["field"], price: number) {
 		const step = this.priceStep > 0 ? this.priceStep : 0.01;
-		const text = String(step);
-		const decimals = text.includes("e-") ? Number(text.split("e-")[1]) : (text.split(".")[1] ?? "").length;
-		const round = (value: number) => Number((Math.round(value / step) * step).toFixed(decimals));
+		const round = (value: number) => snapPrice(value, step);
+		// If the entry moves, as on a draft: it only snaps and stays above zero.
+		if (field === "entry") return Math.max(step, round(price));
 		// A long's target and a short's stop sit above the entry; the other two sit below it, and above zero.
 		const isAbove = (field === "target") === (position.side === "long");
 		return isAbove ? Math.max(round(position.entry + step), round(price)) : Math.max(step, Math.min(round(position.entry - step), round(price)));
@@ -489,7 +535,9 @@ class UseCompCtx {
 		const previous = current[draft.field];
 		// If the line ended where it started: report nothing.
 		if (previous === undefined || previous === draft.price) return;
-		const position = { ...current, [draft.field]: draft.price };
+		// A moved draft entry also saves the target and stop it pushed along.
+		const moved = { side: current.side, entry: draft.price };
+		const position = draft.field === "entry" ? { ...current, entry: draft.price, target: current.target === undefined ? undefined : this.clampPositionPrice(moved, "target", current.target), stop: current.stop === undefined ? undefined : this.clampPositionPrice(moved, "stop", current.stop) } : { ...current, [draft.field]: draft.price };
 		this.positions = this.positions.map((item) => (item.id === draft.id ? position : item));
 		this.onPositionsChange?.(this.positions, { id: draft.id, field: draft.field, price: draft.price, previous, position });
 	}
@@ -511,6 +559,15 @@ class UseCompCtx {
 	/** Turns an armed check mark back into the cancel button. */
 	disarmCancel() {
 		this.armedCancelId = null;
+	}
+
+	/** Confirms a draft position by reporting it, leaving `positions` to the caller, who sets it pending once the order is sent. */
+	confirmPosition(id: string) {
+		const position = this.positions.find((item) => item.id === id);
+		// If the position is gone or no longer a draft: there is nothing to confirm.
+		if (!position || this.getPositionStage(position) !== "draft") return;
+		if (this.positionDraft?.id === id) this.positionDraft = null;
+		this.onPositionConfirm?.(position);
 	}
 
 	/** Asks to cancel a position: drops any drag on it and reports it, leaving `positions` to the caller, who removes or closes it once the order is gone. */
@@ -551,6 +608,19 @@ class UseCompCtx {
 	/** Pixel position of a volume in the volume pane. */
 	volumeToY(volume: number) {
 		return this.volumeTop + (1 - volume / this.maxVolume) * this.volumeHeight;
+	}
+
+	/** Candle indexes a level spans, `null` for an open start or end; an end past the latest candle stays open, so the level keeps running. */
+	getLevelSpan(level: PriceLevel) {
+		const start = level.start === undefined ? null : this.findPositionCandle(level.start);
+		const isFuture = level.end !== undefined && this.findCandle(level.end) < 0 && this.times.length > 0 && toTimestamp(level.end) >= this.times[0];
+		const end = level.end === undefined || isFuture ? null : this.findPositionCandle(level.end);
+		return { start, end };
+	}
+
+	/** Height of a level's band: none for a plain line, then 6px per step of `size`, the same at any zoom. */
+	levelBandHeight(size: number | undefined) {
+		return (Math.max(1, size ?? 1) - 1) * BAND_STEP;
 	}
 
 	/** Color of a level: its own, else rising for support, falling for resistance, and neutral otherwise. */
@@ -653,7 +723,7 @@ class UseCompCtx {
 	}
 }
 
-export type CompCtxProps = Pick<InstanceType<typeof UseCompCtx>, "data" | "levels" | "indicators" | "markers" | "marker" | "positions" | "onPositionsChange" | "onPositionCancel" | "confirmCancel" | "priceStep" | "sessions" | "highlights" | "timeZone" | "scale" | "grid" | "lastPrice" | "showVolume" | "range" | "hidden" | "hiddenGroups" | "variant" | "formatPrice" | "formatTime" | "formatVolume" | "tooltip" | "onRangeChange" | "onHiddenIndicatorsChange" | "onHiddenGroupsChange">;
+export type CompCtxProps = Pick<InstanceType<typeof UseCompCtx>, "data" | "levels" | "level" | "indicators" | "markers" | "marker" | "positions" | "onPositionsChange" | "onPositionCancel" | "onPositionConfirm" | "confirmCancel" | "priceStep" | "sessions" | "highlights" | "timeZone" | "scale" | "grid" | "lastPrice" | "showVolume" | "range" | "hidden" | "hiddenGroups" | "variant" | "formatPrice" | "formatTime" | "formatVolume" | "onRangeChange" | "onHiddenIndicatorsChange" | "onHiddenGroupsChange">;
 
 export const setCompCtx = (props: CompCtxProps) => setContext(CONTEXT_ID, new UseCompCtx(props));
 

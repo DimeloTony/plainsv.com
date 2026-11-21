@@ -26,12 +26,16 @@ const SWING_WINDOW = 10;
 // Strike spacing and count of the sample option chain.
 const STRIKE_STEP = 1;
 const STRIKE_COUNT = 21;
+// How far in dollars a strike's gamma reaches around the price, how fast it swells and fades per candle, and the fewest candles a role must hold to draw, so brief flips stay off the chart.
+const GAMMA_REACH = 2.5;
+const GAMMA_WAVE = 0.04;
+const GAMMA_MIN_RUN = 6;
 
 export const SYMBOL = "PLSV";
 export const TIME_ZONE = "America/New_York";
 export const sessions: CandlestickChartTradingSession[] = [
-	{ start: "04:00", end: "09:30", label: "Pre-market" },
-	{ start: "16:00", end: "20:00", label: "After hours" },
+	{ start: "04:00", end: "09:30", label: "Pre-market", showLabel: false },
+	{ start: "16:00", end: "20:00", label: "After hours", showLabel: false },
 ];
 export const candles = createIntradayCandles(DAYS, 21);
 export const lastClose = candles[candles.length - 1].close;
@@ -43,6 +47,7 @@ export const trades = getTrades(candles);
 export const swings = getSwings(candles);
 export const sentiment = getSentiment(candles, 8);
 export const news = getNews(candles);
+export const gamma = getGamma(candles, 13);
 // Both days, from yesterday's pre-market through today's 16:00 close, leaving the rest of today as empty space to trade into.
 export const initialRange: [number, number] = [0, (DAYS - 1) * CANDLES_PER_DAY + REGULAR_END];
 
@@ -118,6 +123,35 @@ function getWalls(chain: StrikeInterest[], spot: number) {
 	const payout = (price: number) => chain.reduce((sum, item) => sum + item.calls * Math.max(0, price - item.strike) + item.puts * Math.max(0, item.strike - price), 0);
 	const maxPain = chain.reduce((best, item) => (payout(item.strike) < payout(best.strike) ? item : best), chain[0]).strike;
 	return { callWall, putWall, maxPain };
+}
+
+/** Simulates gamma per strike on each regular-hours candle, strongest near the price, and names the strongest strike KING, the strongest above it CEILING, and the strongest below it FLOOR. */
+function getGamma(data: CandlestickChartCandle[], seed: number) {
+	const random = createRandom(seed);
+	const indexes = data.flatMap((_, index) => (isRegular(index) ? [index] : []));
+	const prices = indexes.flatMap((index) => [data[index].low, data[index].high]);
+	const first = Math.floor(Math.min(...prices)) - 2;
+	const strikes = Array.from({ length: Math.ceil(Math.max(...prices)) + 2 - first + 1 }, (_, offset) => first + offset * STRIKE_STEP);
+	// Each strike gets its own weight and a slow wave, so roles hold for a while before passing to another strike.
+	const traits = strikes.map(() => ({ weight: 0.4 + random() * 0.6, phase: random() * Math.PI * 2 }));
+	const roles = new Map<string, GammaRole>();
+	for (const index of indexes) {
+		const close = data[index].close;
+		const values = strikes.map((strike, position) => traits[position].weight * (0.6 + 0.4 * Math.sin(traits[position].phase + index * GAMMA_WAVE)) * Math.exp(-(((strike - close) / GAMMA_REACH) ** 2)));
+		const top = Math.max(...values);
+		const king = strikes[values.indexOf(top)];
+		const best = (side: 1 | -1) => strikes.filter((strike) => (strike - king) * side > 0).reduce((result, strike) => (values[strikes.indexOf(strike)] > values[strikes.indexOf(result)] ? strike : result), king + side * STRIKE_STEP);
+		const named = new Map<number, GammaRole>([
+			[king, "KING"],
+			[best(1), "CEILING"],
+			[best(-1), "FLOOR"],
+		]);
+		for (const [position, strike] of strikes.entries()) {
+			const role = named.get(strike);
+			if (role) roles.set(`${strike}:${index}`, role);
+		}
+	}
+	return { strikes, indexes, roles };
 }
 
 /** Classic floor pivots from one day's regular-hours high, low, and close. */
@@ -248,6 +282,26 @@ export function getWallLevels(): CandlestickChartPriceLevel[] {
 	];
 }
 
+/** Draws each strike's run in one gamma role as a level from its first candle to its last, skipping brief flips; a run that reaches the latest candle keeps going and names itself on the axis. */
+export function getGammaLevels(): CandlestickChartPriceLevel[] {
+	const lastIndex = gamma.indexes.at(-1);
+	const runs: { strike: number; role: GammaRole; first: number; last: number }[] = [];
+	for (const strike of gamma.strikes) {
+		let run: (typeof runs)[number] | null = null;
+		for (const index of gamma.indexes) {
+			const role = gamma.roles.get(`${strike}:${index}`) ?? null;
+			// If the role carries on: stretch the run, else close it and start a new one.
+			if (run && run.role === role) run.last = index;
+			else {
+				if (run) runs.push(run);
+				run = role ? { strike, role, first: index, last: index } : null;
+			}
+		}
+		if (run) runs.push(run);
+	}
+	return runs.filter((run) => run.last === lastIndex || gamma.indexes.indexOf(run.last) - gamma.indexes.indexOf(run.first) + 1 >= GAMMA_MIN_RUN).map((run) => ({ price: run.strike, label: run.role, group: "Gamma", color: "var(--chart-1)", start: candles[run.first].time, end: run.last === lastIndex ? undefined : candles[run.last].time }));
+}
+
 /** Draws yesterday's floor pivots, the main pivot first so the legend keys the group in its color. */
 export function getPivotLevels(): CandlestickChartPriceLevel[] {
 	return [
@@ -258,6 +312,9 @@ export function getPivotLevels(): CandlestickChartPriceLevel[] {
 		{ price: pivots.s2, label: "S2", group: "Pivots", color: "var(--muted-foreground)" },
 	];
 }
+
+/** Name of a strike's gamma role on a candle */
+export type GammaRole = "KING" | "CEILING" | "FLOOR";
 
 /** Open interest at one strike */
 export interface StrikeInterest {

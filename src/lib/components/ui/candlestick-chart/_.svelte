@@ -6,11 +6,13 @@
 	import Overlays from "./overlays.svelte";
 	import Levels from "./levels.svelte";
 	import Markers from "./markers.svelte";
+	import LevelLines from "./level-lines.svelte";
 	import Positions from "./positions.svelte";
 	import PositionHandles from "./position-handles.svelte";
 	import Crosshair from "./crosshair.svelte";
-	import Tooltip from "./tooltip.svelte";
-	import Legend from "./legend.svelte";
+	import TooltipView from "./tooltip-view.svelte";
+	import InfoView from "./info-view.svelte";
+	import LegendView from "./legend-view.svelte";
 	import PriceAxis from "./price-axis.svelte";
 	import Table from "./table.svelte";
 	import { untrack } from "svelte";
@@ -18,11 +20,11 @@
 	import type { Attachment } from "svelte/attachments";
 	import type { Props } from "./index.js";
 	import type { CompCtxProps } from "./ctx.svelte.js";
-	let { data, levels = [], indicators = [], markers = [], marker, positions = $bindable([]), onPositionsChange, onPositionCancel, confirmCancel = true, priceStep = 0.01, sessions = [], highlights = [], timeZone = "", volume, range = $bindable(), onRangeChange, hiddenIndicators = $bindable([]), onHiddenIndicatorsChange, hiddenGroups = $bindable([]), onHiddenGroupsChange, variant = "solid", scale = "linear", grid = true, lastPrice = true, size = "md", formatPrice, formatTime, formatVolume, tooltip, legend, legendPosition = "top", legendOverflow = "wrap", table = false, label = "Candlestick chart", class: className, ...props }: Props = $props();
+	let { data, levels = [], level, indicators = [], markers = [], marker, positions = $bindable([]), onPositionsChange, onPositionCancel, onPositionConfirm, confirmCancel = true, priceStep = 0.01, sessions = [], highlights = [], timeZone = "", volume, range = $bindable(), onRangeChange, gestures = "page", ready = $bindable(false), onReadyChange, hiddenIndicators = $bindable([]), onHiddenIndicatorsChange, hiddenGroups = $bindable([]), onHiddenGroupsChange, variant = "solid", scale = "linear", grid = true, lastPrice = true, size = "md", formatPrice, formatTime, formatVolume, table = false, label = "Candlestick chart", children, class: className, ...props }: Props = $props();
 	// Pixels a pointer must move before a press becomes a drag, so clicks still click.
 	const DRAG_THRESHOLD = 3;
-	// Milliseconds a finger must hold still before it reads candles, and pixels it may jitter meanwhile before it pans instead.
-	const LONG_PRESS_DELAY = 150;
+	// Milliseconds a finger must hold still before it reads candles, long enough that a slow drag still pans, and pixels it may jitter meanwhile before it pans instead.
+	const LONG_PRESS_DELAY = 300;
 	const TOUCH_SLOP = 8;
 	// Zoom speed for the wheel and the keyboard.
 	const WHEEL_ZOOM_SPEED = 0.002;
@@ -33,9 +35,15 @@
 	const KEY_PRICE_PAN_SHARE = 0.1;
 	const clipId = $props.id();
 	const showVolume = $derived(volume ?? data.some((candle) => typeof candle.volume === "number"));
-	const contextData: Omit<CompCtxProps, "range" | "hidden" | "hiddenGroups" | "positions"> = $derived({ data, levels, indicators, markers, marker, onPositionsChange, onPositionCancel, confirmCancel, priceStep, sessions, highlights, timeZone, scale, grid, lastPrice, showVolume, variant, formatPrice, formatTime, formatVolume, tooltip, onRangeChange, onHiddenIndicatorsChange, onHiddenGroupsChange });
+	const contextData: Omit<CompCtxProps, "range" | "hidden" | "hiddenGroups" | "positions"> = $derived({ data, levels, level, indicators, markers, marker, onPositionsChange, onPositionCancel, onPositionConfirm, confirmCancel, priceStep, sessions, highlights, timeZone, scale, grid, lastPrice, showVolume, variant, formatPrice, formatTime, formatVolume, onRangeChange, onHiddenIndicatorsChange, onHiddenGroupsChange });
 	const ctx = setCompCtx({ ...contextData, range: range ?? null, hidden: hiddenIndicators, hiddenGroups, positions });
-	const showLegend = $derived(legend ?? (indicators.length > 0 || ctx.groups.length > 0));
+	// The chart shows only the parts passed as children, so a part left out is hidden.
+	const tooltipSettings = $derived(ctx.tooltipPart);
+	const infoSettings = $derived(ctx.infoPart);
+	const legendSettings = $derived(ctx.legendPart);
+	const legendPosition = $derived(legendSettings?.position ?? "top");
+	// The legend shows only when it has indicators or groups to toggle.
+	const hasLegendItems = $derived(indicators.length > 0 || ctx.groups.length > 0);
 	// Read out the focused candle while the keyboard drives the tooltip; pointer hovers stay quiet.
 	const announcement = $derived.by(() => {
 		const candle = data[ctx.activeIndex];
@@ -46,14 +54,21 @@
 		return `${ctx.formatCandleTime(ctx.activeIndex)}: open ${ctx.formatPriceValue(candle.open)}, high ${ctx.formatPriceValue(candle.high)}, low ${ctx.formatPriceValue(candle.low)}, close ${ctx.formatPriceValue(candle.close)}, ${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%${markerNames.length ? `, ${markerNames.join(", ")}` : ""}`;
 	});
 	let probe: HTMLSpanElement | undefined = $state();
+	// Whether the axis text size has been read, so the plot draws once at its real size instead of jumping from the fallback.
+	let isMeasured = $state(false);
+	// Ready once the plot is measured and has candles to draw.
+	const isReady = $derived(isMeasured && ctx.width > 0 && ctx.height > 0 && data.length > 0);
 	// Pointers pressed on the plot, and where the drag or pinch started.
-	const pointers = new Map<number, number>();
+	const pointers = new Map<number, { x: number; y: number }>();
 	let drag: { x: number; y: number; start: number; count: number; offset: number; hasMoved: boolean } | null = null;
 	let pinch: { distance: number; start: number; count: number; anchorX: number } | null = null;
 	// Long press on touch: its timer, the finger's latest position, and whether the held finger reads candles instead of panning.
 	let pressTimer: ReturnType<typeof setTimeout> | undefined;
 	let touchPoint = { x: 0, y: 0 };
 	let isInspecting = false;
+	// Drag and pinch updates wait for the next frame, so a burst of move events renders once per frame.
+	let frame = 0;
+	let pendingMove: (() => void) | null = null;
 
 	// Keep the shared settings in sync when the props change.
 	$effect.pre(() => void Object.assign(ctx, contextData));
@@ -102,21 +117,38 @@
 		// If the probe is not mounted yet: wait for it.
 		if (!probe) return;
 		ctx.fontSize = parseFloat(getComputedStyle(probe).fontSize) || 12;
+		isMeasured = true;
 	});
 
-	/** Zooms with Ctrl or ⌘ and the wheel or a trackpad pinch, and pans with Shift or a sideways wheel; a plain wheel still scrolls the page. */
+	// Report readiness through `bind:ready` and `onReadyChange`, only when it changes; turning ready waits for two frames, so the chart, its info, and its legend have painted before a loader over them hides.
+	$effect(() => {
+		const next = isReady;
+		/** Reports the new readiness unless it is already reported. */
+		const report = () =>
+			untrack(() => {
+				if (ready === next) return;
+				ready = next;
+				onReadyChange?.(next);
+			});
+		// If the chart is no longer ready: report it right away, so a loader shows at once.
+		if (!next) return report();
+		let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(report)));
+		return () => cancelAnimationFrame(frame);
+	});
+
+	/** Zooms with the wheel or a trackpad pinch, and pans with Shift or a sideways wheel. */
 	const handleWheel: Attachment<HTMLDivElement> = (node) => {
 		/** Zooms or pans, and stops the page from scrolling only when it does. */
 		const handle = (e: WheelEvent) => {
 			const box = node.getBoundingClientRect();
-			// If Ctrl or ⌘ is held, which trackpad pinches also send: zoom around the pointer.
-			if (e.ctrlKey || e.metaKey) {
+			// If Ctrl or ⌘ is held, which trackpad pinches also send, or the wheel moves up and down without Shift: zoom around the pointer.
+			if (e.ctrlKey || e.metaKey || (!e.shiftKey && Math.abs(e.deltaY) >= Math.abs(e.deltaX))) {
 				e.preventDefault();
 				ctx.zoom(Math.exp(e.deltaY * WHEEL_ZOOM_SPEED), e.clientX - box.left);
 				return;
 			}
 			const sideways = e.shiftKey ? e.deltaX || e.deltaY : Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : 0;
-			// If the wheel moves up and down without Shift: let the page scroll.
+			// If there is no sideways movement left to pan with: leave the event alone.
 			if (!sideways) return;
 			e.preventDefault();
 			ctx.pan(sideways / (ctx.spacing || 1));
@@ -135,8 +167,36 @@
 		return () => {
 			node.removeEventListener("touchmove", handle);
 			clearTimeout(pressTimer);
+			cancelAnimationFrame(frame);
 		};
 	};
+
+	/** Runs the latest drag or pinch update on the next frame, dropping the ones it replaces, since each sets the view from where the gesture started. */
+	function scheduleMove(update: () => void) {
+		pendingMove = update;
+		if (frame) return;
+		frame = requestAnimationFrame(() => {
+			frame = 0;
+			const run = pendingMove;
+			pendingMove = null;
+			run?.();
+		});
+	}
+
+	/** Runs a waiting drag or pinch update now instead of on the next frame. */
+	function flushMove() {
+		cancelAnimationFrame(frame);
+		frame = 0;
+		const run = pendingMove;
+		pendingMove = null;
+		run?.();
+	}
+
+	/** Distance in pixels between the two pinching pointers, in any direction, so fingers placed one above the other still zoom smoothly. */
+	function getPinchDistance() {
+		const [first, second] = [...pointers.values()];
+		return Math.hypot(second.x - first.x, second.y - first.y) || 1;
+	}
 
 	/** Starts a drag with one pointer, or a pinch with two; a finger waits for a long press before it shows the crosshair. */
 	const handlePointerDown = (e: PointerEvent & { currentTarget: EventTarget & HTMLDivElement }) => {
@@ -145,12 +205,12 @@
 		// If a mouse button other than the main one was pressed: ignore it.
 		if (e.pointerType === "mouse" && e.button !== 0) return;
 		node.setPointerCapture(e.pointerId);
-		pointers.set(e.pointerId, e.clientX);
+		pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 		const box = node.getBoundingClientRect();
 		if (pointers.size === 1) drag = { x: e.clientX, y: e.clientY, start: ctx.view[0], count: ctx.visibleCount, offset: ctx.priceOffset, hasMoved: false };
 		else if (pointers.size === 2) {
 			const [first, second] = [...pointers.values()];
-			pinch = { distance: Math.abs(second - first) || 1, start: ctx.view[0], count: ctx.visibleCount, anchorX: (first + second) / 2 - box.left };
+			pinch = { distance: getPinchDistance(), start: ctx.view[0], count: ctx.visibleCount, anchorX: (first.x + second.x) / 2 - box.left };
 			drag = null;
 		}
 		// If a finger pressed: show the crosshair only after a long press, so a quick drag just pans.
@@ -174,13 +234,16 @@
 
 	/** Pans with a drag, zooms with a pinch, and otherwise moves the crosshair. */
 	const handlePointerMove = (e: PointerEvent & { currentTarget: EventTarget & HTMLDivElement }) => {
-		if (pointers.has(e.pointerId)) pointers.set(e.pointerId, e.clientX);
+		if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 		// If two pointers pinch: zoom by the change in their distance, around where they started.
 		if (pinch && pointers.size === 2) {
-			const [first, second] = [...pointers.values()];
+			const { start, count, distance, anchorX } = pinch;
+			const scale = distance / getPinchDistance();
 			ctx.isDragging = true;
-			ctx.setRange(pinch.start, pinch.count);
-			ctx.zoom(pinch.distance / (Math.abs(second - first) || 1), pinch.anchorX);
+			scheduleMove(() => {
+				ctx.setRange(start, count);
+				ctx.zoom(scale, anchorX);
+			});
 			return;
 		}
 		const isTouch = e.pointerType === "touch";
@@ -191,13 +254,19 @@
 			// If the finger moved past the slop before the long press: it pans or scrolls, so cancel the long press.
 			if (drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) >= TOUCH_SLOP) clearTimeout(pressTimer);
 		}
-		// If one pointer drags past the threshold: pan with it both ways. A mouse starts in any direction; a finger must start sideways with the larger slop, since a vertical swipe scrolls the page and a jittery hold still counts as a press.
-		const hasStarted = isTouch ? Math.abs(e.clientX - (drag?.x ?? 0)) >= TOUCH_SLOP : Math.hypot(e.clientX - (drag?.x ?? 0), e.clientY - (drag?.y ?? 0)) >= DRAG_THRESHOLD;
+		// If one pointer drags past the threshold: pan with it both ways. A mouse starts in any direction; a finger needs the larger slop, since a jittery hold still counts as a press, and starts sideways only while the page owns vertical swipes.
+		const moveX = Math.abs(e.clientX - (drag?.x ?? 0));
+		const moveDistance = Math.hypot(e.clientX - (drag?.x ?? 0), e.clientY - (drag?.y ?? 0));
+		const hasStarted = !isTouch ? moveDistance >= DRAG_THRESHOLD : gestures === "chart" ? moveDistance >= TOUCH_SLOP : moveX >= TOUCH_SLOP;
 		if (drag && (drag.hasMoved || hasStarted)) {
+			const { start, count, offset, x, y } = drag;
+			const { clientX, clientY } = e;
 			drag.hasMoved = true;
 			ctx.isDragging = true;
-			ctx.setRange(drag.start - (e.clientX - drag.x) / (ctx.spacing || 1), drag.count);
-			ctx.setPriceOffset(drag.offset + (e.clientY - drag.y) / (ctx.priceHeight || 1));
+			scheduleMove(() => {
+				ctx.setRange(start - (clientX - x) / (ctx.spacing || 1), count);
+				ctx.setPriceOffset(offset + (clientY - y) / (ctx.priceHeight || 1));
+			});
 		}
 		// If a mouse or pen moved: the crosshair follows it.
 		if (!isTouch) updateHover(e.currentTarget, e.clientX, e.clientY);
@@ -206,6 +275,13 @@
 	/** Ends the drag or pinch when a pointer lifts. */
 	const handlePointerUp = (e: PointerEvent) => {
 		pointers.delete(e.pointerId);
+		// If a pinch drops to one finger: that finger keeps dragging from where it is, instead of freezing until it lifts.
+		if (pinch && pointers.size === 1) {
+			const [rest] = [...pointers.values()];
+			// Apply the waiting pinch first, so the drag starts from the zoom on screen.
+			flushMove();
+			drag = { x: rest.x, y: rest.y, start: ctx.view[0], count: ctx.visibleCount, offset: ctx.priceOffset, hasMoved: true };
+		}
 		if (pointers.size < 2) pinch = null;
 		if (pointers.size === 0) {
 			drag = null;
@@ -283,17 +359,20 @@
 	};
 </script>
 
-<!-- Candlestick chart: the legend, the plot, and the table of visible candles; an overlay legend floats inside the plot. -->
-<figure class={["candlestickChart not-typeset", className]} data-variant={variant} data-size={size} {...props}>
-	{#if showLegend && legendPosition === "top"}
-		<Legend overflow={legendOverflow} />
+<!-- Candlestick chart: the legend, the plot, and the table of visible candles; the legend sits above or below the plot, or an overlay legend floats inside it. -->
+<figure class={["candlestickChart not-typeset", className]} data-variant={variant} data-size={size} data-ready={isReady || undefined} {...props}>
+	<!-- Parts hand their settings to the chart and draw nothing here, so they render first and every layer below can read them. -->
+	{@render children()}
+	{#if legendSettings && hasLegendItems && legendPosition === "top"}
+		<LegendView {...legendSettings} />
 	{/if}
 
 	<!-- Plot; drag to pan, Ctrl or ⌘ and the wheel to zoom, and focus it to read candles with the arrows. -->
 	<!-- A focusable chart that reads candles with the arrow keys is interactive, which this check does not know. -->
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-	<div class="candlestickChartPlot" role="group" aria-roledescription="candlestick chart" aria-label={label} tabindex="0" data-dragging={ctx.isDragging || undefined} bind:clientWidth={ctx.width} bind:clientHeight={ctx.height} {@attach handleWheel} {@attach handleTouchMove} onpointerdown={handlePointerDown} onpointermove={handlePointerMove} onpointerup={handlePointerUp} onpointercancel={handlePointerUp} onpointerleave={handlePointerLeave} ondblclick={() => ctx.resetRange()} oncontextmenu={handleContextMenu} onkeydown={handleKeydown} onfocus={handleFocus} onblur={handleBlur}>
-		{#if ctx.width > 0 && ctx.height > 0}
+	<div class="candlestickChartPlot" role="group" aria-roledescription="candlestick chart" aria-label={label} tabindex="0" data-gestures={gestures} data-dragging={ctx.isDragging || undefined} bind:clientWidth={ctx.width} bind:clientHeight={ctx.height} {@attach handleWheel} {@attach handleTouchMove} onpointerdown={handlePointerDown} onpointermove={handlePointerMove} onpointerup={handlePointerUp} onpointercancel={handlePointerUp} onpointerleave={handlePointerLeave} ondblclick={() => ctx.resetRange()} oncontextmenu={handleContextMenu} onkeydown={handleKeydown} onfocus={handleFocus} onblur={handleBlur}>
+		<!-- Draw once the plot and its text are measured, so the first paint is already at full size. -->
+		{#if isMeasured && ctx.width > 0 && ctx.height > 0}
 			<svg class="candlestickChartSvg" width={ctx.width} height={ctx.height} viewBox="0 0 {ctx.width} {ctx.height}" aria-hidden="true">
 				<defs>
 					<clipPath id={clipId}>
@@ -320,6 +399,9 @@
 				<Levels />
 				<Crosshair />
 			</svg>
+			{#if ctx.level && ctx.levelLines.length}
+				<LevelLines />
+			{/if}
 			{#if ctx.placedMarkers.length}
 				<Markers />
 			{/if}
@@ -328,16 +410,24 @@
 			{/if}
 			<PriceAxis />
 		{/if}
-		{#if showLegend && legendPosition === "overlay"}
-			<Legend overlay overflow={legendOverflow} />
+		<!-- The info and an overlay legend wait for the plot's width too, so they never paint squeezed into a column first. -->
+		{#if infoSettings && isMeasured && ctx.width > 0}
+			<InfoView {...infoSettings} />
 		{/if}
-		{#if ctx.activeIndex >= 0 && !ctx.isDragging}
-			<Tooltip />
+		{#if legendSettings && hasLegendItems && isMeasured && ctx.width > 0 && (legendPosition === "overlay" || legendPosition === "overlayBottom")}
+			<LegendView {...legendSettings} />
+		{/if}
+		<!-- Without a tooltip part the crosshair, info, and announcements still follow the candle. -->
+		{#if tooltipSettings && ctx.activeIndex >= 0 && !ctx.isDragging}
+			<TooltipView {...tooltipSettings} />
 		{/if}
 		<!-- Hidden probe that resolves the axis text size token to pixels. -->
 		<span class="candlestickChartProbe" bind:this={probe} aria-hidden="true"></span>
 	</div>
 
+	{#if legendSettings && hasLegendItems && legendPosition === "bottom"}
+		<LegendView {...legendSettings} />
+	{/if}
 	<Table visible={table} />
 	<span class="candlestickChartAnnouncement" aria-live="polite">{announcement}</span>
 </figure>
@@ -363,6 +453,11 @@
 		touch-action: pan-y;
 		user-select: none;
 		-webkit-touch-callout: none;
+	}
+
+	/* The chart owns every touch gesture, so vertical drags move the prices instead of being cancelled by a page that cannot scroll */
+	.candlestickChartPlot[data-gestures="chart"] {
+		touch-action: none;
 	}
 
 	.candlestickChartSvg {
@@ -404,9 +499,13 @@
 
 	/* =============== Sizes =============== */
 
+	/* Each size also passes its radius, and one step smaller for buttons, to the parts through `--candlestick-chart-radius` and `--candlestick-chart-inner-radius` */
+
 	/* Large */
 	.candlestickChart[data-size="lg"] {
 		--candlestick-chart-height: 30rem; /* 480px */
+		--candlestick-chart-radius: var(--radius-lg);
+		--candlestick-chart-inner-radius: var(--radius-md);
 		font-size: var(--text-sm);
 		line-height: var(--line-height-sm);
 	}
@@ -414,6 +513,8 @@
 	/* Medium — default */
 	.candlestickChart[data-size="md"] {
 		--candlestick-chart-height: 24rem; /* 384px */
+		--candlestick-chart-radius: var(--radius-md);
+		--candlestick-chart-inner-radius: var(--radius-sm);
 		font-size: var(--text-xs);
 		line-height: var(--line-height-xs);
 	}
@@ -421,6 +522,8 @@
 	/* Small */
 	.candlestickChart[data-size="sm"] {
 		--candlestick-chart-height: 18rem; /* 288px */
+		--candlestick-chart-radius: var(--radius-sm);
+		--candlestick-chart-inner-radius: var(--radius-xs);
 		font-size: var(--text-xs);
 		line-height: var(--line-height-xs);
 	}
@@ -428,6 +531,8 @@
 	/* Extra small */
 	.candlestickChart[data-size="xs"] {
 		--candlestick-chart-height: 14rem; /* 224px */
+		--candlestick-chart-radius: var(--radius-xs);
+		--candlestick-chart-inner-radius: var(--radius-xs);
 		font-size: var(--text-xs);
 		line-height: var(--line-height-xs);
 	}

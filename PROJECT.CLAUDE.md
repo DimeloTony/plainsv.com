@@ -2,7 +2,7 @@
 
 ProjectName uses PlainSv. PlainSv is a registry of components, utilities, and plugins for Svelte development, built with native Svelte and web technologies and as few external packages as possible. Components are accessible and customizable, use Svelte 5 runes for state management, and are styled with Svelte's scoped `<style>` tags and the shadcn CSS design system.
 
-The app is a SvelteKit 3 project set up with the PlainSv `init` item, which installs the theme, global types, app context, root layout, server functions, and Vite plugins. Components are copied into the project with the `remote0` CLI from `https://plainsv.com/r/<item>.json`, so their source lives in `src/lib/components/ui` and can be changed like any other code.
+The app is a SvelteKit 3 project created with `sv create` and set up with the PlainSv `init` item, which installs the theme, global types, app context, page meta, and Vite plugins. Components are copied into the project with the `remote0` CLI from `https://plainsv.com/r/<item>.json`, so their source lives in `src/lib/components/ui` and can be changed like any other code.
 
 ## Folders
 
