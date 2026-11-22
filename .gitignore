@@ -22,8 +22,7 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# SQLite databases
-*.sqlite*
-
 # Temp folders
 /temp
+
+src/test.ts

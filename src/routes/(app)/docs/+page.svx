@@ -35,6 +35,7 @@ The `init` item adds the PlainSv core files and installs their packages:
 - Replace `src/app.d.ts` with the global types that components use
 - Add the app context in `src/lib/context/app.svelte.ts` and the app data in `src/lib/data/app.ts`
 - Add the `Logo` and `PageMeta` components in `src/lib/components/shared`
+- Replace `vite.config.ts` with a config that registers the dev and svx plugins and compiles `.svx` pages
 - Replace `src/routes/+layout.svelte` with a root layout that imports the styles, creates the app context, and renders toasts
 - Add `src/routes/+layout.server.ts`, which passes the theme and device to the app context
 - Add `src/hooks.server.ts`, which sets dark mode on the server so pages never flash light
@@ -43,11 +44,11 @@ The `init` item adds the PlainSv core files and installs their packages:
 - Add `.vscode/settings.json`, which sorts the VS Code explorer by file type so each component's `.svelte` parts sit together, apart from its `.ts` files
 - Add the `toaster` component and the `dev-plugin` and `svx-plugin-simple` Vite plugins
 
-Since `init` replaces `src/app.d.ts` and `src/routes/+layout.svelte`, `remote0` asks before it overwrites them. Copy anything you added to those files back in afterward, and see the adapter notes below.
+Since `init` replaces `src/app.d.ts`, `vite.config.ts`, and `src/routes/+layout.svelte`, `remote0` asks before it overwrites them. Copy anything you added to those files back in afterward, and see the adapter notes below.
 
-## Register the plugins
+## Vite config
 
-Add the dev and svx plugins to the `vite.config.ts` that `sv create` wrote, and let SvelteKit compile `.svx` pages. Keep the adapter import that `sv` picked.
+There is nothing to set up here, since `init` writes `vite.config.ts` with the dev and svx plugins already registered and `.svx` pages enabled. Update it only if your project needs something different. It uses `adapter-node`, so if `sv` picked another adapter, change the `adapter` import to the one `sv` installed, such as `@sveltejs/adapter-vercel`. You can also add your own plugins or compiler options. This is the file `init` writes.
 
 ```ts title="vite.config.ts"
 import adapter from "@sveltejs/adapter-node";

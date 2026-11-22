@@ -187,7 +187,7 @@ Every component should be as customizable as shadcn-svelte without Tailwind CSS:
 - Update an item's `files` when you add, rename, or remove its source files
 - Add npm packages an item imports to `dependencies` or `devDependencies`, except `svelte`, `@sveltejs/kit`, and `vite`
 - Omit `target` so files install to their project path
-- Set `target` only when several items install different files to one path, such as `auth-google-sqlite` installing `src/lib/server/auth/providers/google.ts` as `src/lib/server/auth/provider.ts`
+- Set `target` only when several items install different files to one path
 - Ship the style files in the `init` item, never as items or `itemDependencies`
 - Keep plugins and utilities out of component docs pages, and document them under `/docs/utilities/<name>`
 
@@ -212,7 +212,6 @@ Every component should be as customizable as shadcn-svelte without Tailwind CSS:
 
 ## Updating CLAUDE.md
 
-- Suggest `CLAUDE.md` and `PROJECT.CLAUDE.md` changes to the user and wait for a yes before editing either file
+- Suggest `CLAUDE.md` changes to the user and wait for a yes before editing it
 - Update `CLAUDE.md` when the user asks for something that breaks one of its rules
 - Update `CLAUDE.md` when the project structure changes
-- Keep `PROJECT.CLAUDE.md` aligned with `CLAUDE.md`, since it is the starter `CLAUDE.md` for projects that use PlainSv

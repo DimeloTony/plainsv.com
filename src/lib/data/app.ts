@@ -17,7 +17,6 @@ export const pageLinks = [
 	{ href: "/docs/utilities/css", label: "CSS Utilities", keywords: ["shimmer", "scroll fade", "classes"] },
 	{ href: "/docs/utilities/functions", label: "Functions", keywords: ["server functions", "zod", "validation", "remote"] },
 	{ href: "/docs/utilities/auth", label: "Auth", keywords: ["sign in", "login", "oauth", "google", "github", "vercel", "session"] },
-	{ href: "/docs/utilities/drizzle", label: "Drizzle", keywords: ["database", "db", "sqlite", "orm", "schema", "migrations"] },
 	{ href: "/docs/utilities/mongodb", label: "MongoDB", keywords: ["database", "db", "mongo", "zod", "schema"] },
 	{ href: "/docs/utilities/plugins", label: "Plugins", keywords: ["vite", "svx", "markdown", "icons", "env"] },
 	{ href: "/docs/deploy", label: "Deploy", keywords: ["server", "ubuntu", "nginx", "pm2", "cloudflare", "rollback", "hosting"] },
@@ -77,8 +76,7 @@ export const componentLinks = Object.keys(componentDocsPages)
 export const utilityLinks = [
 	{ href: "/docs/utilities/css", label: "CSS Utilities", description: "Shimmer and scroll-fade classes in plain CSS." },
 	{ href: "/docs/utilities/functions", label: "Functions", description: "Type-safe server functions validated with Zod." },
-	{ href: "/docs/utilities/auth", label: "Auth", description: "Google, GitHub, or Vercel sign in with any database." },
-	{ href: "/docs/utilities/drizzle", label: "Drizzle", description: "Drizzle ORM on Node's built-in SQLite." },
+	{ href: "/docs/utilities/auth", label: "Auth", description: "Google, GitHub, or Vercel sign in with MongoDB." },
 	{ href: "/docs/utilities/mongodb", label: "MongoDB", description: "A typed MongoDB client with Zod collection schemas." },
 	{ href: "/docs/utilities/plugins", label: "Plugins", description: "Vite plugins for .svx pages, icons, and env files." },
 ];

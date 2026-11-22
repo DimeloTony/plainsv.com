@@ -99,7 +99,7 @@ await database.collection("user").createIndex({ email: 1 }, { unique: true });
 
 ## Auth
 
-The auth adapter in `src/lib/server/auth/db.mongodb.ts` stores users and sessions with this utility. It uses the `user` and `session` collections, so keep both in `schema.ts` when you use auth with MongoDB.
+Auth stores sessions with this utility in `src/lib/server/auth/session.ts`, and its callback routes create users. It uses the `user` and `session` collections, so keep both in `schema.ts` when you use auth.
 
 ## API
 

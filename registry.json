@@ -30,6 +30,11 @@
 				{ "type": "file", "path": "static/images/manifest-512.png" },
 				{ "type": "file", "path": "static/images/og.png" },
 				{ "type": "file", "content": "{\n\t\"explorer.sortOrder\": \"type\"\n}", "target": ".vscode/settings.json" },
+				{
+					"type": "file",
+					"content": "import adapter from \"@sveltejs/adapter-node\";\nimport devPlugin from \"#lib/server/plugins/dev/index.js\";\nimport svxPlugin from \"#lib/server/plugins/svx/index.js\";\nimport { sveltekit } from \"@sveltejs/kit/vite\";\nimport { defineConfig } from \"vite\";\n\nexport default defineConfig(() => {\n\treturn {\n\t\tplugins: [\n\t\t\tdevPlugin(),\n\t\t\tsvxPlugin(),\n\t\t\tsveltekit({\n\t\t\t\tadapter: adapter(),\n\t\t\t\textensions: [\".svelte\", \".svx\"],\n\t\t\t\tcompilerOptions: {\n\t\t\t\t\t// Force runes mode for the project, except for libraries. Can be removed in svelte 6.\n\t\t\t\t\trunes: ({ filename }) => (filename.split(/[/\\\\]/).includes(\"node_modules\") ? undefined : true),\n\t\t\t\t\t// Allow reading props once, such as `setAppCtx(data)` in the root layout\n\t\t\t\t\twarningFilter: (warning) => (warning.code === \"state_referenced_locally\" ? false : true),\n\t\t\t\t},\n\t\t\t}),\n\t\t],\n\t};\n});",
+					"target": "vite.config.ts"
+				},
 				{ "type": "file", "content": "DOMAIN_URL=\"http://localhost:3000\"", "target": ".env" },
 				{ "type": "file", "content": "DOMAIN_URL=\"https://example.com\"", "target": ".env.production" }
 			]
@@ -1282,89 +1287,41 @@
 		},
 		{
 			"name": "auth-base",
-			"description": "Shared auth core with cookie sessions, the sign in hook, and sign in routes, used by every auth item.",
+			"description": "Shared auth core with MongoDB cookie sessions, the session hook, and the sign out route, used by every auth item.",
+			"itemDependencies": ["/r/mongodb.json"],
 			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/types.ts" },
 				{ "type": "file", "path": "src/lib/server/auth/session.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/hook.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/signout/+server.ts" }
 			]
 		},
 		{
-			"name": "auth-google-sqlite",
-			"description": "Google sign in with cookie sessions, storing users and sessions in SQLite through the Drizzle utility.",
-			"itemDependencies": ["/r/auth-base.json", "/r/drizzle.json"],
-			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/providers/google.ts", "target": "src/lib/server/auth/provider.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/adapters/sqlite.ts", "target": "src/lib/server/auth/db.ts" },
-				{ "type": "file", "path": "src/routes/api/auth/google/+server.ts" },
-				{ "type": "file", "path": "src/routes/api/auth/google/callback/+server.ts" }
-			]
-		},
-		{
-			"name": "auth-google-mongodb",
+			"name": "auth-google",
 			"description": "Google sign in with cookie sessions, storing users and sessions in MongoDB through the MongoDB utility.",
-			"itemDependencies": ["/r/auth-base.json", "/r/mongodb.json"],
+			"itemDependencies": ["/r/auth-base.json"],
 			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/providers/google.ts", "target": "src/lib/server/auth/provider.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/adapters/mongodb.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/google.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/google/+server.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/google/callback/+server.ts" }
 			]
 		},
 		{
-			"name": "auth-github-sqlite",
-			"description": "GitHub sign in with cookie sessions, storing users and sessions in SQLite through the Drizzle utility.",
-			"itemDependencies": ["/r/auth-base.json", "/r/drizzle.json"],
-			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/providers/github.ts", "target": "src/lib/server/auth/provider.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/adapters/sqlite.ts", "target": "src/lib/server/auth/db.ts" },
-				{ "type": "file", "path": "src/routes/api/auth/github/+server.ts" },
-				{ "type": "file", "path": "src/routes/api/auth/github/callback/+server.ts" }
-			]
-		},
-		{
-			"name": "auth-github-mongodb",
+			"name": "auth-github",
 			"description": "GitHub sign in with cookie sessions, storing users and sessions in MongoDB through the MongoDB utility.",
-			"itemDependencies": ["/r/auth-base.json", "/r/mongodb.json"],
+			"itemDependencies": ["/r/auth-base.json"],
 			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/providers/github.ts", "target": "src/lib/server/auth/provider.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/adapters/mongodb.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/github.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/github/+server.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/github/callback/+server.ts" }
 			]
 		},
 		{
-			"name": "auth-vercel-sqlite",
-			"description": "Vercel sign in with cookie sessions, storing users and sessions in SQLite through the Drizzle utility.",
-			"itemDependencies": ["/r/auth-base.json", "/r/drizzle.json"],
-			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/providers/vercel.ts", "target": "src/lib/server/auth/provider.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/adapters/sqlite.ts", "target": "src/lib/server/auth/db.ts" },
-				{ "type": "file", "path": "src/routes/api/auth/vercel/+server.ts" },
-				{ "type": "file", "path": "src/routes/api/auth/vercel/callback/+server.ts" }
-			]
-		},
-		{
-			"name": "auth-vercel-mongodb",
+			"name": "auth-vercel",
 			"description": "Vercel sign in with cookie sessions, storing users and sessions in MongoDB through the MongoDB utility.",
-			"itemDependencies": ["/r/auth-base.json", "/r/mongodb.json"],
+			"itemDependencies": ["/r/auth-base.json"],
 			"files": [
-				{ "type": "file", "path": "src/lib/server/auth/providers/vercel.ts", "target": "src/lib/server/auth/provider.ts" },
-				{ "type": "file", "path": "src/lib/server/auth/adapters/mongodb.ts", "target": "src/lib/server/auth/db.ts" },
+				{ "type": "file", "path": "src/lib/server/auth/vercel.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/vercel/+server.ts" },
 				{ "type": "file", "path": "src/routes/api/auth/vercel/callback/+server.ts" }
-			]
-		},
-		{
-			"name": "drizzle",
-			"description": "A Drizzle ORM client on Node's built-in node:sqlite, with a typed schema and drizzle-kit migrations.",
-			"dependencies": ["drizzle-orm@rc"],
-			"devDependencies": ["drizzle-kit@rc"],
-			"files": [
-				{ "type": "file", "path": "src/lib/server/drizzle/index.ts" },
-				{ "type": "file", "path": "src/lib/server/drizzle/schema.ts" },
-				{ "type": "file", "path": "src/lib/server/drizzle/config.ts" }
 			]
 		},
 		{

@@ -116,6 +116,12 @@
         },
         {
             "type": "file",
+            "path": "vite.config.ts",
+            "target": "vite.config.ts",
+            "content": "import adapter from \"@sveltejs/adapter-node\";\nimport devPlugin from \"#lib/server/plugins/dev/index.js\";\nimport svxPlugin from \"#lib/server/plugins/svx/index.js\";\nimport { sveltekit } from \"@sveltejs/kit/vite\";\nimport { defineConfig } from \"vite\";\n\nexport default defineConfig(() => {\n\treturn {\n\t\tplugins: [\n\t\t\tdevPlugin(),\n\t\t\tsvxPlugin(),\n\t\t\tsveltekit({\n\t\t\t\tadapter: adapter(),\n\t\t\t\textensions: [\".svelte\", \".svx\"],\n\t\t\t\tcompilerOptions: {\n\t\t\t\t\t// Force runes mode for the project, except for libraries. Can be removed in svelte 6.\n\t\t\t\t\trunes: ({ filename }) => (filename.split(/[/\\\\]/).includes(\"node_modules\") ? undefined : true),\n\t\t\t\t\t// Allow reading props once, such as `setAppCtx(data)` in the root layout\n\t\t\t\t\twarningFilter: (warning) => (warning.code === \"state_referenced_locally\" ? false : true),\n\t\t\t\t},\n\t\t\t}),\n\t\t],\n\t};\n});"
+        },
+        {
+            "type": "file",
             "path": ".env",
             "target": ".env",
             "content": "DOMAIN_URL=\"http://localhost:3000\""

@@ -5,9 +5,9 @@ description: "Plain CSS classes, type-safe server functions, and Vite plugins fo
 
 # Utilities
 
-PlainSv ships more than components. The utilities cover the parts of a Svelte app that usually need a package: CSS effects without Tailwind, typed calls to server code, sign in, a typed MongoDB client, Drizzle on SQLite, and Vite plugins for Markdown pages and faster icon imports. Like the components, each one is copied into your project, so you own the source.
+PlainSv ships more than components. The utilities cover the parts of a Svelte app that usually need a package: CSS effects without Tailwind, typed calls to server code, sign in, a typed MongoDB client, and Vite plugins for Markdown pages and faster icon imports. Like the components, each one is copied into your project, so you own the source.
 
-Every `init` item installs the CSS utilities and the `dev-plugin` and `svx-plugin-simple` Vite plugins below, along with the theme and the app shell. Install the server functions, the full `svx-plugin`, auth, Drizzle, and MongoDB on their own with their items.
+Every `init` item installs the CSS utilities and the `dev-plugin` and `svx-plugin-simple` Vite plugins below, along with the theme and the app shell. Install the server functions, the full `svx-plugin`, auth, and MongoDB on their own with their items.
 
 ```pm
 npx remote0 add https://plainsv.com/r/init.json
@@ -31,18 +31,10 @@ const response = await useFunc("userCreate", { email: "ada@example.com" });
 
 ## Auth
 
-Google, GitHub, or Vercel sign in with 30-day cookie sessions, built on `fetch` and Node's `crypto`. Install one item per provider and database pair, such as `auth-google-sqlite` or `auth-github-mongodb`. Read more on the [auth page](/docs/utilities/auth).
+Google, GitHub, or Vercel sign in with 30-day cookie sessions stored in MongoDB, built on `fetch` and Node's `crypto`. Install one item per provider, such as `auth-google` or `auth-github`. Read more on the [auth page](/docs/utilities/auth).
 
 ```pm
-npx remote0 add https://plainsv.com/r/auth-google-sqlite.json
-```
-
-## Drizzle
-
-Drizzle ORM on SQLite with Node's built-in `node:sqlite` driver, with tables defined in TypeScript and `drizzle-kit` migrations. The SQLite auth items use it. Read more on the [Drizzle page](/docs/utilities/drizzle).
-
-```pm
-npx remote0 add https://plainsv.com/r/drizzle.json
+npx remote0 add https://plainsv.com/r/auth-google.json
 ```
 
 ## MongoDB
