@@ -70,6 +70,36 @@ const POST: RequestHandler = async (event) => {
 	if (outputData instanceof Response) return outputData;
 	const headers = new Headers({ "content-type": "application/json" });
 
+	// If returning an async generator: stream each yielded value as a server-sent event, skipping output validation since streamed schemas are `z.custom`
+	if (!outputData.error && outputData.data && typeof outputData.data === "object" && Symbol.asyncIterator in outputData.data) {
+		const generator = outputData.data as AsyncGenerator<unknown>;
+		const stream = new ReadableStream<string>({
+			// Runs each time the client is ready for the next event
+			async pull(controller) {
+				try {
+					const { done, value } = await generator.next();
+					// If the generator finished: end the stream
+					if (done) return controller.close();
+					// Tag dates as `{ $date }`, since `toJSON` turns them into strings before the replacer sees them
+					const payload = JSON.stringify(value, function (this: Record<string, unknown>, key: string, val: unknown) {
+						return this[key] instanceof Date ? { $date: this[key].toISOString() } : val;
+					});
+					controller.enqueue(`data: ${payload}\n\n`);
+				} catch (err) {
+					// If the generator threw: send the message as an error event and end the stream
+					const message = err instanceof Error ? err.message : String(err);
+					controller.enqueue(`event: error\ndata: ${JSON.stringify(message)}\n\n`);
+					controller.close();
+				}
+			},
+			// Stop the generator when the client disconnects, which runs its `finally` block on its next yield
+			async cancel() {
+				await generator.return(undefined);
+			},
+		});
+		return new Response(stream.pipeThrough(new TextEncoderStream()), { headers: { "content-type": "text/event-stream", "cache-control": "no-cache" } });
+	}
+
 	// if not returning error: validate output
 	if (!outputData.error) {
 		const parseRes = functionsSchemas[functionName]["out"].safeParse(outputData.data);

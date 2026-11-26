@@ -34,6 +34,11 @@ export const functionsSchemas = {
 		out: z.custom<AsyncGenerator<string>>(() => true),
 		isPublic: true,
 	},
+	liveTicker: {
+		in: z.object({ throwError: z.boolean().optional() }),
+		out: z.custom<AsyncGenerator<{ count: number; price: number; time: Date }>>(() => true),
+		isPublic: true,
+	},
 };
 
 /** Function schemas type */

@@ -141,14 +141,14 @@
 		outline-offset: 2px;
 	}
 
-	/* Sending */
-	.promptInputFileOpen:disabled,
-	.promptInputFileRemove:disabled {
+	/* Sending; the chip dims while the remove button stays hidden */
+	.promptInputFileOpen:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
 
-	.promptInputFile:is(:hover, :focus-within) .promptInputFileRemove:disabled {
+	.promptInputFileRemove:disabled {
 		opacity: 0;
+		pointer-events: none;
 	}
 </style>

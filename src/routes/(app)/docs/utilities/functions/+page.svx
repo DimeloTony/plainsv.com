@@ -113,7 +113,7 @@ const response = await useFunc("fileUpload", formData);
 
 ## Streaming
 
-Return a `Response` with the `text/event-stream` content type to stream. On the client, `data` becomes an async generator that yields the payload of each `data:` event, parsing JSON strings. Stopping the loop early closes the connection.
+Return a `Response` with the `text/event-stream` content type to stream. On the client, `data` becomes an async generator that yields the payload of each `data:` event, parsed as JSON when it is valid JSON. Stopping the loop early closes the connection.
 
 <Demo section="stream" />
 
@@ -139,11 +139,95 @@ if (!response.error) for await (const word of response.data) text += word;
 
 Any other `Response` returned from a handler is sent as it is, without output validation.
 
+## Live streams
+
+Return an async generator as `data` to stream typed values without building the stream yourself. The server sends each yielded value as a server-sent event, keeps `Date` values as dates, and sends an error the generator throws as an `error` event. Type the output with `z.custom<AsyncGenerator<T>>()`, where `T` is the type of each value.
+
+<Demo section="live" />
+
+```ts title="src/lib/functions/schemas.ts"
+liveTicker: {
+	in: z.object({ throwError: z.boolean().optional() }),
+	out: z.custom<AsyncGenerator<{ count: number; price: number; time: Date }>>(() => true),
+	isPublic: true,
+},
+```
+
+```ts title="src/lib/functions/handlers/demo.ts"
+/** Stream a random price every second, like a live ticker */
+export const liveTicker: FuncHandler<"liveTicker"> = async ({ event, inputData }) => {
+	async function* ticker() {
+		let price = 100;
+		for (let count = 1; count <= 60; count++) {
+			if (inputData.throwError && count === 3) throw new Error("Ticker failed on purpose.");
+			price = Math.round((price + (Math.random() - 0.5) * 2) * 100) / 100;
+			yield { count, price, time: new Date() };
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		}
+	}
+	return { error: false, data: ticker() };
+};
+```
+
+Read it with `useFuncLive`, which works like a SvelteKit `query.live`. It connects when the markup or an effect first reads it and disconnects when the component is destroyed, and components that read the same instance share one connection. `current` keeps the `useFunc` response shape: `{ error: false, data }` with the latest value, `{ error: true, data }` with the error message, or `undefined` before the first event.
+
+```svelte title="+page.svelte"
+<script lang="ts">
+	import { useFuncLive } from "#lib/functions/index.js";
+
+	let throwError = $state(false);
+	// Recreate the stream when its input changes
+	const ticker = $derived(useFuncLive("liveTicker", { throwError }));
+
+	// Run code for every event or error, removing the callback when the effect reruns
+	$effect(() => ticker.onEvent((data) => console.log(data.price)));
+	$effect(() => ticker.onError((message) => console.error(message)));
+</script>
+
+{#if ticker.current?.error}
+	<p>{ticker.current.data}</p>
+{:else if ticker.current}
+	<p>{ticker.current.data.price} at {ticker.current.data.time.toLocaleTimeString()}</p>
+{/if}
+<p>{ticker.connected ? "Connected" : "Disconnected"}</p>
+<button onclick={() => ticker.reconnect()}>Reconnect</button>
+<button onclick={() => ticker.disconnect()}>Disconnect</button>
+```
+
+Use `onEvent` instead of an effect on `current` when every value matters, since Svelte batches updates and an effect can skip values that arrive close together. Both callbacks also open the stream when called inside an effect, even when nothing else reads it.
+
+A generator stops at its next `yield` after the client disconnects. When it waits a long time between values, such as on a database change stream, close the resource from `event.request.signal` so it stops right away.
+
+```ts title="src/lib/functions/handlers/demo.ts"
+const changeStream = db.watchPostById(inputData.id);
+// Close the change stream as soon as the client disconnects
+event.request.signal.addEventListener("abort", () => changeStream.close());
+```
+
 ## API
 
 ```ts title="src/lib/functions/index.ts"
 /** Calls a server function by name and resolves to its typed response */
-function useFunc<K extends keyof FuncSchemas>(functionName: K, apiLoad: FuncSchemas[K]["in"], skipSleepTime?: boolean): Promise<FuncSchemas[K]["out"]>;
+function useFunc<K extends keyof FuncSchemas>(functionName: K, apiLoad: FuncSchemas[K]["in"], skipSleepTime?: boolean, signal?: AbortSignal): Promise<FuncSchemas[K]["out"]>;
+
+/** Reads a function that returns an async generator as live state */
+function useFuncLive<K extends FuncStreamName>(functionName: K, apiLoad: FuncSchemas[K]["in"]): FuncLive<K>;
+
+/** Live stream returned by `useFuncLive` */
+class FuncLive<K extends FuncStreamName> {
+	/** Latest response, or undefined before the first event */
+	get current(): { error: true; data: string } | { error: false; data: FuncStreamItem<K> } | undefined;
+	/** Whether the stream is open */
+	get connected(): boolean;
+	/** Close the current stream and open a new one */
+	reconnect(): void;
+	/** Close the current stream, keeping the last value */
+	disconnect(): void;
+	/** Run a callback for every value, and return a function that removes it */
+	onEvent(callback: (data: FuncStreamItem<K>) => void): () => void;
+	/** Run a callback with the message when the call or stream fails, and return a function that removes it */
+	onError(callback: (message: string) => void): () => void;
+}
 ```
 
 ```ts title="src/lib/functions/schemas.ts"
